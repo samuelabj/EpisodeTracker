@@ -40,10 +40,10 @@ namespace MediaReign.EpisodeTracker.Monitors {
 		Task checkTask;
 		AutoResetEvent checkEvent = new AutoResetEvent(false);
 
-		public ProcessMonitor() {
+		public ProcessMonitor(Logger logger) {
 			ApplicationNames = new List<string>();
 			ApplicationNames.Add("PotPlayerMini64");
-			Logger = LogManager.GetLogger("EpisodeTracker");
+			Logger = logger;
 		}
 
 		public List<string> ApplicationNames { get; private set; }
@@ -76,6 +76,8 @@ namespace MediaReign.EpisodeTracker.Monitors {
 			Logger.Trace("Checking for open files");
 
 			var files = GetMediaFiles();
+			Logger.Trace("Files found: " + files.Count());
+
 			foreach(var f in files) {
 				Logger.Trace("Found file: " + f);
 				var mon = monitored.SingleOrDefault(m => m.Filename.Equals(f, StringComparison.OrdinalIgnoreCase));
@@ -127,10 +129,10 @@ namespace MediaReign.EpisodeTracker.Monitors {
 								tracked.LastTracked = DateTime.Now;
 								Logger.Trace("Total tracked seconds: " + tracked.TrackedSeconds);
 
-								if(mon.Length.HasValue && tracked.TrackedSeconds >= mon.Length.Value.TotalSeconds - 120) {
-									Logger.Debug("Monitored file has probably been watched: " + mon.Filename);
-									tracked.ProbablyWatched = true;
-								}
+								//if(mon.Length.HasValue && tracked.TrackedSeconds >= (mon.Length.Value.TotalSeconds * .75)) {
+								//	Logger.Debug("Monitored file has probably been watched: " + mon.Filename);
+								//	tracked.ProbablyWatched = true;
+								//}
 								db.SaveChanges();
 							}
 						}
@@ -148,7 +150,7 @@ namespace MediaReign.EpisodeTracker.Monitors {
 					if(mon.Tracked) {
 						using(var db = new EpisodeTrackerDBContext()) {
 							var tracked = GetTrackedItem(db, mon);
-							if(mon.Length.HasValue && tracked.TrackedSeconds >= mon.Length.Value.TotalSeconds - 120) {
+							if(mon.Length.HasValue && tracked.TrackedSeconds >= (mon.Length.Value.TotalSeconds * .75)) {
 								Logger.Debug("Monitored file has probably been watched: " + mon.Filename);
 								tracked.ProbablyWatched = true;
 								db.SaveChanges();
@@ -227,14 +229,15 @@ namespace MediaReign.EpisodeTracker.Monitors {
 		/// <summary>
 		/// Return a list of file locks held by the process.
 		/// </summary>
-		static List<string> GetFilesLockedBy(Process process) {
+		List<string> GetFilesLockedBy(Process process) {
 			var outp = new List<string>();
 
 			var task = Task.Factory.StartNew(() => {
 				try {
 					outp = UnsafeGetFilesLockedBy(process);
-				} catch {
+				} catch(Exception e) {
 					// ignore
+					Logger.Error("Error getting locked files: " + e, e);
 				}
 			});
 
@@ -266,25 +269,23 @@ namespace MediaReign.EpisodeTracker.Monitors {
 
 
 		#region scary win32 stuff
-		private static void Ignore() { }
-		private static List<string> UnsafeGetFilesLockedBy(Process process) {
+		List<string> UnsafeGetFilesLockedBy(Process process) {
+			var files = new List<string>();
 			try {
 				var handles = GetHandles(process);
-				var files = new List<string>();
 
 				foreach(var handle in handles) {
 					var file = GetFilePath(handle, process);
 					if(file != null) files.Add(file);
 				}
-
-				return files;
-			} catch {
-				return new List<string>();
+			} catch(Exception e) {
+				Logger.Error("Error running unsafe get file handles: " + e, e);
 			}
+			return files;
 		}
 
 		const int CNST_SYSTEM_HANDLE_INFORMATION = 16;
-		private static string GetFilePath(Win32API.SYSTEM_HANDLE_INFORMATION systemHandleInformation, Process process) {
+		string GetFilePath(Win32API.SYSTEM_HANDLE_INFORMATION systemHandleInformation, Process process) {
 			var ipProcessHwnd = Win32API.OpenProcess(Win32API.ProcessAccessFlags.All, false, process.Id);
 			var objBasic = new Win32API.OBJECT_BASIC_INFORMATION();
 			var objObjectType = new Win32API.OBJECT_TYPE_INFORMATION();
@@ -306,7 +307,7 @@ namespace MediaReign.EpisodeTracker.Monitors {
 			// this one never locks...
 			while((uint)(Win32API.NtQueryObject(ipHandle, (int)Win32API.ObjectInformationClass.ObjectTypeInformation, ipObjectType, nLength, ref nLength)) == Win32API.STATUS_INFO_LENGTH_MISMATCH) {
 				if(nLength == 0) {
-					Console.WriteLine("nLength returned at zero! ");
+					Logger.Warn("nLength returned at zero!");
 					return null;
 				}
 				Marshal.FreeHGlobal(ipObjectType);
