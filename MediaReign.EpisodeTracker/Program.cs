@@ -51,8 +51,11 @@ namespace MediaReign.EpisodeTracker {
 						if(monitor != null && monitor.Running) monitor.Stop();
 						listen = false;
 						break;
-					case "Partial viewing":
+					case "list":
 						ShowWatching();
+						break;
+					case "list other":
+						ShowWatchingOther();
 						break;
 					case "search":
 						Console.Write("Enter the series name: ");
@@ -64,7 +67,7 @@ namespace MediaReign.EpisodeTracker {
 						DoSearch(search);
 						break;
 					default:
-						Console.WriteLine("Unknown command. Accepted commands: start, stop, watching, exit.");
+						Console.WriteLine("Unknown command. Accepted commands:\n\tstart\n\tstop\n\tlist\n\tlist other\n\tsearch\n\texit.");
 						break;
 				}
 			}
@@ -89,8 +92,8 @@ namespace MediaReign.EpisodeTracker {
 						var top = series.TrackedEpisodes.OrderByDescending(e => e.Number).OrderByDescending(e => e.Season).First();
 
 						Console.WriteLine(series.Name);
-						Console.WriteLine(String.Format("Last watched: S{1:00}E{2:00} ({0}, tracked {3}) - {4}", last.LastTracked, last.Season, last.Number, TimeSpan.FromSeconds(last.TrackedSeconds), last.ProbablyWatched ? "Probably watched" : "Partial viewing"));
-						Console.WriteLine(String.Format("Latest episode watched: S{1:00}E{2:00} ({0}, tracked {3}) - {4}", top.LastTracked, top.Season, top.Number, TimeSpan.FromSeconds(top.TrackedSeconds), top.ProbablyWatched ? "Probably watched" : "Partial viewing"));
+						Console.WriteLine(String.Format("\tLast watched: S{1:00}E{2:00}\n\t\t{4}\n\t\t{0}\n\t\t{3}", last.LastTracked, last.Season, last.Number, TimeSpan.FromSeconds(last.TrackedSeconds), last.ProbablyWatched ? "Probably watched" : "Partial viewing"));
+						if(last.ID != top.ID) Console.WriteLine(String.Format("\tLatest episode watched: S{1:00}E{2:00}\n\t\t{4}\n\t\t{0}\n\t\t{3}", top.LastTracked, top.Season, top.Number, TimeSpan.FromSeconds(top.TrackedSeconds), top.ProbablyWatched ? "Probably watched" : "Partial viewing"));
 						Console.WriteLine();
 					}
 					
@@ -109,10 +112,9 @@ namespace MediaReign.EpisodeTracker {
 					.Take(5);
 
 				if(watching.Any()) {
-					Console.WriteLine("These are the last episodes you watched by series: ");
 					Console.WriteLine();
 					foreach(var ep in watching) {
-						Console.WriteLine(String.Format("{1} - S{2:00}E{3:00} ({0}, tracked {4}) - {5}", 
+						Console.Write(String.Format("{1} - S{2:00}E{3:00}\n\t{5}\n\t{0}\n\t{4}\n\n", 
 							ep.LastTracked, 
 							ep.TrackedSeries.Name, 
 							ep.Season, 
@@ -125,19 +127,24 @@ namespace MediaReign.EpisodeTracker {
 					Console.WriteLine("You don't appear to be watching any tv series");
 					Console.WriteLine();
 				}
+			}
+		}
 
-				var watchingOther = db.TrackedOthers.OrderByDescending(o => o.LastTracked);
-				if(watchingOther.Any()) {
-					Console.WriteLine("These are the files you recently watched which were not recognised as tv episodes: ");
+		static void ShowWatchingOther() {
+			using(var db = new EpisodeTrackerDBContext()) {
+				var watching = db.TrackedOthers.OrderByDescending(o => o.LastTracked);
+				if(watching.Any()) {
 					Console.WriteLine();
-					foreach(var other in watchingOther) {
-						Console.WriteLine(String.Format("{0} ({1}, tracked {2}) - {3}", 
-							Path.GetFileName(other.FileName), 
-							other.LastTracked, 
-							TimeSpan.FromSeconds(other.TrackedSeconds), 
+					foreach(var other in watching) {
+						Console.Write(String.Format("{0}\n\t{3}\n\t{1}\n\t{2}\n\n",
+							Path.GetFileName(other.FileName),
+							other.LastTracked,
+							TimeSpan.FromSeconds(other.TrackedSeconds),
 							other.ProbablyWatched ? "Probably watched" : "Partial viewing"));
 					}
 					Console.WriteLine();
+				} else {
+					Console.WriteLine("No 'other' found");
 				}
 			}
 		}
