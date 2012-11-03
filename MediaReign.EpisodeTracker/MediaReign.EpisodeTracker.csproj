@@ -80,6 +80,7 @@
       <DependentUpon>201210281050359_RemoveLastWatched.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
+    <Compile Include="Models\HandleHelper.cs" />
     <Compile Include="Monitors\ProcessMonitor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -148,9 +149,10 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
+  <Target Name="BeforeBuild">  
+  </Target>-->
   <Target Name="AfterBuild">
+		<Copy SourceFiles="..\Dependencies\handle.exe" DestinationFiles="$(OutDir)\handle.exe" />
   </Target>
-  -->
+
 </Project>
