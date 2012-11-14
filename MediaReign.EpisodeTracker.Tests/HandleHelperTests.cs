@@ -52,7 +52,7 @@ PotPlayerMini64.exe pid: 7748 BLACK-BEAUTY\Sam
 			var list = HandleHelper.ParseOutput(output);
 			Assert.Equal(1, list.Count);
 			var proc = list.First();
-			Assert.Equal("PotPlayerMini64", proc.Name);
+			Assert.Equal("PotPlayerMini64", proc.ProcessName);
 			Assert.Equal(7748, proc.PID);
 			Assert.Equal(2, proc.Files.Count(f => f == @"D:\Downloads\Media\Archer (2009) - S03E07 - Crossing Over.avi"));
 		}
@@ -2971,7 +2971,7 @@ handle64.exe pid: 9336 BLACK-BEAUTY\Sam
 ";
 			var list = HandleHelper.ParseOutput(output);
 			Assert.True(list.Count > 1);
-			Assert.Equal(36, list.Count(p => p.Name == "chrome"));
+			Assert.Equal(36, list.Count(p => p.ProcessName == "chrome"));
 		}
 	}
 }

@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using MediaReign.EpisodeTracker.Data;
 using MediaReign.EpisodeTracker.Monitors;
 using NLog;
@@ -11,13 +13,21 @@ using NLog;
 namespace MediaReign.EpisodeTracker {
 	class Program {
 		static Logger Logger;
+		static NotifyIcon notify;
 
 		static void Main(string[] args) {
 			try {
-				Logger = LogManager.GetLogger("EpisodeTracker"); ;
+				Logger = LogManager.GetLogger("EpisodeTracker");
+				notify = new NotifyIcon();
+				notify.Text = "EpisodeTracker";
+				notify.Icon = new Icon(SystemIcons.Application, 40, 40);
+				notify.Visible = true;		
+
 				Run();
 			} catch(Exception e) {
 				Logger.Fatal(e);
+			} finally {
+				if(notify != null) notify.Dispose();
 			}
 		}
 
@@ -44,11 +54,12 @@ namespace MediaReign.EpisodeTracker {
 							Console.WriteLine("Monitor is not running!");
 						} else {
 							monitor.Stop();
+							monitor.Dispose();
 							Console.WriteLine("Stopped");
 						}
 						break;
 					case "exit":
-						if(monitor != null && monitor.Running) monitor.Stop();
+						if(monitor != null) monitor.Dispose();
 						listen = false;
 						break;
 					case "list":
@@ -67,14 +78,24 @@ namespace MediaReign.EpisodeTracker {
 						DoSearch(search);
 						break;
 					default:
-						Console.WriteLine("Unknown command. Accepted commands:\n\tstart\n\tstop\n\tlist\n\tlist other\n\tsearch\n\texit.");
+						Console.WriteLine("Unknown command");
 						break;
 				}
 			}
 		}
 
 		static ProcessMonitor GetMonitor() {
-			return new ProcessMonitor(Logger);
+			var mon = new ProcessMonitor(Logger);
+
+			mon.FileAdded += (o, f) => {
+				notify.ShowBalloonTip(3000, "EpisodeTracker", "Tracking file: " + Path.GetFileNameWithoutExtension(f), ToolTipIcon.None);
+			};
+
+			mon.FileRemoved += (o, f) => {
+				notify.ShowBalloonTip(3000, "EpisodeTracker", "Finished tracking: " + Path.GetFileNameWithoutExtension(f), ToolTipIcon.None);
+			};
+
+			return mon;
 		}
 
 		private static void DoSearch(string search) {

@@ -13,13 +13,15 @@ using MediaReign.EpisodeTracker.Models;
 using NLog;
 
 namespace MediaReign.EpisodeTracker.Monitors {
-	public class ProcessMonitor {
+	public class ProcessMonitor : IDisposable {
+		public delegate void MonitoredFileHandler(ProcessMonitor monitor, string filename);
+
 		class MonitoredFile {
 			public DateTime Start { get; set; }
 			public string Filename { get; set; }
 			public TvMatch Match { get; set; }
 			public TimeSpan? Length { get; set; }
-			public bool Tracked { get; set; }
+			public bool Tracking { get; set; }
 			public int PreviousTrackedSeconds { get; set; }
 			public bool Watched { get; set; }
 		}
@@ -47,6 +49,9 @@ namespace MediaReign.EpisodeTracker.Monitors {
 			Logger = logger;
 		}
 
+		public event MonitoredFileHandler FileAdded;
+		public event MonitoredFileHandler FileRemoved;
+
 		public List<string> ApplicationNames { get; private set; }
 		public Logger Logger { get; private set; }
 		public bool Running { get { return checkTask != null; } }
@@ -54,7 +59,7 @@ namespace MediaReign.EpisodeTracker.Monitors {
 		public void Start() {
 			monitored = new List<MonitoredFile>();
 			checkTask = Task.Factory.StartNew(() => {
-				var wait = TimeSpan.FromSeconds(30);
+				var wait = TimeSpan.FromSeconds(5);
 
 				do {
 					try {
@@ -95,46 +100,36 @@ namespace MediaReign.EpisodeTracker.Monitors {
 						Match = match,
 						Length = GetVideoLength(f)
 					};
-					monitored.Add(mon);
-
-					// check if it's been tracked before
-					using(var db = new EpisodeTrackerDBContext()) {
-						var tracked = GetTrackedItem(db, mon);
-						if(tracked != null) {
-							Logger.Debug("This file has been tracked before");
-							mon.Tracked = true;
-							mon.PreviousTrackedSeconds = tracked.TrackedSeconds;
-							mon.Watched = tracked.Watched;
-						}
-					}
-					
+					monitored.Add(mon);					
 				} else {
 					Logger.Trace("File is monitored");
 
 					if(!mon.Watched) {
 						using(var db = new EpisodeTrackerDBContext()) {
-							ITrackedItem tracked = null;
 							Logger.Trace("Seconds since started monitoring: " + DateTime.Now.Subtract(mon.Start).TotalSeconds);
 
 							// check if it's been monitored for a while before doing anything with file
-							if(mon.Start <= DateTime.Now.AddMinutes(-1)) {				
-								if(!mon.Tracked) {
-									Logger.Debug("Recording file/episode as tracked: " + f);
-									tracked = NewTrackedItem(db, mon);
-									mon.Tracked = true;
+							if(mon.Start <= DateTime.Now.AddMinutes(-1)) {
+								var tracked = GetTrackedItem(db, mon);
+								
+								if(!mon.Tracking) {
+									Logger.Debug("Begin tracking file: " + f);
+									if(tracked == null) {
+										Logger.Debug("Recording file/episode as tracked");
+										tracked = NewTrackedItem(db, mon);
+									} else {
+										Logger.Debug("This file has been tracked before");
+										mon.PreviousTrackedSeconds = tracked.TrackedSeconds;
+										mon.Watched = tracked.Watched;
+									}
+									mon.Tracking = true;
+									if(FileAdded != null) FileAdded(this, mon.Filename);
 								}
 
-
-								if(tracked == null) tracked = GetTrackedItem(db, mon);
 								tracked.TrackedSeconds = (int)DateTime.Now.Subtract(mon.Start).TotalSeconds + mon.PreviousTrackedSeconds;
 								tracked.LastTracked = DateTime.Now;
 								Logger.Trace("Total tracked seconds: " + tracked.TrackedSeconds);
-
-								//if(mon.Length.HasValue && tracked.TrackedSeconds >= (mon.Length.Value.TotalSeconds * .75)) {
-								//	Logger.Debug("Monitored file has probably been watched: " + mon.Filename);
-								//	tracked.ProbablyWatched = true;
-								//}
-								db.SaveChanges();
+								db.SaveChanges();								
 							}
 						}
 					}
@@ -148,7 +143,7 @@ namespace MediaReign.EpisodeTracker.Monitors {
 					Logger.Debug("Monitored file is no longer open and will be removed: " + mon.Filename);
 
 					// not open anymore
-					if(mon.Tracked) {
+					if(mon.Tracking) {
 						using(var db = new EpisodeTrackerDBContext()) {
 							var tracked = GetTrackedItem(db, mon);
 							if(mon.Length.HasValue && tracked.TrackedSeconds >= (mon.Length.Value.TotalSeconds * .75)) {
@@ -157,6 +152,7 @@ namespace MediaReign.EpisodeTracker.Monitors {
 								db.SaveChanges();
 							}
 						}
+						if(FileRemoved != null) FileRemoved(this, mon.Filename);
 					}
 
 					monitored.RemoveAt(i);
@@ -170,7 +166,7 @@ namespace MediaReign.EpisodeTracker.Monitors {
 			if(mon.Match != null) {
 				var match = mon.Match;
 				// ignore multi episode files for now
-				return db.TrackedEpisodes.FirstOrDefault(e => e.FileName == mon.Filename|| e.TrackedSeries.Name == match.Name && e.Number == match.Episode);
+				return db.TrackedEpisodes.FirstOrDefault(e => e.FileName == mon.Filename || e.TrackedSeries.Name == match.Name && e.Number == match.Episode);
 			} else {
 				return db.TrackedOthers.SingleOrDefault(o => o.FileName == mon.Filename);
 			}
@@ -214,7 +210,7 @@ namespace MediaReign.EpisodeTracker.Monitors {
 			var processes = helper.GetProcesses();
 
 			foreach(var process in processes) {
-				if(!ApplicationNames.Contains(process.Name)) continue;
+				if(!ApplicationNames.Contains(process.ProcessName)) continue;
 
 				foreach(var f in process.Files) {
 					var ext = Path.GetExtension(f);
@@ -247,6 +243,10 @@ namespace MediaReign.EpisodeTracker.Monitors {
 			}
 
 			return null;
+		}
+
+		public void Dispose() {
+			if(Running) Stop();
 		}
 	}
 }

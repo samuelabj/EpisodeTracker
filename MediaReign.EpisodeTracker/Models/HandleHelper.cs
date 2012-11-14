@@ -16,7 +16,7 @@ namespace MediaReign.EpisodeTracker.Models {
 
 		public string WorkingDirectory { get; set; }
 
-		public List<ProcessHandle> GetProcesses() {
+		public List<HandleItem> GetProcesses() {
 			var proc = new Process();
 			proc.StartInfo.FileName = "handle.exe";
 			proc.StartInfo.WorkingDirectory = WorkingDirectory;
@@ -35,15 +35,20 @@ namespace MediaReign.EpisodeTracker.Models {
 				throw new ApplicationException(err);
 			}
 
-			return ParseOutput(outsb.ToString());
+			var output = outsb.ToString();
+			if(output.Contains("Make sure that you are an administrator")) {
+				throw new ApplicationException("Must run as administrator");
+			}
+
+			return ParseOutput(output);
 		}
 
-		public static List<ProcessHandle> ParseOutput(string output) {
-			var list = new List<ProcessHandle>();
+		public static List<HandleItem> ParseOutput(string output) {
+			var list = new List<HandleItem>();
 			using(var sr = new StringReader(output)) {
 				string line = null;
 				bool start = false;
-				ProcessHandle proc = null;
+				HandleItem proc = null;
 
 				do {
 					line = sr.ReadLine();		
@@ -55,9 +60,9 @@ namespace MediaReign.EpisodeTracker.Models {
 						if(line != null) start = true;
 					} else if(start) {
 						start = false;
-						proc = new ProcessHandle();
+						proc = new HandleItem();
 						var match = Regex.Match(line, @"(?<name>.+)\spid:\s(?<pid>\d+)\s");
-						proc.Name = Path.GetFileNameWithoutExtension(match.Groups["name"].Value);
+						proc.ProcessName = Path.GetFileNameWithoutExtension(match.Groups["name"].Value);
 						proc.PID = int.Parse(match.Groups["pid"].Value);
 					} else if(proc != null) {
 						var match = Regex.Match(line, @"\sFile\s+?\(.+?\)\s+(?<file>[^\r\n]+)");
@@ -71,12 +76,12 @@ namespace MediaReign.EpisodeTracker.Models {
 		}
 	}
 
-	public class ProcessHandle {
-		public ProcessHandle() {
+	public class HandleItem {
+		public HandleItem() {
 			Files = new List<string>();
 		}
 
-		public string Name { get; set; }
+		public string ProcessName { get; set; }
 		public int PID { get; set; }
 		public List<string> Files { get; set; }
 	}
