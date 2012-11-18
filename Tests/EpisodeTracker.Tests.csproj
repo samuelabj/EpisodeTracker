@@ -58,7 +58,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MediaReign.EpisodeTracker\MediaReign.EpisodeTracker.csproj">
+    <ProjectReference Include="..\EpisodeTracker\EpisodeTracker.csproj">
       <Project>{cedf11ea-b0bc-4f4e-aa05-2b89e5cc4e21}</Project>
       <Name>MediaReign.EpisodeTracker</Name>
     </ProjectReference>
