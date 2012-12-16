@@ -179,6 +179,7 @@ namespace MediaReign.EpisodeTracker.Monitors {
 
 				if(!files.Contains(mon.Filename)) {
 					Logger.Debug("Monitored file is no longer open and will be removed: " + mon.Filename);
+					Logger.Debug("Process output: " + processOutput);
 
 					// not open anymore
 					if(mon.Tracking) {
@@ -248,11 +249,13 @@ namespace MediaReign.EpisodeTracker.Monitors {
 			return tracked;
 		}
 
+		string processOutput;
 		List<string> GetMediaFiles() {
 			var videoFiles = new List<string>();
 
 			var helper = new HandleHelper();
 			var processes = helper.GetProcesses();
+			processOutput = helper.Output;
 
 			foreach(var process in processes) {
 				if(!ApplicationNames.Contains(process.ProcessName)) continue;

@@ -58,9 +58,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\EpisodeTracker\EpisodeTracker.csproj">
+    <ProjectReference Include="..\EpisodeTracker\EpisodeTracker.Core.csproj">
       <Project>{cedf11ea-b0bc-4f4e-aa05-2b89e5cc4e21}</Project>
-      <Name>MediaReign.EpisodeTracker</Name>
+      <Name>EpisodeTracker.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

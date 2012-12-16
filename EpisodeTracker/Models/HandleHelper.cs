@@ -15,6 +15,7 @@ namespace MediaReign.EpisodeTracker.Models {
 		}
 
 		public string WorkingDirectory { get; set; }
+		public string Output { get; private set; }
 
 		public List<HandleItem> GetProcesses() {
 			var proc = new Process();
@@ -23,6 +24,7 @@ namespace MediaReign.EpisodeTracker.Models {
 			proc.StartInfo.Arguments = "/accepteula";
 			proc.StartInfo.UseShellExecute = false;
 			proc.StartInfo.RedirectStandardOutput = true;
+			proc.StartInfo.CreateNoWindow = true;
 			proc.Start();
 
 			var outsb = new StringBuilder();
@@ -40,6 +42,7 @@ namespace MediaReign.EpisodeTracker.Models {
 				throw new ApplicationException("Must run as administrator");
 			}
 
+			Output = output;
 			return ParseOutput(output);
 		}
 

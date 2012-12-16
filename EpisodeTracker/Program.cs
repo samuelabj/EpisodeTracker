@@ -4,8 +4,9 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Windows.Forms;
+using Hardcodet.Wpf.TaskbarNotification;
 using MediaReign.EpisodeTracker.Data;
 using MediaReign.EpisodeTracker.Monitors;
 using NLog;
@@ -13,23 +14,23 @@ using NLog;
 namespace MediaReign.EpisodeTracker {
 	class Program {
 		static Logger Logger;
-		static NotifyIcon notify;
+		static TaskbarIcon taskbar;
 
-		static void Main(string[] args) {
-			try {
-				Logger = LogManager.GetLogger("EpisodeTracker");
-				notify = new NotifyIcon();
-				notify.Text = "EpisodeTracker";
-				notify.Icon = new Icon(SystemIcons.Application, 40, 40);
-				notify.Visible = true;		
+		//[STAThread]
+		//static void Main(string[] args) {
 
-				Run();
-			} catch(Exception e) {
-				Logger.Fatal(e);
-			} finally {
-				if(notify != null) notify.Dispose();
-			}
-		}
+		//	try {
+		//		Logger = LogManager.GetLogger("EpisodeTracker");
+
+		//		taskbar = new TaskbarIcon();
+
+		//		Run();
+		//	} catch(Exception e) {
+		//		Logger.Fatal(e);
+		//	} finally {
+		//		if(taskbar != null) taskbar.Dispose();
+		//	}
+		//}
 
 		static void Run() {
 			ShowWatching();
@@ -87,13 +88,21 @@ namespace MediaReign.EpisodeTracker {
 		static ProcessMonitor GetMonitor() {
 			var mon = new ProcessMonitor(Logger);
 
-			mon.FileAdded += (o, e) => {
-				notify.ShowBalloonTip(1000, "EpisodeTracker", "Tracking file: " + e.FriendlyName, ToolTipIcon.None);
-			};
+			//mon.FileAdded += (o, e) => {
+			//	RunInSTA(() => {
+			//		var balloon = new NotificationBalloon();
+			//		balloon.BodyText = "Tracking file: " + e.FriendlyName;
+			//		taskbar.ShowCustomBalloon(balloon, System.Windows.Controls.Primitives.PopupAnimation.Slide, 5000);
+			//	});
+			//};
 
-			mon.FileRemoved += (o, e) => {
-				notify.ShowBalloonTip(1000, "EpisodeTracker", "Finished tracking: " + e.FriendlyName + (e.ProbablyWatched ? " (probably watched)" : " (not watched)"), ToolTipIcon.None);
-			};
+			//mon.FileRemoved += (o, e) => {
+			//	RunInSTA(() => {
+			//		var balloon = new NotificationBalloon();
+			//		balloon.BodyText = "Finished tracking: " + e.FriendlyName + (e.ProbablyWatched ? " (probably watched)" : " (not watched)");
+			//		taskbar.ShowCustomBalloon(balloon, System.Windows.Controls.Primitives.PopupAnimation.Slide, 5000);
+			//	});
+			//};
 
 			return mon;
 		}
