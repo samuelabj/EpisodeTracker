@@ -95,7 +95,6 @@
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\HandleHelper.cs" />
     <Compile Include="Monitors\ProcessMonitor.cs" />
-    <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
