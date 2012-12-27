@@ -33,6 +33,7 @@ namespace MediaReign.EpisodeTracker.Monitors {
 			public bool Tracking { get; set; }
 			public int PreviousTrackedSeconds { get; set; }
 			public bool Watched { get; set; }
+			public int MissingStrikes { get; set; }
 			public string FriendlyName {
 				get {
 					var m = Match;
@@ -142,7 +143,19 @@ namespace MediaReign.EpisodeTracker.Monitors {
 
 					var series = new TVDBRequest().Series(first.ID, true);
 					mon.Series = series;
-					mon.Episode = series.Episodes.FirstOrDefault(ep => ep.Season == match.Season && ep.Number == match.Episode);
+					mon.Episode = series.Episodes.FirstOrDefault(ep => 
+						(
+							match.Season.HasValue 
+							&& ep.Season == match.Season 
+							&& ep.Number == match.Episode
+						)
+						|| 
+						(
+							!match.Season.HasValue 
+							&& ep.AbsoluteNumber == match.Episode
+						)
+					);
+
 					if(mon.Episode != null) Logger.Debug("Found TVDB episode: " + mon.Episode.Name);
 				}
 			}
@@ -153,6 +166,7 @@ namespace MediaReign.EpisodeTracker.Monitors {
 
 		void CheckMonitoredFile(MonitoredFile mon) {
 			Logger.Trace("File is monitored");
+			mon.MissingStrikes = 0;
 
 			if(!mon.Watched) {
 				using(var db = new EpisodeTrackerDBContext()) {
@@ -195,8 +209,10 @@ namespace MediaReign.EpisodeTracker.Monitors {
 				var mon = monitored[i];
 
 				if(!files.Contains(mon.Filename)) {
-					Logger.Debug("Monitored file is no longer open and will be removed: " + mon.Filename);
+					Logger.Debug("Monitored file is no longer open: " + mon.Filename);
 					Logger.Debug("Process output: " + processOutput);
+
+					if(mon.MissingStrikes++ < 1) continue;
 
 					// not open anymore
 					if(mon.Tracking) {
