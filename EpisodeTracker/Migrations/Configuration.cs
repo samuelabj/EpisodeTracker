@@ -5,7 +5,7 @@ namespace MediaReign.EpisodeTracker.Migrations
     using System.Data.Entity.Migrations;
     using System.Linq;
 
-    internal sealed class Configuration : DbMigrationsConfiguration<MediaReign.EpisodeTracker.Data.EpisodeTrackerDBContext>
+    public sealed class Configuration : DbMigrationsConfiguration<MediaReign.EpisodeTracker.Data.EpisodeTrackerDBContext>
     {
         public Configuration()
         {

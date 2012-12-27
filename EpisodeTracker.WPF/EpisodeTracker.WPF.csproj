@@ -66,6 +66,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="NativeMethods.cs" />
     <Compile Include="Views\Shared\CommandBase.cs" />
     <Compile Include="Views\Shared\NotificationBalloon.xaml.cs">
       <DependentUpon>NotificationBalloon.xaml</DependentUpon>
@@ -136,7 +137,7 @@
   <Target Name="BeforeBuild">
   </Target>
   -->
-	<Target Name="AfterBuild">
-		<Copy SourceFiles="..\Dependencies\handle.exe" DestinationFiles="$(OutDir)\handle.exe" />
-	</Target>
+  <Target Name="AfterBuild">
+    <Copy SourceFiles="..\Dependencies\handle.exe" DestinationFiles="$(OutDir)\handle.exe" />
+  </Target>
 </Project>
