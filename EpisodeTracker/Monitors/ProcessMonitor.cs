@@ -25,10 +25,11 @@ namespace MediaReign.EpisodeTracker.Monitors {
 
 		class MonitoredFile {
 			public DateTime Start { get; set; }
-			public string Filename { get; set; }
-			public TvMatch Match { get; set; }
+			public string FileName { get; set; }
+			public TvMatch TvMatch { get; set; }
 			public TVDBSeries Series { get; set; }
 			public TVDBEpisode Episode { get; set; }
+			public int? TrackedFileID { get; set; }
 			public TimeSpan? Length { get; set; }
 			public bool Tracking { get; set; }
 			public int PreviousTrackedSeconds { get; set; }
@@ -36,14 +37,11 @@ namespace MediaReign.EpisodeTracker.Monitors {
 			public int MissingStrikes { get; set; }
 			public string FriendlyName {
 				get {
-					var m = Match;
-					if(m != null) {
-						var series = Series != null ? Series.Name : m.Name;
-						var epName = Episode != null ? " - " + Episode.Name : null;
-						return String.Format("{0} - S{1:00}E{2:00}{3}", series, m.Season, m.Episode, epName);
+					if(Episode != null) {
+						return String.Format("{0} - S{1:00}E{2:00} - {3}", Series.Name, Episode.Season, Episode.Number, Episode.Name);
 					}
 
-					return Path.GetFileName(Filename);
+					return Path.GetFileName(FileName);
 				}
 			}
 		}
@@ -113,7 +111,7 @@ namespace MediaReign.EpisodeTracker.Monitors {
 		void CheckFiles(IEnumerable<string> files) {
 			foreach(var f in files) {
 				Logger.Trace("Found file: " + f);
-				var mon = monitored.SingleOrDefault(m => m.Filename.Equals(f, StringComparison.OrdinalIgnoreCase));
+				var mon = monitored.SingleOrDefault(m => m.FileName.Equals(f, StringComparison.OrdinalIgnoreCase));
 				if(mon == null) {
 					CheckUnmonitoredFile(f);
 				} else {
@@ -125,7 +123,7 @@ namespace MediaReign.EpisodeTracker.Monitors {
 		void CheckUnmonitoredFile(string filename) {
 			Logger.Debug("File is not monitored: " + filename);
 			var mon = new MonitoredFile {
-				Filename = filename,
+				FileName = filename,
 				Start = DateTime.Now,
 				Length = GetVideoLength(filename)
 			};
@@ -160,7 +158,7 @@ namespace MediaReign.EpisodeTracker.Monitors {
 				}
 			}
 
-			mon.Match = match;
+			mon.TvMatch = match;
 			monitored.Add(mon);
 		}
 
@@ -174,13 +172,13 @@ namespace MediaReign.EpisodeTracker.Monitors {
 
 					// check if it's been monitored for a while before doing anything with file
 					if(mon.Start <= DateTime.Now.AddMinutes(-.5)) {
-						var tracked = GetTrackedItem(db, mon);
+						var tracked = GetTrackedFile(db, mon);
 
 						if(!mon.Tracking) {
-							Logger.Debug("Begin tracking file: " + mon.Filename);
+							Logger.Debug("Begin tracking file: " + mon.FileName);
 							if(tracked == null) {
 								Logger.Debug("Recording file/episode as tracked");
-								tracked = NewTrackedItem(db, mon);
+								tracked = NewTrackedFile(db, mon);
 							} else {
 								Logger.Debug("This file has been tracked before");
 								mon.PreviousTrackedSeconds = tracked.TrackedSeconds;
@@ -189,7 +187,7 @@ namespace MediaReign.EpisodeTracker.Monitors {
 							mon.Tracking = true;
 							if(FileAdded != null) {
 								FileAdded(this, new MonitoredFileEventArgs {
-									Filename = mon.Filename,
+									Filename = mon.FileName,
 									FriendlyName = mon.FriendlyName
 								});
 							}
@@ -208,26 +206,26 @@ namespace MediaReign.EpisodeTracker.Monitors {
 			for(var i = 0; i < monitored.Count; i++) {
 				var mon = monitored[i];
 
-				if(!files.Contains(mon.Filename)) {
-					Logger.Debug("Monitored file is no longer open: " + mon.Filename);
-					Logger.Debug("Process output: " + processOutput);
+				if(!files.Contains(mon.FileName)) {
+					Logger.Debug("Monitored file is no longer open: " + mon.FileName);
+					//Logger.Debug("Process output: " + processOutput);
 
 					if(mon.MissingStrikes++ < 1) continue;
 
 					// not open anymore
 					if(mon.Tracking) {
-						ITrackedItem tracked;
+						TrackedFile tracked;
 						using(var db = new EpisodeTrackerDBContext()) {
-							tracked = GetTrackedItem(db, mon);
+							tracked = GetTrackedFile(db, mon);
 							if(mon.Length.HasValue && tracked.TrackedSeconds >= (mon.Length.Value.TotalSeconds * .75)) {
-								Logger.Debug("Monitored file has probably been watched: " + mon.Filename);
+								Logger.Debug("Monitored file has probably been watched: " + mon.FileName);
 								tracked.ProbablyWatched = true;
 								db.SaveChanges();
 							}
 						}
 						if(FileRemoved != null) {
 							FileRemoved(this, new MonitoredFileEventArgs {
-								Filename = mon.Filename,
+								Filename = mon.FileName,
 								FriendlyName = mon.FriendlyName,
 								ProbablyWatched = tracked.ProbablyWatched
 							});
@@ -241,59 +239,108 @@ namespace MediaReign.EpisodeTracker.Monitors {
 			}
 		}
 
-		ITrackedItem GetTrackedItem(EpisodeTrackerDBContext db, MonitoredFile mon) {
-			if(mon.Match != null) {
-				var match = mon.Match;
-				var seriesName = match.Name;
-				var episode = match.Episode;
-				var season = match.Season;
+		TrackedFile GetTrackedFile(EpisodeTrackerDBContext db, MonitoredFile mon) {
+			TrackedFile file = null;
+			if(mon.TrackedFileID.HasValue) return db.TrackedFiles.Single(f => f.ID == mon.TrackedFileID.Value);
 
-				if(mon.Episode != null) {
-					seriesName = mon.Series.Name;
-					episode = mon.Episode.Number;
-					season = mon.Episode.Season;
+			if(mon.Episode != null) {
+				file = db.TrackedFiles.SingleOrDefault(f => f.Episode.TVDBID == mon.Episode.ID);
+				if(file == null) {
+					file = db.TrackedFiles
+						.FirstOrDefault(f =>
+							f.Episode.Series.Name == mon.Series.Name
+							&& f.Episode.Season == mon.Episode.Season
+							&& f.Episode.Number == mon.Episode.Number
+						);
 				}
-
-				// ignore multi episode files for now
-				return db.TrackedEpisodes
-					.FirstOrDefault(e => 
-						e.FileName == mon.Filename 
-						|| e.TrackedSeries.Name == seriesName 
-						&& e.Season == season 
-						&& e.Number == episode
-					);
-			} else {
-				return db.TrackedOthers
-					.SingleOrDefault(o => o.FileName == mon.Filename);
 			}
+
+			if(file == null && mon.TvMatch != null) {
+				file = db.TrackedFiles
+					.FirstOrDefault(f =>
+						f.FileName == mon.FileName
+						|| f.Episode.Series.Name == mon.TvMatch.Name
+						&& f.Episode.Season == mon.TvMatch.Season
+						&& f.Episode.Number == mon.TvMatch.Episode
+					);
+			}
+
+			if(file == null) {
+				file = db.TrackedFiles.SingleOrDefault(f => f.FileName == mon.FileName);
+			}
+
+			if(file != null) mon.TrackedFileID = file.ID;
+
+			return file;
 		}
 
-		ITrackedItem NewTrackedItem(EpisodeTrackerDBContext db, MonitoredFile mon) {
-			ITrackedItem tracked = null;
-			if(mon.Match != null) {
-				var series = db.TrackedSeries.SingleOrDefault(s => s.Name == mon.Match.Name);
+		TrackedFile NewTrackedFile(EpisodeTrackerDBContext db, MonitoredFile mon) {
+			var tracked = new TrackedFile {
+				FileName = mon.FileName,
+				Added = DateTime.Now,
+				LastTracked = DateTime.Now,
+				SecondsLength = mon.Length.HasValue ? mon.Length.Value.TotalSeconds : default(double?)
+			};
+
+			if(mon.TvMatch != null) {
+				// Save additional tv info
+				Series series;
+				if(mon.Series != null) series = db.Series.SingleOrDefault(s => s.TVDBID == mon.Series.ID);
+				else series = db.Series.SingleOrDefault(s => s.Name == mon.TvMatch.Name);
+
 				if(series == null) {
-					series = new TrackedSeries {
-						Name = mon.Match.Name,
+					series = new Series {
+						Name = mon.TvMatch.Name,
 						Added = DateTime.Now
 					};
-					db.TrackedSeries.Add(series);
+
+					db.Series.Add(series);
 				}
 
-				tracked = new TrackedEpisode {
-					FileName = mon.Filename,
-					Season = mon.Match.Season ?? 0,
-					Number = mon.Match.Episode
-				};
-				series.TrackedEpisodes.Add((TrackedEpisode)tracked);
-			} else {
-				tracked = new TrackedOther {
-					FileName = mon.Filename
-				};
-				db.TrackedOthers.Add((TrackedOther)tracked);
+				series.Updated = DateTime.Now;
+
+				if(mon.Series != null) {
+					series.Name = mon.Series.Name;
+					series.TVDBID = mon.Series.ID;
+					series.AirsDay = mon.Series.AirsDay;
+					series.AirsTime = mon.Series.AirsTime;
+					series.Status = mon.Series.Status;
+				}
+
+				Episode episode;
+				if(mon.Episode != null) {
+					episode = series.Episodes
+						.SingleOrDefault(ep => ep.TVDBID == mon.Episode.ID);
+				} else {
+					episode = series.Episodes
+						.SingleOrDefault(ep =>
+							ep.Number == mon.TvMatch.Episode
+							&& ep.Season == mon.TvMatch.Season
+						);
+				}
+				
+				if(episode == null) {
+					episode = new Episode {
+						Season = mon.TvMatch.Season ?? 0,
+						Number = mon.TvMatch.Episode,
+						Added = DateTime.Now
+					};
+					series.Episodes.Add(episode);
+				}
+
+				episode.Updated = DateTime.Now;
+
+				if(mon.Episode != null) {
+					episode.Name = mon.Episode.Name;
+					episode.TVDBID = mon.Episode.ID;
+					episode.Overview = mon.Episode.Overview;
+					episode.Aired = mon.Episode.Aired;
+				}
+
+				tracked.Episode = episode;
 			}
-			tracked.Added = DateTime.Now;
-			tracked.LastTracked = tracked.Added;
+
+			db.TrackedFiles.Add(tracked);
 
 			db.SaveChanges();
 			return tracked;

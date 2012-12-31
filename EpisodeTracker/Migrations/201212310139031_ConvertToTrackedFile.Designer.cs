@@ -5,13 +5,13 @@ namespace MediaReign.EpisodeTracker.Migrations
     using System.Data.Entity.Migrations.Infrastructure;
     using System.Resources;
     
-    public sealed partial class RemoveLastWatched : IMigrationMetadata
+    public sealed partial class ConvertToTrackedFile : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(RemoveLastWatched));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(ConvertToTrackedFile));
         
         string IMigrationMetadata.Id
         {
-            get { return "201210281050359_RemoveLastWatched"; }
+            get { return "201212310139031_ConvertToTrackedFile"; }
         }
         
         string IMigrationMetadata.Source

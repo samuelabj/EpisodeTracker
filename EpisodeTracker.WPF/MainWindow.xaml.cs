@@ -43,7 +43,7 @@ namespace EpisodeTracker.WPF {
 
 			taskbar = new TaskbarIcon();
 			taskbar.Icon = new Icon(SystemIcons.Application, 40, 40);
-			taskbar.ToolTipText = "Ha ha you can't do anything yet";
+			taskbar.ToolTipText = "Episode Tracker";
 			taskbar.Visibility = Visibility.Visible;
 			taskbar.LeftClickCommand = new ShowSampleWindowCommand { Window = this };
 			taskbar.LeftClickCommandParameter = taskbar;
@@ -59,29 +59,30 @@ namespace EpisodeTracker.WPF {
 
 		void ShowWatching() {
 			using(var db = new EpisodeTrackerDBContext()) {
-				var watching = db.TrackedEpisodes.OrderByDescending(e => e.LastTracked)
+				var watching = db.TrackedFiles.OrderByDescending(e => e.LastTracked)
 					.OrderByDescending(e => e.LastTracked)
 					.ToList();
 
-				var display = watching.Select(ep => new {
-					File = String.Format(@"{0} - S{1:00}E{2:00}", ep.TrackedSeries.Name, ep.Season, ep.Number),
-					Date = ep.LastTracked,
-					Status = ep.ProbablyWatched ? "Probably watched" : "Partial viewing",
-					Tracked = TimeSpan.FromSeconds(ep.TrackedSeconds)
-				});
+				var display = watching
+					.Where(f => f.Episode != null)
+					.Select(f => new {
+						File = String.Format(@"{0} - S{1:00}E{2:00}", f.Episode.Series.Name, f.Episode.Season, f.Episode.Number),
+						Date = f.LastTracked,
+						Status = f.ProbablyWatched ? "Probably watched" : "Partial viewing",
+						Tracked = TimeSpan.FromSeconds(f.TrackedSeconds)
+					});
 
-				var watching2 = db.TrackedOthers.OrderByDescending(e => e.LastTracked)
-					.OrderByDescending(e => e.LastTracked)
-					.ToList();
+				display = display
+					.Union(watching
+						.Where(f => f.Episode == null)
+						.Select(ep => new {
+							File = System.IO.Path.GetFileName(ep.FileName),
+							Date = ep.LastTracked,
+							Status = ep.ProbablyWatched ? "Probably watched" : "Partial viewing",
+							Tracked = TimeSpan.FromSeconds(ep.TrackedSeconds)
+						})
+					);
 
-				display = display.Union(watching2.Select(ep => new {
-					File = System.IO.Path.GetFileName(ep.FileName),
-					Date = ep.LastTracked,
-					Status = ep.ProbablyWatched ? "Probably watched" : "Partial viewing",
-					Tracked = TimeSpan.FromSeconds(ep.TrackedSeconds)
-				}));
-
-				listView.ItemsSource = display;
 				dataGrid.ItemsSource = display.OrderByDescending(ep => ep.File).OrderByDescending(ep => ep.Date);
 			}
 		}

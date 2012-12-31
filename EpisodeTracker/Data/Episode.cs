@@ -7,20 +7,21 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MediaReign.EpisodeTracker.Data {
-	public class TrackedEpisode : ITrackedItem {
+	public class Episode {
 		[Key, Required, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 		public int ID { get; set; }
 		
-		public int TrackedSeriesID { get; set; }
+		public int SeriesID { get; set; }
 		public int Season { get; set; }
 		public int Number { get; set; }
-		public string FileName { get; set; }
+		public string Name { get; set; }
+		public DateTime Aired { get; set; }
+		public string Overview { get; set; }
+		public int? TVDBID { get; set; }
 		public DateTime Added { get; set; }
-		public DateTime LastTracked { get; set; }
-		public bool Watched { get; set; }
-		public bool ProbablyWatched { get; set; }
-		public int TrackedSeconds { get; set; }
+		public DateTime Updated { get; set; }
 
-		public virtual TrackedSeries TrackedSeries { get; set; }
+		public virtual Series Series { get; set; }
+		public virtual ICollection<TrackedFile> TrackedFiles { get; set; }
 	}
 }

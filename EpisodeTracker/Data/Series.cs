@@ -7,16 +7,21 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace MediaReign.EpisodeTracker.Data {
-	public class TrackedSeries {
-		public TrackedSeries() {
-			TrackedEpisodes = new List<TrackedEpisode>();
+	public class Series {
+		public Series() {
+			Episodes = new List<Episode>();
 		}
 
 		[Key, Required, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 		public int ID { get; set; }
 		public string Name { get; set; }
 		public DateTime Added { get; set; }
+		public DateTime Updated { get; set; }
+		public string Status { get; set; }
+		public DayOfWeek? AirsDay { get; set; }
+		public DateTime? AirsTime { get; set; }
+		public int? TVDBID { get; set; }
 
-		public virtual ICollection<TrackedEpisode> TrackedEpisodes { get; set; }
+		public virtual ICollection<Episode> Episodes { get; set; }
 	}
 }

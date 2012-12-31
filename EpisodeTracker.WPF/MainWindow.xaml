@@ -3,16 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
-        <ListView Name="listView" HorizontalAlignment="Stretch" Margin="0" VerticalAlignment="Stretch" Visibility="Collapsed">
-            <ListView.View>
-                <GridView>
-                    <GridViewColumn Header="File" Width="200" DisplayMemberBinding="{Binding File}" />
-                    <GridViewColumn Header="Date" Width="100" DisplayMemberBinding="{Binding Date}" />
-                    <GridViewColumn Header="Status" Width="100" DisplayMemberBinding="{Binding Status}" />
-                    <GridViewColumn Header="Tracked" Width="100" DisplayMemberBinding="{Binding Tracked}" />
-                </GridView>
-            </ListView.View>
-        </ListView>
         <DataGrid Name="dataGrid" HorizontalAlignment="Stretch" Margin="0" VerticalAlignment="Stretch" AutoGenerateColumns="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="File" Width="200" Binding="{Binding File}" />

@@ -7,15 +7,20 @@ using System.Threading.Tasks;
 
 namespace MediaReign.EpisodeTracker.Data {
 	public class EpisodeTrackerDBContext : DbContext {
-		public DbSet<TrackedSeries> TrackedSeries { get; set; }
-		public DbSet<TrackedEpisode> TrackedEpisodes { get; set; }
-		public DbSet<TrackedOther> TrackedOthers { get; set; }
+		public DbSet<Series> Series { get; set; }
+		public DbSet<Episode> Episodes { get; set; }
+		public DbSet<TrackedFile> TrackedFiles { get; set; }
 
 		protected override void OnModelCreating(DbModelBuilder modelBuilder) {
-			modelBuilder.Entity<TrackedEpisode>()
-				.HasRequired(e => e.TrackedSeries)
-				.WithMany(s => s.TrackedEpisodes)
-				.HasForeignKey(e => e.TrackedSeriesID);
+			modelBuilder.Entity<Episode>()
+				.HasRequired(e => e.Series)
+				.WithMany(s => s.Episodes)
+				.HasForeignKey(e => e.SeriesID);
+
+			modelBuilder.Entity<TrackedFile>()
+				.HasOptional(f => f.Episode)
+				.WithMany(e => e.TrackedFiles)
+				.HasForeignKey(f => f.EpisodeID);
 
 			base.OnModelCreating(modelBuilder);
 		}

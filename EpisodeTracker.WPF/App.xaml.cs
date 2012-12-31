@@ -29,8 +29,7 @@ namespace EpisodeTracker.WPF {
 		protected override void OnStartup(StartupEventArgs e) {
 			singleInstance = new Mutex(true, @"Global\EventTracker.WPF");
 			
-			if(singleInstance.WaitOne(TimeSpan.Zero, true)) {
-				Database.SetInitializer(new MigrateDatabaseToLatestVersion<EpisodeTrackerDBContext, MediaReign.EpisodeTracker.Migrations.Configuration>());
+			if(singleInstance.WaitOne(TimeSpan.Zero, true)) {				
 				base.OnStartup(e);
 			} else {
 				NativeMethods.PostMessage(

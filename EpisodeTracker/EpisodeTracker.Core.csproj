@@ -80,17 +80,16 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\EpisodeTrackerDBContext.cs" />
-    <Compile Include="Data\ITrackedItem.cs" />
-    <Compile Include="Data\TrackedEpisode.cs" />
-    <Compile Include="Data\TrackedSeries.cs" />
-    <Compile Include="Data\TrackedOther.cs" />
+    <Compile Include="Data\Episode.cs" />
+    <Compile Include="Data\TrackedFile.cs" />
+    <Compile Include="Data\Series.cs" />
     <Compile Include="Migrations\201210280828547_InitialCreate.cs" />
     <Compile Include="Migrations\201210280828547_InitialCreate.Designer.cs">
       <DependentUpon>201210280828547_InitialCreate.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201210281050359_RemoveLastWatched.cs" />
-    <Compile Include="Migrations\201210281050359_RemoveLastWatched.Designer.cs">
-      <DependentUpon>201210281050359_RemoveLastWatched.cs</DependentUpon>
+    <Compile Include="Migrations\201212310139031_ConvertToTrackedFile.cs" />
+    <Compile Include="Migrations\201212310139031_ConvertToTrackedFile.Designer.cs">
+      <DependentUpon>201212310139031_ConvertToTrackedFile.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\HandleHelper.cs" />
@@ -158,8 +157,8 @@
     <EmbeddedResource Include="Migrations\201210280828547_InitialCreate.resx">
       <DependentUpon>201210280828547_InitialCreate.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201210281050359_RemoveLastWatched.resx">
-      <DependentUpon>201210281050359_RemoveLastWatched.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201212310139031_ConvertToTrackedFile.resx">
+      <DependentUpon>201212310139031_ConvertToTrackedFile.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup />
