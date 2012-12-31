@@ -34,6 +34,16 @@ namespace EpisodeTracker.WPF {
 			InitializeComponent();
 		}
 
+		class SeriesInfo {
+			public int SeriesID { get; set; }
+			public string Series { get; set; }
+			public int Season { get; set; }
+			public int Episode { get; set; }
+			public DateTime Date { get; set; }
+			public string Status { get; set; }
+			public TimeSpan Tracked { get; set; }
+		}
+
 		protected override void OnInitialized(EventArgs e) {
 			base.OnInitialized(e);
 
@@ -48,43 +58,70 @@ namespace EpisodeTracker.WPF {
 			taskbar.LeftClickCommand = new ShowSampleWindowCommand { Window = this };
 			taskbar.LeftClickCommandParameter = taskbar;
 
-			ShowWatching();
-
 			this.Hide();
 			this.StateChanged += (o, ea) => { 
 				if(WindowState == System.Windows.WindowState.Minimized) this.Hide();
-				ShowWatching();
+				RefreshLists();
 			};
 		}
 
-		void ShowWatching() {
+		void ShowSeries() {
 			using(var db = new EpisodeTrackerDBContext()) {
-				var watching = db.TrackedFiles.OrderByDescending(e => e.LastTracked)
-					.OrderByDescending(e => e.LastTracked)
+				var watching = db.Series
+					.SelectMany(s => s.Episodes.Select(ep => ep.TrackedFiles.OrderByDescending(f => f.LastTracked)).FirstOrDefault())
 					.ToList();
 
 				var display = watching
 					.Where(f => f.Episode != null)
-					.Select(f => new {
-						File = String.Format(@"{0} - S{1:00}E{2:00}", f.Episode.Series.Name, f.Episode.Season, f.Episode.Number),
+					.Select(f => new SeriesInfo {
+						SeriesID = f.Episode.SeriesID,
+						Series = f.Episode.Series.Name,
+						Season = f.Episode.Season,
+						Episode = f.Episode.Number,
 						Date = f.LastTracked,
 						Status = f.ProbablyWatched ? "Probably watched" : "Partial viewing",
 						Tracked = TimeSpan.FromSeconds(f.TrackedSeconds)
 					});
 
-				display = display
-					.Union(watching
-						.Where(f => f.Episode == null)
-						.Select(ep => new {
-							File = System.IO.Path.GetFileName(ep.FileName),
-							Date = ep.LastTracked,
-							Status = ep.ProbablyWatched ? "Probably watched" : "Partial viewing",
-							Tracked = TimeSpan.FromSeconds(ep.TrackedSeconds)
-						})
-					);
-
-				dataGrid.ItemsSource = display.OrderByDescending(ep => ep.File).OrderByDescending(ep => ep.Date);
+				seriesGrid.ItemsSource = display
+					.OrderByDescending(f => f.Date);
 			}
+		}
+
+		void ShowOther() {
+			using(var db = new EpisodeTrackerDBContext()) {
+				var watching = db.TrackedFiles
+					.ToList();
+
+				var display = watching
+					.Where(f => f.Episode == null)
+					.Select(f => new {
+						File = System.IO.Path.GetFileName(f.FileName),
+						Date = f.LastTracked,
+						Status = f.ProbablyWatched ? "Probably watched" : "Partial viewing",
+						Tracked = TimeSpan.FromSeconds(f.TrackedSeconds)
+					});
+
+				otherGrid.ItemsSource = display
+					.OrderByDescending(f => f.File)
+					.OrderByDescending(f => f.Date);
+			}
+		}
+
+		void RefreshLists() {
+			ShowSeries();
+			ShowOther();
+		}
+
+		void SeriesRowDoubleClick(object sender, RoutedEventArgs e) {
+			var row = sender as DataGridRow;
+			var info = row.Item as SeriesInfo;
+
+			var episodesView = new EpisodeTracker.WPF.Views.Episodes.Index {
+				SeriesID = info.SeriesID
+			};
+			episodesView.WindowState = System.Windows.WindowState.Maximized;
+			episodesView.ShowDialog();
 		}
 
 		ProcessMonitor GetMonitor() {
@@ -92,7 +129,7 @@ namespace EpisodeTracker.WPF {
 
 			mon.FileAdded += (o, e) => {
 				this.Dispatcher.BeginInvoke(new Action(() => {
-					ShowWatching();
+					RefreshLists();
 
 					var bal = new NotificationBalloon();
 					bal.HeaderText = "Episode Tracker";
@@ -103,7 +140,7 @@ namespace EpisodeTracker.WPF {
 
 			mon.FileRemoved += (o, e) => {
 				this.Dispatcher.BeginInvoke(new Action(() => {
-					ShowWatching();
+					RefreshLists();
 
 					var bal = new NotificationBalloon();
 					bal.HeaderText = "Episode Tracker";
