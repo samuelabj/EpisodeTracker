@@ -7,8 +7,8 @@
     <ProjectGuid>{FA2D4846-93B3-42A8-A125-6D1147E8BA5F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MediaReign.EpisodeTracker.Tests</RootNamespace>
-    <AssemblyName>MediaReign.EpisodeTracker.Tests</AssemblyName>
+    <RootNamespace>EpisodeTracker.Tests</RootNamespace>
+    <AssemblyName>EpisodeTracker.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
@@ -58,7 +58,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\EpisodeTracker\EpisodeTracker.Core.csproj">
+    <ProjectReference Include="..\Core\Core.csproj">
       <Project>{cedf11ea-b0bc-4f4e-aa05-2b89e5cc4e21}</Project>
       <Name>EpisodeTracker.Core</Name>
     </ProjectReference>

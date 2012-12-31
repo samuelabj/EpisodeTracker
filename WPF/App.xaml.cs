@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using EpisodeTracker.WPF.Views.Shared;
 using Hardcodet.Wpf.TaskbarNotification;
-using MediaReign.EpisodeTracker.Data;
+using EpisodeTracker.Core.Data;
 using Microsoft.Shell;
 
 namespace EpisodeTracker.WPF {
@@ -20,7 +20,7 @@ namespace EpisodeTracker.WPF {
 	/// Interaction logic for App.xaml
 	/// </summary>
 	public partial class App : Application, ISingleInstanceApp {
-		private const string Unique = "MediaReign.EpisodeTracker";
+		private const string Unique = "EpisodeTracker";
 
 		[STAThread]
 		public static void Main() {

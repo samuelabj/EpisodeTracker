@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace MediaReign.EpisodeTracker.Models {
+namespace EpisodeTracker.Core.Models {
 	public class HandleHelper {
 
 		public HandleHelper() {

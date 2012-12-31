@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using MediaReign.EpisodeTracker.Models;
+using EpisodeTracker.Core.Models;
 using Xunit;
 
-namespace MediaReign.EpisodeTracker.Tests {
+namespace EpisodeTracker.Tests {
 	public class HandleHelperTests {
 
 		[Fact]
@@ -2431,7 +2431,7 @@ conhost.exe pid: 4428 BLACK-BEAUTY\Sam
    80: Section       \Windows\Theme577161652
    84: Section       \Sessions\1\Windows\Theme2445879050
 ------------------------------------------------------------------------------
-MediaReign.EpisodeTracker.vshost.exe pid: 4248 BLACK-BEAUTY\Sam
+EpisodeTracker.vshost.exe pid: 4248 BLACK-BEAUTY\Sam
     C: File  (RW-)   C:\Windows
    14: File  (RW-)   C:\Users\Sam\Documents\Projects\Personal\EpisodeTracker\MediaReign.EpisodeTracker\bin\Debug
    60: File  (RW-)   C:\Windows\WinSxS\x86_microsoft.vc90.crt_1fc8b3b9a1e18e3b_9.0.30729.6871_none_50944e7cbcb706e5

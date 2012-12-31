@@ -11,7 +11,7 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-using MediaReign.EpisodeTracker.Data;
+using EpisodeTracker.Core.Data;
 
 namespace EpisodeTracker.WPF.Views.Episodes {
 	/// <summary>

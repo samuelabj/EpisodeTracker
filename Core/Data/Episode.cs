@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MediaReign.EpisodeTracker.Data {
+namespace EpisodeTracker.Core.Data {
 	public class Episode {
 		[Key, Required, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 		public int ID { get; set; }

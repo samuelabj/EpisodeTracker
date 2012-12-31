@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MediaReign.EpisodeTracker.Data {
+namespace EpisodeTracker.Core.Data {
 	public class EpisodeTrackerDBContext : DbContext {
 		public DbSet<Series> Series { get; set; }
 		public DbSet<Episode> Episodes { get; set; }

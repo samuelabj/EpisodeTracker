@@ -7,8 +7,8 @@
     <ProjectGuid>{CEDF11EA-B0BC-4F4E-AA05-2B89E5CC4E21}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MediaReign.EpisodeTracker</RootNamespace>
-    <AssemblyName>EpisodeTracker</AssemblyName>
+    <RootNamespace>EpisodeTracker.Core</RootNamespace>
+    <AssemblyName>EpisodeTracker.Core</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>false</IsWebBootstrapper>
@@ -133,11 +133,11 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Core\MediaReign.Core.csproj">
+    <ProjectReference Include="..\MediaReign.Core\MediaReign.Core.csproj">
       <Project>{8be05c02-2183-4825-b68d-f37c4c8fbf43}</Project>
       <Name>MediaReign.Core</Name>
     </ProjectReference>
-    <ProjectReference Include="..\TVDB\MediaReign.TVDB.csproj">
+    <ProjectReference Include="..\MediaReign.TVDB\MediaReign.TVDB.csproj">
       <Project>{b825aa41-99d4-4856-8bc1-f72d8ffbef15}</Project>
       <Name>MediaReign.TVDB</Name>
     </ProjectReference>

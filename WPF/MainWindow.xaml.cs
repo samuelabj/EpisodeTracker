@@ -17,8 +17,8 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using EpisodeTracker.WPF.Views.Shared;
 using Hardcodet.Wpf.TaskbarNotification;
-using MediaReign.EpisodeTracker.Data;
-using MediaReign.EpisodeTracker.Monitors;
+using EpisodeTracker.Core.Data;
+using EpisodeTracker.Core.Monitors;
 using NLog;
 using System.Data.Entity;
 

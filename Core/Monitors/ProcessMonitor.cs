@@ -8,12 +8,12 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaReign.Core.TvMatchers;
-using MediaReign.EpisodeTracker.Data;
-using MediaReign.EpisodeTracker.Models;
+using EpisodeTracker.Core.Data;
+using EpisodeTracker.Core.Models;
 using MediaReign.TVDB;
 using NLog;
 
-namespace MediaReign.EpisodeTracker.Monitors {
+namespace EpisodeTracker.Core.Monitors {
 	public delegate void MonitoredFileHandler(ProcessMonitor monitor, MonitoredFileEventArgs args);
 	public class MonitoredFileEventArgs {
 		public string Filename { get; set; }

@@ -1,18 +1,18 @@
-namespace MediaReign.EpisodeTracker.Migrations
+namespace EpisodeTracker.Core.Migrations
 {
     using System;
     using System.Data.Entity;
     using System.Data.Entity.Migrations;
     using System.Linq;
 
-    public sealed class Configuration : DbMigrationsConfiguration<MediaReign.EpisodeTracker.Data.EpisodeTrackerDBContext>
+    public sealed class Configuration : DbMigrationsConfiguration<EpisodeTracker.Core.Data.EpisodeTrackerDBContext>
     {
         public Configuration()
         {
             AutomaticMigrationsEnabled = false;
         }
 
-        protected override void Seed(MediaReign.EpisodeTracker.Data.EpisodeTrackerDBContext context)
+        protected override void Seed(EpisodeTracker.Core.Data.EpisodeTrackerDBContext context)
         {
             //  This method will be called after migrating to the latest version.
 

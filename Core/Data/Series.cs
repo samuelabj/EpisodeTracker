@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MediaReign.EpisodeTracker.Data {
+namespace EpisodeTracker.Core.Data {
 	public class Series {
 		public Series() {
 			Episodes = new List<Episode>();

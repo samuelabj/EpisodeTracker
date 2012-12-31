@@ -1,4 +1,4 @@
-namespace MediaReign.EpisodeTracker.Migrations
+namespace EpisodeTracker.Core.Migrations
 {
     using System;
     using System.Data.Entity.Migrations;
