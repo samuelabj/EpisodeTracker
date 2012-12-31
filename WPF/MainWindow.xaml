@@ -16,11 +16,11 @@
                 </Style>
             </DataGrid.RowStyle>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Series" Width="200" Binding="{Binding Series}" />
+                <DataGridTextColumn Header="Series" Width="200" Binding="{Binding Series}" /> 
                 <DataGridTextColumn Header="Season" Width="200" Binding="{Binding Season}" />
                 <DataGridTextColumn Header="Episode" Width="200" Binding="{Binding Episode}" />
                 <DataGridTextColumn Header="Date" Width="100" Binding="{Binding Date, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
-                <DataGridTextColumn Header="Status" Width="100" Binding="{Binding Status}" />
+                <DataGridTextColumn Header="Watched Status" Width="100" Binding="{Binding WatchedStatus}" />
                 <DataGridTextColumn Header="Tracked Duration" Width="100" Binding="{Binding Tracked}" />
                 <DataGridTemplateColumn Header="Progress" Width="100">
                     <DataGridTemplateColumn.CellTemplate>
@@ -33,6 +33,7 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Series Status" Width="200" Binding="{Binding Status}" />
                 <DataGridTextColumn Header="New Episode" Width="100" Binding="{Binding NextAirs, StringFormat=\{0:dd MMM yyyy\}}" />
             </DataGrid.Columns>
         </DataGrid>

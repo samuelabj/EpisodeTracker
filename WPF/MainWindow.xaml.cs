@@ -42,6 +42,7 @@ namespace EpisodeTracker.WPF {
 			public int Episode { get; set; }
 			public DateTime Date { get; set; }
 			public string Status { get; set; }
+			public string WatchedStatus { get; set; }
 			public TimeSpan Tracked { get; set; }
 			public int Total { get; set; }
 			public int Watched { get; set; }
@@ -91,7 +92,7 @@ namespace EpisodeTracker.WPF {
 
 				var seriesInfo = db.Series.Select(s => new {
 					s.ID,
-					Total = s.Episodes.Count(),
+					Total = s.Episodes.Count(e => e.Season != 0), // don't include specials
 					Watched = s.Episodes.Count(e => e.TrackedFiles.Any(f => f.ProbablyWatched)),
 					NextAirs = (DateTime?)s.Episodes.Where(e => e.Aired > DateTime.Now).Min(e => e.Aired)
 				})
@@ -101,10 +102,11 @@ namespace EpisodeTracker.WPF {
 					.Select(f => new SeriesInfo {
 						SeriesID = f.Episode.SeriesID,
 						Series = f.Episode.Series.Name,
+						Status = f.Episode.Series.Status,
 						Season = f.Episode.Season,
 						Episode = f.Episode.Number,
 						Date = f.LastTracked,
-						Status = f.ProbablyWatched ? "Probably watched" : "Partial viewing",
+						WatchedStatus = f.ProbablyWatched ? "Probably watched" : "Partial viewing",
 						Tracked = TimeSpan.FromSeconds(f.TrackedSeconds),
 						Total = seriesInfo[f.Episode.SeriesID].Total,
 						Watched = seriesInfo[f.Episode.SeriesID].Watched,
