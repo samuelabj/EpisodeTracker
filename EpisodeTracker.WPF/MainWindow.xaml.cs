@@ -63,6 +63,12 @@ namespace EpisodeTracker.WPF {
 				if(WindowState == System.Windows.WindowState.Minimized) this.Hide();
 				RefreshLists();
 			};
+
+			this.Closing += (o, ev) => {
+				if(MessageBox.Show("Are you sure you want to exit?", "Confirm exit", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No) {
+					ev.Cancel = true;
+				}
+			};
 		}
 
 		void ShowSeries() {
