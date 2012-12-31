@@ -20,6 +20,7 @@ using Hardcodet.Wpf.TaskbarNotification;
 using MediaReign.EpisodeTracker.Data;
 using MediaReign.EpisodeTracker.Monitors;
 using NLog;
+using System.Data.Entity;
 
 namespace EpisodeTracker.WPF {
 	/// <summary>
@@ -74,11 +75,18 @@ namespace EpisodeTracker.WPF {
 		void ShowSeries() {
 			using(var db = new EpisodeTrackerDBContext()) {
 				var watching = db.Series
-					.SelectMany(s => s.Episodes.Select(ep => ep.TrackedFiles.OrderByDescending(f => f.LastTracked)).FirstOrDefault())
+					.Select(s =>
+						s.Episodes
+							.SelectMany(ep => ep.TrackedFiles)
+							.OrderByDescending(f => f.LastTracked)
+							.FirstOrDefault()
+					)
+					.AsQueryable()
+					.Include(f => f.Episode)
+					.Include(f => f.Episode.Series)
 					.ToList();
 
 				var display = watching
-					.Where(f => f.Episode != null)
 					.Select(f => new SeriesInfo {
 						SeriesID = f.Episode.SeriesID,
 						Series = f.Episode.Series.Name,
@@ -97,10 +105,10 @@ namespace EpisodeTracker.WPF {
 		void ShowOther() {
 			using(var db = new EpisodeTrackerDBContext()) {
 				var watching = db.TrackedFiles
+					.Where(f => f.Episode == null)
 					.ToList();
 
 				var display = watching
-					.Where(f => f.Episode == null)
 					.Select(f => new {
 						File = System.IO.Path.GetFileName(f.FileName),
 						Date = f.LastTracked,
