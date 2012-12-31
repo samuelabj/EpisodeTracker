@@ -12,6 +12,8 @@ using EpisodeTracker.Core.Data;
 using EpisodeTracker.Core.Models;
 using MediaReign.TVDB;
 using NLog;
+using System.Data.Entity;
+using System.Data.SqlTypes;
 
 namespace EpisodeTracker.Core.Monitors {
 	public delegate void MonitoredFileHandler(ProcessMonitor monitor, MonitoredFileEventArgs args);
@@ -86,6 +88,7 @@ namespace EpisodeTracker.Core.Monitors {
 						Check();
 					} catch(Exception e) {
 						Logger.Error("Error while checking processes: " + e, e);
+						throw new ApplicationException("Error while checking processes: " + e.Message, e);
 					}
 
 				} while(!checkEvent.WaitOne(wait));
@@ -284,9 +287,17 @@ namespace EpisodeTracker.Core.Monitors {
 
 			if(mon.TvMatch != null) {
 				// Save additional tv info
-				Series series;
-				if(mon.Series != null) series = db.Series.SingleOrDefault(s => s.TVDBID == mon.Series.ID);
-				else series = db.Series.SingleOrDefault(s => s.Name == mon.TvMatch.Name);
+				Series series = null;
+				var seriesQuery = db.Series.Include(s => s.Episodes);
+
+				if(mon.Series != null) {
+					series = seriesQuery.SingleOrDefault(s => s.TVDBID == mon.Series.ID);
+					if(series == null) series = seriesQuery.SingleOrDefault(s => s.Name == mon.Series.Name);
+				}
+
+				if(series == null) {
+					series = seriesQuery.SingleOrDefault(s => s.Name == mon.TvMatch.Name);
+				}
 
 				if(series == null) {
 					series = new Series {
@@ -305,37 +316,36 @@ namespace EpisodeTracker.Core.Monitors {
 					series.AirsDay = mon.Series.AirsDay;
 					series.AirsTime = mon.Series.AirsTime;
 					series.Status = mon.Series.Status;
+
+					foreach(var ep in mon.Series.Episodes) {
+						SyncEpisode(ep, series);
+					}
 				}
 
-				Episode episode;
+				Episode episode = null;
 				if(mon.Episode != null) {
 					episode = series.Episodes
-						.SingleOrDefault(ep => ep.TVDBID == mon.Episode.ID);
+						.Single(ep => ep.TVDBID == mon.Episode.ID);
 				} else {
+					// check for loose reference
 					episode = series.Episodes
 						.SingleOrDefault(ep =>
 							ep.Number == mon.TvMatch.Episode
 							&& ep.Season == mon.TvMatch.Season
 						);
-				}
-				
-				if(episode == null) {
-					episode = new Episode {
-						Season = mon.TvMatch.Season ?? 0,
-						Number = mon.TvMatch.Episode,
-						Added = DateTime.Now
-					};
-					series.Episodes.Add(episode);
-				}
 
-				episode.Updated = DateTime.Now;
+					if(episode == null) {
+						episode = new Episode {
+							Season = mon.TvMatch.Season ?? 0,
+							Number = mon.TvMatch.Episode,
+							Added = DateTime.Now
+						};
+						episode.AbsoluteNumber = series.Episodes.Count(e => e.Season <= episode.Season && e.Number <= episode.Number) + 1;
+						series.Episodes.Add(episode);
+					}
 
-				if(mon.Episode != null) {
-					episode.Name = mon.Episode.Name;
-					episode.TVDBID = mon.Episode.ID;
-					episode.Overview = mon.Episode.Overview;
-					episode.Aired = mon.Episode.Aired;
-				}
+					episode.Updated = DateTime.Now;
+				}			
 
 				tracked.Episode = episode;
 			}
@@ -344,6 +354,39 @@ namespace EpisodeTracker.Core.Monitors {
 
 			db.SaveChanges();
 			return tracked;
+		}
+
+		Episode SyncEpisode(TVDBEpisode tvDBEpisode, Series series) {
+			Episode episode = null;
+
+			episode = series.Episodes
+				.SingleOrDefault(ep => ep.TVDBID == tvDBEpisode.ID);
+
+			if(episode == null) {
+				episode = series.Episodes
+					.SingleOrDefault(ep =>
+						ep.Number == tvDBEpisode.Number
+						&& ep.Season == tvDBEpisode.Season
+					);
+			}
+
+			if(episode == null) {
+				episode = new Episode {
+					Season = tvDBEpisode.Season,
+					Number = tvDBEpisode.Number,
+					Added = DateTime.Now
+				};
+				series.Episodes.Add(episode);
+			}
+
+			episode.Updated = DateTime.Now;
+			episode.Name = tvDBEpisode.Name;
+			episode.TVDBID = tvDBEpisode.ID;
+			episode.Overview = tvDBEpisode.Overview;
+			episode.Aired = tvDBEpisode.Aired <= SqlDateTime.MaxValue.Value && tvDBEpisode.Aired >= SqlDateTime.MinValue.Value ? tvDBEpisode.Aired : SqlDateTime.MinValue.Value;
+			episode.AbsoluteNumber = tvDBEpisode.AbsoluteNumber;
+
+			return episode;
 		}
 
 		string processOutput;

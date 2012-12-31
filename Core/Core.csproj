@@ -91,6 +91,10 @@
     <Compile Include="Migrations\201212310139031_ConvertToTrackedFile.Designer.cs">
       <DependentUpon>201212310139031_ConvertToTrackedFile.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201212311144375_EnsureUniqueSeriesEpisodes.cs" />
+    <Compile Include="Migrations\201212311144375_EnsureUniqueSeriesEpisodes.Designer.cs">
+      <DependentUpon>201212311144375_EnsureUniqueSeriesEpisodes.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\HandleHelper.cs" />
     <Compile Include="Monitors\ProcessMonitor.cs" />
@@ -159,6 +163,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201212310139031_ConvertToTrackedFile.resx">
       <DependentUpon>201212310139031_ConvertToTrackedFile.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201212311144375_EnsureUniqueSeriesEpisodes.resx">
+      <DependentUpon>201212311144375_EnsureUniqueSeriesEpisodes.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup />

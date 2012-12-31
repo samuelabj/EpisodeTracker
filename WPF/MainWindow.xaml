@@ -22,6 +22,18 @@
                 <DataGridTextColumn Header="Date" Width="100" Binding="{Binding Date, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
                 <DataGridTextColumn Header="Status" Width="100" Binding="{Binding Status}" />
                 <DataGridTextColumn Header="Tracked Duration" Width="100" Binding="{Binding Tracked}" />
+                <DataGridTemplateColumn Header="Progress" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Watched}" />
+                                <TextBlock Text="/" />
+                                <TextBlock Text="{Binding Total}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="New Episode" Width="100" Binding="{Binding NextAirs, StringFormat=\{0:dd MMM yyyy\}}" />
             </DataGrid.Columns>
         </DataGrid>
         <GridSplitter 

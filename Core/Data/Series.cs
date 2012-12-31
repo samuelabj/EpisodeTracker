@@ -14,6 +14,7 @@ namespace EpisodeTracker.Core.Data {
 
 		[Key, Required, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 		public int ID { get; set; }
+		[MaxLength(250)]
 		public string Name { get; set; }
 		public DateTime Added { get; set; }
 		public DateTime Updated { get; set; }

@@ -43,6 +43,9 @@ namespace EpisodeTracker.WPF {
 			public DateTime Date { get; set; }
 			public string Status { get; set; }
 			public TimeSpan Tracked { get; set; }
+			public int Total { get; set; }
+			public int Watched { get; set; }
+			public DateTime? NextAirs { get; set; }
 		}
 
 		protected override void OnInitialized(EventArgs e) {
@@ -86,6 +89,14 @@ namespace EpisodeTracker.WPF {
 					.Include(f => f.Episode.Series)
 					.ToList();
 
+				var seriesInfo = db.Series.Select(s => new {
+					s.ID,
+					Total = s.Episodes.Count(),
+					Watched = s.Episodes.Count(e => e.TrackedFiles.Any(f => f.ProbablyWatched)),
+					NextAirs = (DateTime?)s.Episodes.Where(e => e.Aired > DateTime.Now).Min(e => e.Aired)
+				})
+				.ToDictionary(s => s.ID);
+
 				var display = watching
 					.Select(f => new SeriesInfo {
 						SeriesID = f.Episode.SeriesID,
@@ -94,7 +105,10 @@ namespace EpisodeTracker.WPF {
 						Episode = f.Episode.Number,
 						Date = f.LastTracked,
 						Status = f.ProbablyWatched ? "Probably watched" : "Partial viewing",
-						Tracked = TimeSpan.FromSeconds(f.TrackedSeconds)
+						Tracked = TimeSpan.FromSeconds(f.TrackedSeconds),
+						Total = seriesInfo[f.Episode.SeriesID].Total,
+						Watched = seriesInfo[f.Episode.SeriesID].Watched,
+						NextAirs = seriesInfo[f.Episode.SeriesID].NextAirs
 					});
 
 				seriesGrid.ItemsSource = display

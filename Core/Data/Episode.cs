@@ -20,6 +20,7 @@ namespace EpisodeTracker.Core.Data {
 		public int? TVDBID { get; set; }
 		public DateTime Added { get; set; }
 		public DateTime Updated { get; set; }
+		public int AbsoluteNumber { get; set; }
 
 		public virtual Series Series { get; set; }
 		public virtual ICollection<TrackedFile> TrackedFiles { get; set; }
