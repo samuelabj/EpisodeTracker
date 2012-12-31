@@ -152,27 +152,6 @@ namespace EpisodeTracker.WPF {
 			return mon;
 		}
 
-		protected override void OnSourceInitialized(EventArgs e) {
-			base.OnSourceInitialized(e);
-			HwndSource source = PresentationSource.FromVisual(this) as HwndSource;
-			source.AddHook(WndProc);
-		}
-
-		private IntPtr WndProc(IntPtr hwnd, int msg, IntPtr wParam, IntPtr lParam, ref bool handled) {
-			// Handle messages...
-			if(msg == NativeMethods.WM_SHOWME) {
-				ShowMe();
-			}
-
-			return IntPtr.Zero;
-		}
-
-		private void ShowMe() {
-			if(WindowState == WindowState.Minimized) {
-				WindowState = WindowState.Normal;
-			}
-		}
-
 		public class ShowSampleWindowCommand : CommandBase<ShowSampleWindowCommand> {
 			public Window Window { get; set; }
 

@@ -13,33 +13,36 @@ using System.Windows;
 using EpisodeTracker.WPF.Views.Shared;
 using Hardcodet.Wpf.TaskbarNotification;
 using MediaReign.EpisodeTracker.Data;
+using Microsoft.Shell;
 
 namespace EpisodeTracker.WPF {
 	/// <summary>
 	/// Interaction logic for App.xaml
 	/// </summary>
-	public partial class App : Application {
-		Mutex singleInstance;
+	public partial class App : Application, ISingleInstanceApp {
+		private const string Unique = "MediaReign.EpisodeTracker";
 
-		[DllImport("user32.dll")]
-		private static extern bool ShowWindow(IntPtr hWnd, int cmdShow);
-		private const int SW_MAXIMIZE = 3;
-		private const int SW_SHOWNORMAL = 1;
+		[STAThread]
+		public static void Main() {
+			if(SingleInstance<App>.InitializeAsFirstInstance(Unique)) {
+				var application = new App();
 
-		protected override void OnStartup(StartupEventArgs e) {
-			singleInstance = new Mutex(true, @"Global\EventTracker.WPF");
-			
-			if(singleInstance.WaitOne(TimeSpan.Zero, true)) {				
-				base.OnStartup(e);
-			} else {
-				NativeMethods.PostMessage(
-					(IntPtr)NativeMethods.HWND_BROADCAST,
-					NativeMethods.WM_SHOWME,
-					IntPtr.Zero,
-					IntPtr.Zero
-				);
-				App.Current.Shutdown();
-			}			
+				application.InitializeComponent();
+				application.Run();
+
+				// Allow single instance code to perform cleanup operations
+				SingleInstance<App>.Cleanup();
+			}
 		}
+
+		#region ISingleInstanceApp Members
+
+		public bool SignalExternalCommandLineArgs(IList<string> args) {
+			MainWindow.Show();
+			MainWindow.WindowState = WindowState.Maximized;
+			return true;
+		}
+
+		#endregion
 	}
 }
