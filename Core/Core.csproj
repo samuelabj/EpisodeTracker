@@ -95,7 +95,12 @@
     <Compile Include="Migrations\201212311144375_EnsureUniqueSeriesEpisodes.Designer.cs">
       <DependentUpon>201212311144375_EnsureUniqueSeriesEpisodes.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201301010410533_AllowNullableEpisodeProps.cs" />
+    <Compile Include="Migrations\201301010410533_AllowNullableEpisodeProps.Designer.cs">
+      <DependentUpon>201301010410533_AllowNullableEpisodeProps.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
+    <Compile Include="Migrations\SQLCompactMigration.cs" />
     <Compile Include="Models\HandleHelper.cs" />
     <Compile Include="Monitors\ProcessMonitor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -166,6 +171,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201212311144375_EnsureUniqueSeriesEpisodes.resx">
       <DependentUpon>201212311144375_EnsureUniqueSeriesEpisodes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201301010410533_AllowNullableEpisodeProps.resx">
+      <DependentUpon>201301010410533_AllowNullableEpisodeProps.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup />

@@ -71,6 +71,7 @@ from trackedOthers");
 			AddColumn("dbo.Series", "AirsTime", c => c.DateTime());
 			AddColumn("dbo.Series", "TVDBID", c => c.Int());
 			AddColumn("dbo.Series", "Updated", c => c.DateTime(nullable: false));
+			DropColumn("dbo.Series", "LastTracked");
 
 			// episodes
 			RenameTable("dbo.TrackedEpisodes", "Episodes");
@@ -126,6 +127,7 @@ from trackedOthers");
 					ID = c.Int(nullable: false, identity: true),
 					Name = c.String(),
 					Added = c.DateTime(nullable: false),
+					LastTracked = c.DateTime(nullable: false),
 				})
 				.PrimaryKey(t => t.ID);
 

@@ -10,18 +10,18 @@ namespace MediaReign.TVDB {
 		public string[] Directors { get; internal set; }
 		public string Name { get; internal set; }
 		public int Number { get; internal set; }
-		public DateTime Aired { get; internal set; }
+		public DateTime? Aired { get; internal set; }
 		public string[] GuestStars { get; internal set; }
-		public string ImDbId { get; internal set; }
+		public string IMDbID { get; internal set; }
 		public string Language { get; internal set; }
 		public string Overview { get; internal set; }
 		public double Rating { get; internal set; }
 		public int Season { get; internal set; }
 		public string[] Writers { get; internal set; }
-		public int AbsoluteNumber { get; internal set; }
+		public int? AbsoluteNumber { get; internal set; }
 		public string Filename { get; internal set; }
 		public DateTime LastUpdated { get; internal set; }
-		public int SeasonId { get; internal set; }
-		public int SeriesId { get; internal set; }
+		public int SeasonID { get; internal set; }
+		public int SeriesID { get; internal set; }
 	}
 }

@@ -21,6 +21,7 @@ using EpisodeTracker.Core.Data;
 using EpisodeTracker.Core.Monitors;
 using NLog;
 using System.Data.Entity;
+using System.IO;
 
 namespace EpisodeTracker.WPF {
 	/// <summary>
@@ -47,6 +48,7 @@ namespace EpisodeTracker.WPF {
 			public int Total { get; set; }
 			public int Watched { get; set; }
 			public DateTime? NextAirs { get; set; }
+			public string BannerPath { get; set; }
 		}
 
 		protected override void OnInitialized(EventArgs e) {
@@ -110,7 +112,8 @@ namespace EpisodeTracker.WPF {
 						Tracked = TimeSpan.FromSeconds(f.TrackedSeconds),
 						Total = seriesInfo[f.Episode.SeriesID].Total,
 						Watched = seriesInfo[f.Episode.SeriesID].Watched,
-						NextAirs = seriesInfo[f.Episode.SeriesID].NextAirs
+						NextAirs = seriesInfo[f.Episode.SeriesID].NextAirs,
+						BannerPath = File.Exists(@"External\Series\" + f.Episode.SeriesID + @"\banner.jpg") ? System.IO.Path.GetFullPath(@"External\Series\" + f.Episode.SeriesID + @"\banner.jpg") : null
 					});
 
 				seriesGrid.ItemsSource = display

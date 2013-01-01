@@ -36,8 +36,8 @@ namespace MediaReign.TVDB {
 			var results = from series in xml.Descendants("Series")
 						  where series.HasElements
 						  select new TVDBSearchResult {
-							  ID = series.GetInt("seriesid"),
-							  Aired = series.GetDateTime("FirstAired"),
+							  ID = series.GetInt("seriesid").Value,
+							  Aired = series.GetDateTime("FirstAired").Value,
 							  Language = series.Get("language"),
 							  Overview = series.Get("Overview"),
 							  Name = series.Get("SeriesName"),
@@ -51,6 +51,10 @@ namespace MediaReign.TVDB {
 		public TVDBSeries Series(int id, bool zip = false) {
 			var xml = DownloadXml(zip, "{0}/series/{1}/all/{2}", API, id, language);
 			return new TVDBSeries(xml);			
+		}
+
+		public void DownloadBanner(string path, string fileName) {
+			new WebClient().DownloadFile("http://www.thetvdb.com/banners/" + path.TrimStart('/'), fileName);
 		}
 
 		private XDocument DownloadXml(bool zip, string request, params object[] args) {

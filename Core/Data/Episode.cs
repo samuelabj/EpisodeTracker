@@ -15,12 +15,12 @@ namespace EpisodeTracker.Core.Data {
 		public int Season { get; set; }
 		public int Number { get; set; }
 		public string Name { get; set; }
-		public DateTime Aired { get; set; }
+		public DateTime? Aired { get; set; }
 		public string Overview { get; set; }
 		public int? TVDBID { get; set; }
 		public DateTime Added { get; set; }
 		public DateTime Updated { get; set; }
-		public int AbsoluteNumber { get; set; }
+		public int? AbsoluteNumber { get; set; }
 
 		public virtual Series Series { get; set; }
 		public virtual ICollection<TrackedFile> TrackedFiles { get; set; }

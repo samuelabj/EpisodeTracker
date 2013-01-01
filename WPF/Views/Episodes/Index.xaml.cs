@@ -31,24 +31,31 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 
 		void ShowEpisodes() {
 			using(var db = new EpisodeTrackerDBContext()) {
-				var watching = db.TrackedFiles
-					.Where(f => !SeriesID.HasValue || f.Episode.SeriesID == SeriesID)
-					.OrderByDescending(e => e.LastTracked)
+				var episodes = db.Episodes
+					.Where(ep => ep.SeriesID == SeriesID)
+					.Select(ep => new {
+						Episode = ep,
+						Tracked = ep.TrackedFiles.OrderByDescending(f => f.LastTracked).FirstOrDefault()
+					})
 					.ToList();
 
-				var display = watching
-					.Where(f => f.Episode != null)
-					.Select(f => new {
-						File = System.IO.Path.GetFileName(f.FileName),
-						Series = f.Episode.Series.Name,
-						Season = (int?)f.Episode.Season,
-						Episode = (int?)f.Episode.Number,
-						Date = f.LastTracked,
-						Status = f.ProbablyWatched ? "Probably watched" : "Partial viewing",
-						Tracked = TimeSpan.FromSeconds(f.TrackedSeconds)
+				var display = episodes
+					.Select(ep => new {
+						Series = ep.Episode.Series.Name,
+						Season = (int?)ep.Episode.Season,
+						Episode = (int?)ep.Episode.Number,
+						Overview = ep.Episode.Overview,
+						Aired = ep.Episode.Aired,
+						File = ep.Tracked != null ? System.IO.Path.GetFileName(ep.Tracked.FileName) : null,
+						Date = ep.Tracked != null ? ep.Tracked.LastTracked : default(DateTime?),
+						Status = ep.Tracked != null ? ep.Tracked.ProbablyWatched ? "Probably watched" : "Partial viewing" : null,
+						Tracked = ep.Tracked != null ? TimeSpan.FromSeconds(ep.Tracked.TrackedSeconds) : default(TimeSpan?)		
 					});
 
-				dataGrid.ItemsSource = display.OrderByDescending(ep => ep.File).OrderByDescending(ep => ep.Date);
+				dataGrid.ItemsSource = display
+					.OrderByDescending(ep => ep.Episode)
+					.OrderByDescending(ep => ep.Season)
+					.OrderByDescending(ep => ep.Date);
 			}
 		}
 	}

@@ -3,15 +3,32 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Index" Height="300" Width="300">
     <Grid>
-        <DataGrid Name="dataGrid" HorizontalAlignment="Stretch" Margin="0" VerticalAlignment="Stretch" AutoGenerateColumns="False">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="File" Width="200" Binding="{Binding File}" />
-                <DataGridTextColumn Header="Series" Width="200" Binding="{Binding Series}" />
-                <DataGridTextColumn Header="Season" Width="200" Binding="{Binding Season}" />
-                <DataGridTextColumn Header="Episode" Width="200" Binding="{Binding Episode}" />
+        <DataGrid Name="dataGrid" HorizontalAlignment="Stretch" Margin="0,0,-418.4,-79.6" VerticalAlignment="Stretch" AutoGenerateColumns="False">
+            <DataGrid.RowStyle>
+                <Style TargetType="{x:Type DataGridRow}">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Status}" Value="Probably watched">
+                            <Setter Property="Background" Value="LightGreen"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Status}" Value="Partial viewing">
+                            <Setter Property="Background" Value="#FFC5E3FF"/>
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding Status}" Value="">
+                            <Setter Property="Background" Value="White"/>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </DataGrid.RowStyle>
+            <DataGrid.Columns> 
+                <DataGridTextColumn Header="Series" Width="150" Binding="{Binding Series}" />
+                <DataGridTextColumn Header="Season" Width="50" Binding="{Binding Season}" />
+                <DataGridTextColumn Header="Episode" Width="52" Binding="{Binding Episode}" />
+                <DataGridTextColumn Header="Overview" Width="200" Binding="{Binding Overview}" />
+                <DataGridTextColumn Header="Aired" Width="100" Binding="{Binding Aired, StringFormat=\{0:dd MMM yyyy\}}" />
                 <DataGridTextColumn Header="Date" Width="100" Binding="{Binding Date, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
                 <DataGridTextColumn Header="Status" Width="100" Binding="{Binding Status}" />
                 <DataGridTextColumn Header="Tracked" Width="100" Binding="{Binding Tracked}" />
+                <DataGridTextColumn Header="File" Width="200" Binding="{Binding File}" />
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

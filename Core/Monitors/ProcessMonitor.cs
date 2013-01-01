@@ -220,7 +220,7 @@ namespace EpisodeTracker.Core.Monitors {
 						TrackedFile tracked;
 						using(var db = new EpisodeTrackerDBContext()) {
 							tracked = GetTrackedFile(db, mon);
-							if(mon.Length.HasValue && tracked.TrackedSeconds >= (mon.Length.Value.TotalSeconds * .75)) {
+							if(mon.Length.HasValue && tracked.TrackedSeconds >= (mon.Length.Value.TotalSeconds * .66)) {
 								Logger.Debug("Monitored file has probably been watched: " + mon.FileName);
 								tracked.ProbablyWatched = true;
 								db.SaveChanges();
@@ -340,7 +340,7 @@ namespace EpisodeTracker.Core.Monitors {
 							Number = mon.TvMatch.Episode,
 							Added = DateTime.Now
 						};
-						episode.AbsoluteNumber = series.Episodes.Count(e => e.Season <= episode.Season && e.Number <= episode.Number) + 1;
+						
 						series.Episodes.Add(episode);
 					}
 
@@ -353,6 +353,26 @@ namespace EpisodeTracker.Core.Monitors {
 			db.TrackedFiles.Add(tracked);
 
 			db.SaveChanges();
+
+			if(mon.Series != null) {
+				if(mon.Series.BannerPath != null) {
+					var seriesPath = @"External\Series\" + tracked.Episode.SeriesID;
+					if(!Directory.Exists(seriesPath)) Directory.CreateDirectory(seriesPath);
+					var bannerPath = Path.Combine(seriesPath, "banner.jpg");
+					if(!File.Exists(bannerPath)) {
+						new TVDBRequest().DownloadBanner(mon.Series.BannerPath, bannerPath);
+					}
+				}
+				if(mon.Series.FanartPath != null) {
+					var seriesPath = @"External\Series\" + tracked.Episode.SeriesID;
+					if(!Directory.Exists(seriesPath)) Directory.CreateDirectory(seriesPath);
+					var fanartPath = Path.Combine(seriesPath, "fanart.jpg");
+					if(!File.Exists(fanartPath)) {
+						new TVDBRequest().DownloadBanner(mon.Series.FanartPath, fanartPath);
+					}
+				}
+			}
+
 			return tracked;
 		}
 
@@ -383,7 +403,7 @@ namespace EpisodeTracker.Core.Monitors {
 			episode.Name = tvDBEpisode.Name;
 			episode.TVDBID = tvDBEpisode.ID;
 			episode.Overview = tvDBEpisode.Overview;
-			episode.Aired = tvDBEpisode.Aired <= SqlDateTime.MaxValue.Value && tvDBEpisode.Aired >= SqlDateTime.MinValue.Value ? tvDBEpisode.Aired : SqlDateTime.MinValue.Value;
+			episode.Aired = tvDBEpisode.Aired <= SqlDateTime.MaxValue.Value && tvDBEpisode.Aired >= SqlDateTime.MinValue.Value ? tvDBEpisode.Aired : default(DateTime?);
 			episode.AbsoluteNumber = tvDBEpisode.AbsoluteNumber;
 
 			return episode;
