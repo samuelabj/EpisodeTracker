@@ -22,7 +22,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			InitializeComponent();
 		}
 
-		public int? SeriesID { get; set; }
+		public int SeriesID { get; set; }
 
 		protected override void OnActivated(EventArgs e) {
 			base.OnActivated(e);
@@ -31,6 +31,8 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 
 		void ShowEpisodes() {
 			using(var db = new EpisodeTrackerDBContext()) {
+				Title = db.Series.SingleOrDefault(s => s.ID == SeriesID).Name;
+
 				var episodes = db.Episodes
 					.Where(ep => ep.SeriesID == SeriesID)
 					.Select(ep => new {
@@ -41,9 +43,9 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 
 				var display = episodes
 					.Select(ep => new {
-						Series = ep.Episode.Series.Name,
 						Season = (int?)ep.Episode.Season,
 						Episode = (int?)ep.Episode.Number,
+						Name = ep.Episode.Name,
 						Overview = ep.Episode.Overview,
 						Aired = ep.Episode.Aired,
 						File = ep.Tracked != null ? System.IO.Path.GetFileName(ep.Tracked.FileName) : null,

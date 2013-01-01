@@ -9,10 +9,10 @@ namespace MediaReign.TVDB {
 
 		public int ID { get; private set; }
 		public string[] Actors { get; private set; }
-		public DayOfWeek AirsDay { get; private set; }
-		public DateTime AirsTime { get; private set; }
+		public DayOfWeek? AirsDay { get; private set; }
+		public DateTime? AirsTime { get; private set; }
 		public string ContentRating { get; private set; }
-		public DateTime FirstAired { get; private set; }
+		public DateTime? FirstAired { get; private set; }
 		public string[] Genre { get; private set; }
 		public string IMDbID { get; private set; }
 		public string Language { get; private set; }
@@ -38,10 +38,10 @@ namespace MediaReign.TVDB {
 
 			ID = series.GetInt("id").Value;
 			Actors = series.Split("Actors");
-			AirsDay = series.Get<DayOfWeek>("Airs_DayOfWeek");
-			AirsTime = series.GetDateTime("Airs_Time").Value;
+			AirsDay = series.GetEnum<DayOfWeek>("Airs_DayOfWeek");
+			AirsTime = series.GetDateTime("Airs_Time");
 			ContentRating = series.Get("ContentRating");
-			FirstAired = series.GetDateTime("FirstAired").Value;
+			FirstAired = series.GetDateTime("FirstAired");
 			Genre = series.Split("Genre");
 			IMDbID = series.Get("IMDB_ID");
 			Language = series.Get("Language");
@@ -61,24 +61,7 @@ namespace MediaReign.TVDB {
 			Episodes = (
 				from ep in xml.Descendants("Episode")
 				where ep.HasElements
-				select new TVDBEpisode {
-					ID = ep.GetInt("id").Value,
-					Directors = ep.Split("Director"),
-					Name = ep.Get("EpisodeName"),
-					Number = ep.GetInt("EpisodeNumber").Value,
-					Aired = ep.GetDateTime("FirstAired"),
-					GuestStars = ep.Split("GuestStars"),
-					IMDbID = ep.Get("IMDB_ID"),
-					Language = ep.Get("Language"),
-					Overview = ep.Get("Overview"),
-					Season = ep.GetInt("SeasonNumber").Value,
-					Writers = ep.Split("Writer"),
-					AbsoluteNumber = ep.GetInt("absolute_number"),
-					Filename = ep.Get("filename"),
-					LastUpdated = ep.GetUnixDateTime("lastupdated"),
-					SeasonID = ep.GetInt("seasonid").Value,
-					SeriesID = ep.GetInt("seriesid").Value
-				}
+				select new TVDBEpisode(ep)
 			)
 			.ToList();
 		}

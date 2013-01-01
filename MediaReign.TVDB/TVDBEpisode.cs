@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml.Linq;
 
 namespace MediaReign.TVDB {
 	public class TVDBEpisode {
@@ -23,5 +24,24 @@ namespace MediaReign.TVDB {
 		public DateTime LastUpdated { get; internal set; }
 		public int SeasonID { get; internal set; }
 		public int SeriesID { get; internal set; }
+
+		public TVDBEpisode(XElement element) {
+			ID = element.GetInt("id").Value;
+			Directors = element.Split("Director");
+			Name = element.Get("EpisodeName");
+			Number = element.GetInt("EpisodeNumber").Value;
+			Aired = element.GetDateTime("FirstAired");
+			GuestStars = element.Split("GuestStars");
+			IMDbID = element.Get("IMDB_ID");
+			Language = element.Get("Language");
+			Overview = element.Get("Overview");
+			Season = element.GetInt("SeasonNumber").Value;
+			Writers = element.Split("Writer");
+			AbsoluteNumber = element.GetInt("absolute_number");
+			Filename = element.Get("filename");
+			LastUpdated = element.GetUnixDateTime("lastupdated");
+			SeasonID = element.GetInt("seasonid").Value;
+			SeriesID = element.GetInt("seriesid").Value;
+		}
 	}
 }

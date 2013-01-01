@@ -37,7 +37,7 @@ namespace MediaReign.TVDB {
 						  where series.HasElements
 						  select new TVDBSearchResult {
 							  ID = series.GetInt("seriesid").Value,
-							  Aired = series.GetDateTime("FirstAired").Value,
+							  FirstAired = series.GetDateTime("FirstAired"),
 							  Language = series.Get("language"),
 							  Overview = series.Get("Overview"),
 							  Name = series.Get("SeriesName"),

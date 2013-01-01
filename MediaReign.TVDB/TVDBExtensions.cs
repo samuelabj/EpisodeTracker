@@ -21,7 +21,7 @@ namespace MediaReign.TVDB {
 		}
 
 		public static DateTime? GetDateTime(this XElement parent, string name) {
-			return Get<DateTime?>(parent, name, v => DateTime.Parse(v));
+			return Get<DateTime?>(parent, name, v => DateTime.Parse(v.Replace(".", ":")));
 		}
 
 		public static DateTime GetUnixDateTime(this XElement parent, string name) {
@@ -29,15 +29,15 @@ namespace MediaReign.TVDB {
 			return Get<DateTime>(parent, name, v => start.AddSeconds(int.Parse(v)));
 		}
 
-		public static T Get<T>(this XElement parent, string name) where T : struct, IConvertible {
+		public static Nullable<T> GetEnum<T>(this XElement parent, string name) where T : struct, IConvertible {
 			var el = parent.Element(name);
-			if(el == null || String.IsNullOrEmpty(el.Value)) return default(T);
+			if(el == null || String.IsNullOrEmpty(el.Value)) return new Nullable<T>();
 			try {
 				return (T)Enum.Parse(typeof(T), el.Value, true);
 			} catch(ArgumentException e) {
 				// TODO logging
-				Console.WriteLine(e);
-				return default(T);
+				Console.WriteLine("Could not parse enum for element: " + name + ", value: " + el.Value + " - " + e);
+				return new Nullable<T>();
 			}
 		}
 
@@ -54,7 +54,7 @@ namespace MediaReign.TVDB {
 				return convert(el.Value);
 			} catch(FormatException e) {
 				// TODO logging
-				Console.WriteLine(e);
+				Console.WriteLine("Could not convert: " + name + ", value: " + el.Value + " - " + e);
 				return default(T);
 			}
 		}

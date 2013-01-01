@@ -22,6 +22,7 @@ using EpisodeTracker.Core.Monitors;
 using NLog;
 using System.Data.Entity;
 using System.IO;
+using EpisodeTracker.Core.Models;
 
 namespace EpisodeTracker.WPF {
 	/// <summary>
@@ -76,6 +77,34 @@ namespace EpisodeTracker.WPF {
 					ev.Cancel = true;
 				}
 			};
+
+			Task.Factory.StartNew(() => {
+				try {
+					UpdateSeries();
+				} catch(Exception ex) {
+					Logger.Error("Error running UpdateSeries: " + ex);
+				}
+			});
+		}
+
+		void UpdateSeries() {
+			var tasks = new List<Task>();
+			using(var db = new EpisodeTrackerDBContext()) {
+				var old = DateTime.Now.AddDays(-7);
+				var series = db.Series.Where(s => !s.TVDBID.HasValue || s.Updated <= old).ToList();
+				foreach(var temp in series) {
+					var s = temp;
+					var task = Task.Factory.StartNew(() => {
+						if(!s.TVDBID.HasValue) {
+							TVDBSeriesSyncer.Sync(s.Name);
+						} else {
+							TVDBSeriesSyncer.Sync(s.TVDBID.Value);
+						}
+					});
+					tasks.Add(task);
+				}
+			}
+			Task.WaitAll(tasks.ToArray());
 		}
 
 		void ShowSeries() {
@@ -90,7 +119,8 @@ namespace EpisodeTracker.WPF {
 					.AsQueryable()
 					.Include(f => f.Episode)
 					.Include(f => f.Episode.Series)
-					.ToList();
+					.ToList()
+					.Where(f => f != null);
 
 				var seriesInfo = db.Series.Select(s => new {
 					s.ID,

@@ -29,8 +29,8 @@ namespace EpisodeTracker.Core.Monitors {
 			public DateTime Start { get; set; }
 			public string FileName { get; set; }
 			public TvMatch TvMatch { get; set; }
-			public TVDBSeries Series { get; set; }
-			public TVDBEpisode Episode { get; set; }
+			public Series Series { get; set; }
+			public Episode Episode { get; set; }
 			public int? TrackedFileID { get; set; }
 			public TimeSpan? Length { get; set; }
 			public bool Tracking { get; set; }
@@ -141,21 +141,29 @@ namespace EpisodeTracker.Core.Monitors {
 
 				if(first != null) {
 					Logger.Debug("Found TVDB result: " + first.Name);
+					
+					using(var db = new EpisodeTrackerDBContext()) {
+						var series = db.Series.SingleOrDefault(s => s.TVDBID == first.ID);
+						if(series == null || series.Updated <= DateTime.Now.AddDays(-7)) {
+							TVDBSeriesSyncer.Sync(first.ID, match.Name);
+						}
 
-					var series = new TVDBRequest().Series(first.ID, true);
-					mon.Series = series;
-					mon.Episode = series.Episodes.FirstOrDefault(ep => 
-						(
-							match.Season.HasValue 
-							&& ep.Season == match.Season 
-							&& ep.Number == match.Episode
-						)
-						|| 
-						(
-							!match.Season.HasValue 
-							&& ep.AbsoluteNumber == match.Episode
-						)
-					);
+						// Pull out series again as it might have been updated
+						series = db.Series.Include(s => s.Episodes).Single(s => s.TVDBID == first.ID);
+						mon.Series = series;
+						mon.Episode = series.Episodes.FirstOrDefault(ep =>
+							(
+								match.Season.HasValue
+								&& ep.Season == match.Season
+								&& ep.Number == match.Episode
+							)
+							||
+							(
+								!match.Season.HasValue
+								&& ep.AbsoluteNumber == match.Episode
+							)
+						);
+					}					
 
 					if(mon.Episode != null) Logger.Debug("Found TVDB episode: " + mon.Episode.Name);
 				}
@@ -284,18 +292,14 @@ namespace EpisodeTracker.Core.Monitors {
 				LastTracked = DateTime.Now,
 				SecondsLength = mon.Length.HasValue ? mon.Length.Value.TotalSeconds : default(double?)
 			};
+			db.TrackedFiles.Add(tracked);
 
 			if(mon.TvMatch != null) {
-				// Save additional tv info
-				Series series = null;
-				var seriesQuery = db.Series.Include(s => s.Episodes);
-
-				if(mon.Series != null) {
-					series = seriesQuery.SingleOrDefault(s => s.TVDBID == mon.Series.ID);
-					if(series == null) series = seriesQuery.SingleOrDefault(s => s.Name == mon.Series.Name);
-				}
-
+				var series = mon.Series;
+				
+				// Series is only null when no TVDB match was found
 				if(series == null) {
+					var seriesQuery = db.Series.Include(s => s.Episodes);
 					series = seriesQuery.SingleOrDefault(s => s.Name == mon.TvMatch.Name);
 				}
 
@@ -306,20 +310,6 @@ namespace EpisodeTracker.Core.Monitors {
 					};
 
 					db.Series.Add(series);
-				}
-
-				series.Updated = DateTime.Now;
-
-				if(mon.Series != null) {
-					series.Name = mon.Series.Name;
-					series.TVDBID = mon.Series.ID;
-					series.AirsDay = mon.Series.AirsDay;
-					series.AirsTime = mon.Series.AirsTime;
-					series.Status = mon.Series.Status;
-
-					foreach(var ep in mon.Series.Episodes) {
-						SyncEpisode(ep, series);
-					}
 				}
 
 				Episode episode = null;
@@ -345,68 +335,16 @@ namespace EpisodeTracker.Core.Monitors {
 					}
 
 					episode.Updated = DateTime.Now;
+					series.Updated = DateTime.Now;
 				}			
 
 				tracked.Episode = episode;
+				mon.Series = series;
+				mon.Episode = episode;
 			}
-
-			db.TrackedFiles.Add(tracked);
 
 			db.SaveChanges();
-
-			if(mon.Series != null) {
-				if(mon.Series.BannerPath != null) {
-					var seriesPath = @"External\Series\" + tracked.Episode.SeriesID;
-					if(!Directory.Exists(seriesPath)) Directory.CreateDirectory(seriesPath);
-					var bannerPath = Path.Combine(seriesPath, "banner.jpg");
-					if(!File.Exists(bannerPath)) {
-						new TVDBRequest().DownloadBanner(mon.Series.BannerPath, bannerPath);
-					}
-				}
-				if(mon.Series.FanartPath != null) {
-					var seriesPath = @"External\Series\" + tracked.Episode.SeriesID;
-					if(!Directory.Exists(seriesPath)) Directory.CreateDirectory(seriesPath);
-					var fanartPath = Path.Combine(seriesPath, "fanart.jpg");
-					if(!File.Exists(fanartPath)) {
-						new TVDBRequest().DownloadBanner(mon.Series.FanartPath, fanartPath);
-					}
-				}
-			}
-
 			return tracked;
-		}
-
-		Episode SyncEpisode(TVDBEpisode tvDBEpisode, Series series) {
-			Episode episode = null;
-
-			episode = series.Episodes
-				.SingleOrDefault(ep => ep.TVDBID == tvDBEpisode.ID);
-
-			if(episode == null) {
-				episode = series.Episodes
-					.SingleOrDefault(ep =>
-						ep.Number == tvDBEpisode.Number
-						&& ep.Season == tvDBEpisode.Season
-					);
-			}
-
-			if(episode == null) {
-				episode = new Episode {
-					Season = tvDBEpisode.Season,
-					Number = tvDBEpisode.Number,
-					Added = DateTime.Now
-				};
-				series.Episodes.Add(episode);
-			}
-
-			episode.Updated = DateTime.Now;
-			episode.Name = tvDBEpisode.Name;
-			episode.TVDBID = tvDBEpisode.ID;
-			episode.Overview = tvDBEpisode.Overview;
-			episode.Aired = tvDBEpisode.Aired <= SqlDateTime.MaxValue.Value && tvDBEpisode.Aired >= SqlDateTime.MinValue.Value ? tvDBEpisode.Aired : default(DateTime?);
-			episode.AbsoluteNumber = tvDBEpisode.AbsoluteNumber;
-
-			return episode;
 		}
 
 		string processOutput;
