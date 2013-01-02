@@ -14,6 +14,7 @@ using MediaReign.TVDB;
 using NLog;
 using System.Data.Entity;
 using System.Data.SqlTypes;
+using MediaReign.Core;
 
 namespace EpisodeTracker.Core.Monitors {
 	public delegate void MonitoredFileHandler(ProcessMonitor monitor, MonitoredFileEventArgs args);
@@ -32,7 +33,7 @@ namespace EpisodeTracker.Core.Monitors {
 			public Series Series { get; set; }
 			public Episode Episode { get; set; }
 			public int? TrackedFileID { get; set; }
-			public TimeSpan? Length { get; set; }
+			public TimeSpan? Duration { get; set; }
 			public bool Tracking { get; set; }
 			public int PreviousTrackedSeconds { get; set; }
 			public bool Watched { get; set; }
@@ -88,7 +89,6 @@ namespace EpisodeTracker.Core.Monitors {
 						Check();
 					} catch(Exception e) {
 						Logger.Error("Error while checking processes: " + e, e);
-						throw new ApplicationException("Error while checking processes: " + e.Message, e);
 					}
 
 				} while(!checkEvent.WaitOne(wait));
@@ -123,17 +123,22 @@ namespace EpisodeTracker.Core.Monitors {
 			}
 		}
 
-		void CheckUnmonitoredFile(string filename) {
-			Logger.Debug("File is not monitored: " + filename);
+		void CheckUnmonitoredFile(string fileName) {
+			Logger.Debug("File is not monitored: " + fileName);
 			var mon = new MonitoredFile {
-				FileName = filename,
-				Start = DateTime.Now,
-				Length = GetVideoLength(filename)
+				FileName = fileName,
+				Start = DateTime.Now
 			};
 
-			var match = new TvMatcher().Match(filename);
+			using(var info = new MediaInfo(fileName)) {
+				mon.Duration = info.Duration;
+			}
+
+			var match = new TvMatcher().Match(fileName);
 			if(match != null) {
 				Logger.Debug("Found episode info - name: " + match.Name + ", season: " + match.Season + ", episode: " + match.Episode);
+				
+				mon.TvMatch = match;
 				// try and look it up
 				// do movies later
 				var results = new TVDBRequest().Search(match.Name);
@@ -169,7 +174,6 @@ namespace EpisodeTracker.Core.Monitors {
 				}
 			}
 
-			mon.TvMatch = match;
 			monitored.Add(mon);
 		}
 
@@ -182,7 +186,7 @@ namespace EpisodeTracker.Core.Monitors {
 					Logger.Trace("Seconds since started monitoring: " + DateTime.Now.Subtract(mon.Start).TotalSeconds);
 
 					// check if it's been monitored for a while before doing anything with file
-					if(mon.Start <= DateTime.Now.AddMinutes(-.5)) {
+					if(mon.Start <= DateTime.Now.AddMinutes(-.0)) {
 						var tracked = GetTrackedFile(db, mon);
 
 						if(!mon.Tracking) {
@@ -228,7 +232,7 @@ namespace EpisodeTracker.Core.Monitors {
 						TrackedFile tracked;
 						using(var db = new EpisodeTrackerDBContext()) {
 							tracked = GetTrackedFile(db, mon);
-							if(mon.Length.HasValue && tracked.TrackedSeconds >= (mon.Length.Value.TotalSeconds * .66)) {
+							if(mon.Duration.HasValue && tracked.TrackedSeconds >= (mon.Duration.Value.TotalSeconds * .66)) {
 								Logger.Debug("Monitored file has probably been watched: " + mon.FileName);
 								tracked.ProbablyWatched = true;
 								db.SaveChanges();
@@ -290,7 +294,7 @@ namespace EpisodeTracker.Core.Monitors {
 				FileName = mon.FileName,
 				Added = DateTime.Now,
 				LastTracked = DateTime.Now,
-				SecondsLength = mon.Length.HasValue ? mon.Length.Value.TotalSeconds : default(double?)
+				SecondsLength = mon.Duration.HasValue ? mon.Duration.Value.TotalSeconds : default(double?)
 			};
 			db.TrackedFiles.Add(tracked);
 
@@ -367,28 +371,6 @@ namespace EpisodeTracker.Core.Monitors {
 				}
 			}
 			return videoFiles;
-		}
-
-		TimeSpan? GetVideoLength(string file) {
-			var fi = new FileInfo(file);
-			var shellAppType = Type.GetTypeFromProgID("Shell.Application");
-
-			// hack to fix exception - Unable to cast COM object of type 'System.__ComObject' to interface type 'Shell32.Shell'
-			dynamic shell = Activator.CreateInstance(shellAppType);
-			var folder = (Shell32.Folder)shell.NameSpace(fi.DirectoryName);
-			var item = folder.ParseName(fi.Name);
-
-			for(int i = 0; i < short.MaxValue; i++) {
-				var key = folder.GetDetailsOf(null, i);
-				if(key != "Length") continue;
-				var val = folder.GetDetailsOf(item, i);
-				TimeSpan length;
-				if(TimeSpan.TryParse(val, out length)) {
-					return length;
-				}
-			}
-
-			return null;
 		}
 
 		public void Dispose() {
