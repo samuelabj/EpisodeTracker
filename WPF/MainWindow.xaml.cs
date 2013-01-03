@@ -112,38 +112,38 @@ namespace EpisodeTracker.WPF {
 				var watching = db.Series
 					.Select(s =>
 						s.Episodes
-							.SelectMany(ep => ep.TrackedFiles)
+							.SelectMany(ep => ep.TrackedEpisodes.Select(te => te.TrackedFile))
 							.OrderByDescending(f => f.LastTracked)
 							.FirstOrDefault()
 					)
 					.AsQueryable()
-					.Include(f => f.Episode)
-					.Include(f => f.Episode.Series)
+					.Include(f => f.TrackedEpisodes)
+					.Include(f => f.TrackedEpisodes.Select(te => te.Episode))
 					.ToList()
 					.Where(f => f != null);
 
 				var seriesInfo = db.Series.Select(s => new {
 					s.ID,
 					Total = s.Episodes.Count(e => e.Season != 0), // don't include specials
-					Watched = s.Episodes.Count(e => e.TrackedFiles.Any(f => f.ProbablyWatched)),
+					Watched = s.Episodes.Count(e => e.TrackedEpisodes.Any(te => te.TrackedFile.ProbablyWatched)),
 					NextAirs = (DateTime?)s.Episodes.Where(e => e.Aired > DateTime.Now).Min(e => e.Aired)
 				})
 				.ToDictionary(s => s.ID);
 
 				var display = watching
 					.Select(f => new SeriesInfo {
-						SeriesID = f.Episode.SeriesID,
-						Series = f.Episode.Series.Name,
-						Status = f.Episode.Series.Status,
-						Season = f.Episode.Season,
-						Episode = f.Episode.Number,
+						SeriesID = f.TrackedEpisodes.First().Episode.SeriesID,
+						Series = f.TrackedEpisodes.First().Episode.Series.Name,
+						Status = f.TrackedEpisodes.First().Episode.Series.Status,
+						Season = f.TrackedEpisodes.First().Episode.Season,
+						Episode = f.TrackedEpisodes.First().Episode.Number,
 						Date = f.LastTracked,
 						WatchedStatus = f.ProbablyWatched ? "Probably watched" : "Partial viewing",
 						Tracked = TimeSpan.FromSeconds(f.TrackedSeconds),
-						Total = seriesInfo[f.Episode.SeriesID].Total,
-						Watched = seriesInfo[f.Episode.SeriesID].Watched,
-						NextAirs = seriesInfo[f.Episode.SeriesID].NextAirs,
-						BannerPath = File.Exists(@"External\Series\" + f.Episode.SeriesID + @"\banner.jpg") ? System.IO.Path.GetFullPath(@"External\Series\" + f.Episode.SeriesID + @"\banner.jpg") : null
+						Total = seriesInfo[f.TrackedEpisodes.First().Episode.SeriesID].Total,
+						Watched = seriesInfo[f.TrackedEpisodes.First().Episode.SeriesID].Watched,
+						NextAirs = seriesInfo[f.TrackedEpisodes.First().Episode.SeriesID].NextAirs,
+						BannerPath = File.Exists(@"External\Series\" + f.TrackedEpisodes.First().Episode.SeriesID + @"\banner.jpg") ? System.IO.Path.GetFullPath(@"External\Series\" + f.TrackedEpisodes.First().Episode.SeriesID + @"\banner.jpg") : null
 					});
 
 				seriesGrid.ItemsSource = display
@@ -154,7 +154,7 @@ namespace EpisodeTracker.WPF {
 		void ShowOther() {
 			using(var db = new EpisodeTrackerDBContext()) {
 				var watching = db.TrackedFiles
-					.Where(f => f.Episode == null)
+					.Where(f => !f.TrackedEpisodes.Any())
 					.ToList();
 
 				var display = watching

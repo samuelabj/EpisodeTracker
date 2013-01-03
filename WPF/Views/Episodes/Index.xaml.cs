@@ -37,7 +37,10 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 					.Where(ep => ep.SeriesID == SeriesID)
 					.Select(ep => new {
 						Episode = ep,
-						Tracked = ep.TrackedFiles.OrderByDescending(f => f.LastTracked).FirstOrDefault()
+						Tracked = ep.TrackedEpisodes
+							.Select(te => te.TrackedFile)
+							.OrderByDescending(f => f.LastTracked)
+							.FirstOrDefault()
 					})
 					.ToList();
 
@@ -56,8 +59,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 
 				dataGrid.ItemsSource = display
 					.OrderByDescending(ep => ep.Episode)
-					.OrderByDescending(ep => ep.Season)
-					.OrderByDescending(ep => ep.Date);
+					.OrderByDescending(ep => ep.Season);
 			}
 		}
 	}

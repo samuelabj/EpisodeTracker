@@ -22,7 +22,9 @@ namespace EpisodeTracker.Core.Data {
 		public DateTime Updated { get; set; }
 		public int? AbsoluteNumber { get; set; }
 
+		[ForeignKey("ID")]
 		public virtual Series Series { get; set; }
-		public virtual ICollection<TrackedFile> TrackedFiles { get; set; }
+		[ForeignKey("EpisodeID")]
+		public virtual ICollection<TrackedEpisode> TrackedEpisodes { get; set; }
 	}
 }

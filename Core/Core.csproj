@@ -83,6 +83,7 @@
     <Compile Include="Data\Episode.cs" />
     <Compile Include="Data\TrackedFile.cs" />
     <Compile Include="Data\Series.cs" />
+    <Compile Include="Data\TrackedEpisode.cs" />
     <Compile Include="Migrations\201210280828547_InitialCreate.cs" />
     <Compile Include="Migrations\201210280828547_InitialCreate.Designer.cs">
       <DependentUpon>201210280828547_InitialCreate.cs</DependentUpon>
@@ -98,6 +99,10 @@
     <Compile Include="Migrations\201301010410533_AllowNullableEpisodeProps.cs" />
     <Compile Include="Migrations\201301010410533_AllowNullableEpisodeProps.Designer.cs">
       <DependentUpon>201301010410533_AllowNullableEpisodeProps.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201301031109044_MultipleTrackedEpisodes.cs" />
+    <Compile Include="Migrations\201301031109044_MultipleTrackedEpisodes.Designer.cs">
+      <DependentUpon>201301031109044_MultipleTrackedEpisodes.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Migrations\SQLCompactMigration.cs" />
@@ -175,6 +180,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201301010410533_AllowNullableEpisodeProps.resx">
       <DependentUpon>201301010410533_AllowNullableEpisodeProps.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201301031109044_MultipleTrackedEpisodes.resx">
+      <DependentUpon>201301031109044_MultipleTrackedEpisodes.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup />

@@ -48,6 +48,9 @@ namespace EpisodeTracker.Core.Models {
 					series.AirsDay = tvdbSeries.AirsDay;
 					series.AirsTime = tvdbSeries.AirsTime;
 					series.Status = tvdbSeries.Status;
+					series.Overview = tvdbSeries.Overview;
+					series.DurationMinutes = tvdbSeries.DurationMinutes;
+
 					series.Updated = DateTime.Now;
 
 					foreach(var ep in tvdbSeries.Episodes) {

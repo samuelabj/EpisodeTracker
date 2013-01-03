@@ -15,13 +15,12 @@ namespace EpisodeTracker.Core.Data {
 		public string FileName { get; set; }
 		public DateTime Added { get; set; }
 		public DateTime LastTracked { get; set; }
-		public double? SecondsLength { get; set; }
+		public double? DurationSeconds { get; set; }
 		public bool Watched { get; set; }
 		public bool ProbablyWatched { get; set; }
 		public int TrackedSeconds { get; set; }
-		public int? EpisodeID { get; set; }
 
-
-		public virtual Episode Episode { get; set; }
+		[ForeignKey("TrackedFileID")]
+		public virtual ICollection<TrackedEpisode> TrackedEpisodes { get; set; }
 	}
 }

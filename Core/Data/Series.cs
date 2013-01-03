@@ -22,8 +22,11 @@ namespace EpisodeTracker.Core.Data {
 		public DateTime? FirstAired { get; set; }
 		public DayOfWeek? AirsDay { get; set; }
 		public DateTime? AirsTime { get; set; }
+		public double? DurationMinutes { get; set; }
+		public string Overview { get; set; }
 		public int? TVDBID { get; set; }
 
+		[ForeignKey("SeriesID")]
 		public virtual ICollection<Episode> Episodes { get; set; }
 	}
 }
