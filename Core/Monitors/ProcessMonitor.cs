@@ -163,22 +163,17 @@ namespace EpisodeTracker.Core.Monitors {
 						// Pull out series again as it might have been updated
 						series = db.Series.Include(s => s.Episodes).Single(s => s.TVDBID == first.ID);
 						mon.Series = series;
-						mon.Episodes = series.Episodes.Where(ep => (
-								match.Season.HasValue
-								&& ep.Season == match.Season
-								&& (
-									match.ToEpisode.HasValue 
-									&& ep.Number >= match.Episode
-									&& ep.Number <= match.ToEpisode.Value
-								) || (
-									!match.ToEpisode.HasValue
-									&& ep.Number == match.Episode
-								)
-							) || (
-								!match.Season.HasValue
-								&& ep.AbsoluteNumber == match.Episode
-							)
-						);
+
+						if(match.Season.HasValue) {
+							var eps = series.Episodes.Where(ep => ep.Season == match.Season.Value);
+							if(match.ToEpisode.HasValue) {
+								mon.Episodes = eps.Where(ep => ep.Number >= match.Episode && ep.Number <= match.ToEpisode.Value);
+							} else {
+								mon.Episodes = eps.Where(ep => ep.Number == match.Episode);
+							}
+						} else {
+							mon.Episodes = series.Episodes.Where(ep => ep.AbsoluteNumber == match.Episode);
+						}
 					}					
 
 					if(mon.Episodes != null) Logger.Debug("Found TVDB episodes: " + String.Join(" + ", mon.Episodes.Select(e => e.Name)));
@@ -273,16 +268,17 @@ namespace EpisodeTracker.Core.Monitors {
 				file = db.TrackedFiles.SingleOrDefault(f => f.FileName == mon.FileName);
 			}
 
-			if(mon.Episodes != null) {
+			if(file == null && mon.Episodes != null) {
 				var episodeIDs = mon.Episodes.Select(e => e.ID);
 				file = db.TrackedFiles
-					.FirstOrDefault(f => f.TrackedEpisodes.All(te => episodeIDs.Contains(te.Episode.ID)));
+					.FirstOrDefault(f => f.TrackedEpisodes.Any() && f.TrackedEpisodes.All(te => episodeIDs.Contains(te.Episode.ID)));
 			}
 
 			if(file == null && mon.TvMatch != null) {
 				file = db.TrackedFiles
 					.FirstOrDefault(f =>
-						f.TrackedEpisodes.All(te => 
+						f.TrackedEpisodes.Any()
+						&& f.TrackedEpisodes.All(te => 
 							te.Episode.Series.Name == mon.TvMatch.Name
 							&& te.Episode.Season == mon.TvMatch.Season
 							&& (
@@ -308,11 +304,12 @@ namespace EpisodeTracker.Core.Monitors {
 			db.TrackedFiles.Add(tracked);
 
 			if(mon.TvMatch != null) {
-				var series = mon.Series;
-				
-				// Series is only null when no TVDB match was found
-				if(series == null) {
-					var seriesQuery = db.Series.Include(s => s.Episodes);
+				var seriesQuery = db.Series.Include(s => s.Episodes);
+				Series series = null;
+				if(mon.Series != null) {
+					series = db.Series.SingleOrDefault(s => s.ID == mon.Series.ID);
+				} else if(series == null) {
+					// Series is only null when no TVDB match was found
 					series = seriesQuery.SingleOrDefault(s => s.Name == mon.TvMatch.Name);
 				}
 

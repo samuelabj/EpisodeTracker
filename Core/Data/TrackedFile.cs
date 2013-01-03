@@ -9,6 +9,10 @@ using System.Threading.Tasks;
 namespace EpisodeTracker.Core.Data {
 	public class TrackedFile {
 
+		public TrackedFile() {
+			TrackedEpisodes = new List<TrackedEpisode>();
+		}
+
 		[Key, Required, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 		public int ID { get; set; }
 		[MaxLength(500)]
