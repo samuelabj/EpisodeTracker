@@ -112,38 +112,38 @@ namespace EpisodeTracker.WPF {
 				var watching = db.Series
 					.Select(s =>
 						s.Episodes
-							.SelectMany(ep => ep.TrackedEpisodes.Select(te => te.TrackedFile))
-							.OrderByDescending(f => f.LastTracked)
+							.SelectMany(ep => ep.Tracked.Select(te => te.TrackedFile))
+							.OrderByDescending(f => f.Stop)
 							.FirstOrDefault()
 					)
 					.AsQueryable()
-					.Include(f => f.TrackedEpisodes)
-					.Include(f => f.TrackedEpisodes.Select(te => te.Episode))
+					.Include(f => f.Episodes)
+					.Include(f => f.Episodes.Select(te => te.Episode))
 					.ToList()
 					.Where(f => f != null);
 
 				var seriesInfo = db.Series.Select(s => new {
 					s.ID,
 					Total = s.Episodes.Count(e => e.Season != 0), // don't include specials
-					Watched = s.Episodes.Count(e => e.TrackedEpisodes.Any(te => te.TrackedFile.ProbablyWatched)),
+					Watched = s.Episodes.Count(e => e.Tracked.Any(te => te.DateWatched.HasValue)),
 					NextAirs = (DateTime?)s.Episodes.Where(e => e.Aired > DateTime.Now).Min(e => e.Aired)
 				})
 				.ToDictionary(s => s.ID);
 
 				var display = watching
 					.Select(f => new SeriesInfo {
-						SeriesID = f.TrackedEpisodes.First().Episode.SeriesID,
-						Series = f.TrackedEpisodes.First().Episode.Series.Name,
-						Status = f.TrackedEpisodes.First().Episode.Series.Status,
-						Season = f.TrackedEpisodes.First().Episode.Season,
-						Episode = f.TrackedEpisodes.First().Episode.Number,
-						Date = f.LastTracked,
-						WatchedStatus = f.ProbablyWatched ? "Probably watched" : "Partial viewing",
+						SeriesID = f.Episodes.First().Episode.SeriesID,
+						Series = f.Episodes.First().Episode.Series.Name,
+						Status = f.Episodes.First().Episode.Series.Status,
+						Season = f.Episodes.First().Episode.Season,
+						Episode = f.Episodes.First().Episode.Number,
+						Date = f.Stop,
+						WatchedStatus = f.Episodes.First().DateWatched.HasValue ? "Probably watched" : "Partial viewing",
 						Tracked = TimeSpan.FromSeconds(f.TrackedSeconds),
-						Total = seriesInfo[f.TrackedEpisodes.First().Episode.SeriesID].Total,
-						Watched = seriesInfo[f.TrackedEpisodes.First().Episode.SeriesID].Watched,
-						NextAirs = seriesInfo[f.TrackedEpisodes.First().Episode.SeriesID].NextAirs,
-						BannerPath = File.Exists(@"External\Series\" + f.TrackedEpisodes.First().Episode.SeriesID + @"\banner.jpg") ? System.IO.Path.GetFullPath(@"External\Series\" + f.TrackedEpisodes.First().Episode.SeriesID + @"\banner.jpg") : null
+						Total = seriesInfo[f.Episodes.First().Episode.SeriesID].Total,
+						Watched = seriesInfo[f.Episodes.First().Episode.SeriesID].Watched,
+						NextAirs = seriesInfo[f.Episodes.First().Episode.SeriesID].NextAirs,
+						BannerPath = File.Exists(@"External\Series\" + f.Episodes.First().Episode.SeriesID + @"\banner.jpg") ? System.IO.Path.GetFullPath(@"External\Series\" + f.Episodes.First().Episode.SeriesID + @"\banner.jpg") : null
 					});
 
 				seriesGrid.ItemsSource = display
@@ -153,15 +153,15 @@ namespace EpisodeTracker.WPF {
 
 		void ShowOther() {
 			using(var db = new EpisodeTrackerDBContext()) {
-				var watching = db.TrackedFiles
-					.Where(f => !f.TrackedEpisodes.Any())
+				var watching = db.TrackedFile
+					.Where(f => !f.Episodes.Any())
 					.ToList();
 
 				var display = watching
 					.Select(f => new {
 						File = System.IO.Path.GetFileName(f.FileName),
-						Date = f.LastTracked,
-						Status = f.ProbablyWatched ? "Probably watched" : "Partial viewing",
+						Date = f.Stop,
+						Status = "Unknown",
 						Tracked = TimeSpan.FromSeconds(f.TrackedSeconds)
 					});
 
@@ -207,7 +207,7 @@ namespace EpisodeTracker.WPF {
 
 					var bal = new NotificationBalloon();
 					bal.HeaderText = "Episode Tracker";
-					bal.BodyText = "Finished tracking: " + e.FriendlyName + (e.ProbablyWatched ? " (probably watched)" : " (not watched)");
+					bal.BodyText = "Finished tracking: " + e.FriendlyName + (e.Watched ? " (probably watched)" : " (not watched)");
 					taskbar.ShowCustomBalloon(bal, System.Windows.Controls.Primitives.PopupAnimation.Slide, 3000);
 				}));
 			};

@@ -21,7 +21,7 @@ namespace EpisodeTracker.Core.Monitors {
 	public class MonitoredFileEventArgs {
 		public string Filename { get; set; }
 		public string FriendlyName { get; set; }
-		public bool ProbablyWatched { get; set; }
+		public bool Watched { get; set; }
 	}
 
 	public class ProcessMonitor : IDisposable {
@@ -203,7 +203,6 @@ namespace EpisodeTracker.Core.Monitors {
 							} else {
 								Logger.Debug("This file has been tracked before");
 								mon.PreviousTrackedSeconds = tracked.TrackedSeconds;
-								mon.Watched = tracked.Watched;
 							}
 							mon.Tracking = true;
 							if(FileAdded != null) {
@@ -215,7 +214,7 @@ namespace EpisodeTracker.Core.Monitors {
 						}
 
 						tracked.TrackedSeconds = (int)DateTime.Now.Subtract(mon.Start).TotalSeconds + mon.PreviousTrackedSeconds;
-						tracked.LastTracked = DateTime.Now;
+						tracked.Stop = DateTime.Now;
 						Logger.Trace("Total tracked seconds: " + tracked.TrackedSeconds);
 						db.SaveChanges();
 					}
@@ -240,7 +239,9 @@ namespace EpisodeTracker.Core.Monitors {
 							tracked = GetTrackedFile(db, mon);
 							if(tracked.TrackedSeconds >= (mon.Duration.TotalSeconds * .66)) {
 								Logger.Debug("Monitored file has probably been watched: " + mon.FileName);
-								tracked.ProbablyWatched = true;
+								foreach(var ep in tracked.Episodes) {
+									ep.DateWatched = DateTime.Now;
+								}
 								db.SaveChanges();
 							}
 						}
@@ -248,7 +249,7 @@ namespace EpisodeTracker.Core.Monitors {
 							FileRemoved(this, new MonitoredFileEventArgs {
 								Filename = mon.FileName,
 								FriendlyName = mon.FriendlyName,
-								ProbablyWatched = tracked.ProbablyWatched
+								Watched = tracked.Episodes.Any(ep => ep.DateWatched.HasValue)
 							});
 						}
 					}
@@ -262,23 +263,23 @@ namespace EpisodeTracker.Core.Monitors {
 
 		TrackedFile GetTrackedFile(EpisodeTrackerDBContext db, MonitoredFile mon) {
 			TrackedFile file = null;
-			if(mon.TrackedFileID.HasValue) return db.TrackedFiles.Single(f => f.ID == mon.TrackedFileID.Value);
+			if(mon.TrackedFileID.HasValue) return db.TrackedFile.Single(f => f.ID == mon.TrackedFileID.Value);
 
 			if(file == null) {
-				file = db.TrackedFiles.SingleOrDefault(f => f.FileName == mon.FileName);
+				file = db.TrackedFile.SingleOrDefault(f => f.FileName == mon.FileName);
 			}
 
 			if(file == null && mon.Episodes != null) {
 				var episodeIDs = mon.Episodes.Select(e => e.ID);
-				file = db.TrackedFiles
-					.FirstOrDefault(f => f.TrackedEpisodes.Any() && f.TrackedEpisodes.All(te => episodeIDs.Contains(te.Episode.ID)));
+				file = db.TrackedFile
+					.FirstOrDefault(f => f.Episodes.Any() && f.Episodes.All(te => episodeIDs.Contains(te.Episode.ID)));
 			}
 
 			if(file == null && mon.TvMatch != null) {
-				file = db.TrackedFiles
+				file = db.TrackedFile
 					.FirstOrDefault(f =>
-						f.TrackedEpisodes.Any()
-						&& f.TrackedEpisodes.All(te => 
+						f.Episodes.Any()
+						&& f.Episodes.All(te => 
 							te.Episode.Series.Name == mon.TvMatch.Name
 							&& te.Episode.Season == mon.TvMatch.Season
 							&& (
@@ -297,11 +298,11 @@ namespace EpisodeTracker.Core.Monitors {
 		TrackedFile NewTrackedFile(EpisodeTrackerDBContext db, MonitoredFile mon) {
 			var tracked = new TrackedFile {
 				FileName = mon.FileName,
-				Added = DateTime.Now,
-				LastTracked = DateTime.Now,
+				Start = DateTime.Now,
+				Stop = DateTime.Now,
 				DurationSeconds = mon.Duration.TotalSeconds
 			};
-			db.TrackedFiles.Add(tracked);
+			db.TrackedFile.Add(tracked);
 
 			if(mon.TvMatch != null) {
 				var seriesQuery = db.Series.Include(s => s.Episodes);
@@ -329,7 +330,7 @@ namespace EpisodeTracker.Core.Monitors {
 						.Where(ep => ids.Contains(ep.ID));
 
 					foreach(var ep in episodes) {
-						tracked.TrackedEpisodes.Add(new TrackedEpisode { Episode = ep });
+						tracked.Episodes.Add(new TrackedEpisode { Episode = ep });
 					}
 				} else {
 					// check for loose reference
@@ -355,14 +356,14 @@ namespace EpisodeTracker.Core.Monitors {
 						}
 
 						episode.Updated = DateTime.Now;
-						tracked.TrackedEpisodes.Add(new TrackedEpisode { Episode = episode });
+						tracked.Episodes.Add(new TrackedEpisode { Episode = episode });
 					}
 
 					series.Updated = DateTime.Now;
 				}			
 
 				mon.Series = series;
-				mon.Episodes = tracked.TrackedEpisodes.Select(te => te.Episode);
+				mon.Episodes = tracked.Episodes.Select(te => te.Episode);
 			}
 
 			db.SaveChanges();

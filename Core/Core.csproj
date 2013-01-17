@@ -63,9 +63,11 @@
     <Reference Include="PresentationFramework" />
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data.Entity" />
     <Reference Include="System.Data.Linq" />
+    <Reference Include="System.Data.SqlServerCe, Version=4.0.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Runtime.Serialization" />
     <Reference Include="System.Security" />
@@ -81,8 +83,9 @@
   <ItemGroup>
     <Compile Include="Data\EpisodeTrackerDBContext.cs" />
     <Compile Include="Data\Episode.cs" />
-    <Compile Include="Data\TrackedFile.cs" />
     <Compile Include="Data\Series.cs" />
+    <Compile Include="Data\TrackedFile.cs" />
+    <Compile Include="Data\User.cs" />
     <Compile Include="Data\TrackedEpisode.cs" />
     <Compile Include="Migrations\201210280828547_InitialCreate.cs" />
     <Compile Include="Migrations\201210280828547_InitialCreate.Designer.cs">
@@ -104,6 +107,10 @@
     <Compile Include="Migrations\201301031109044_MultipleTrackedEpisodes.Designer.cs">
       <DependentUpon>201301031109044_MultipleTrackedEpisodes.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201301131145424_Users.cs" />
+    <Compile Include="Migrations\201301131145424_Users.Designer.cs">
+      <DependentUpon>201301131145424_Users.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Migrations\SQLCompactMigration.cs" />
     <Compile Include="Models\HandleHelper.cs" />
@@ -112,7 +119,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
     <Content Include="NLog.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <SubType>Designer</SubType>
@@ -183,6 +192,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201301031109044_MultipleTrackedEpisodes.resx">
       <DependentUpon>201301031109044_MultipleTrackedEpisodes.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201301131145424_Users.resx">
+      <DependentUpon>201301131145424_Users.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup />

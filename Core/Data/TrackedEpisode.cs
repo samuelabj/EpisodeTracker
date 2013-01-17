@@ -8,14 +8,20 @@ using System.Threading.Tasks;
 
 namespace EpisodeTracker.Core.Data {
 	public class TrackedEpisode {
-		[Key, Column(Order = 1), Required]
-		public int TrackedFileID { get; set; }
-		[Key, Column(Order = 2), Required]
+		[Key, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+		public int ID { get; set; }
 		public int EpisodeID { get; set; }
+		public int? UserID { get; set; }
+		public DateTime? DateWatched { get; set; }
+		public int? TrackedFileID { get; set; }
+
+		[ForeignKey("EpisodeID")]
+		public virtual Episode Episode { get; set; }
 
 		[ForeignKey("TrackedFileID")]
 		public virtual TrackedFile TrackedFile { get; set; }
-		[ForeignKey("EpisodeID")]
-		public virtual Episode Episode { get; set; }
+
+		[ForeignKey("UserID")]
+		public virtual User User { get; set; }
 	}
 }

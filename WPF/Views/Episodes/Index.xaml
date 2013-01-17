@@ -7,10 +7,10 @@
             <DataGrid.RowStyle>
                 <Style TargetType="{x:Type DataGridRow}">
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding Status}" Value="Probably watched">
+                        <DataTrigger Binding="{Binding Status}" Value="Watched">
                             <Setter Property="Background" Value="LightGreen"/>
                         </DataTrigger>
-                        <DataTrigger Binding="{Binding Status}" Value="Partial viewing">
+                        <DataTrigger Binding="{Binding Status}" Value="Incomplete">
                             <Setter Property="Background" Value="#FFC5E3FF"/>
                         </DataTrigger>
                         <DataTrigger Binding="{Binding Status}" Value="">
@@ -19,6 +19,12 @@
                     </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Watched" Click="Watched_Click" />
+                    <MenuItem Header="Unwatched" Click="Unwatched_Click" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.Columns> 
                 <DataGridTextColumn Header="Season" Width="50" Binding="{Binding Season}" />
                 <DataGridTextColumn Header="Episode" Width="52" Binding="{Binding Episode}" />

@@ -25,6 +25,6 @@ namespace EpisodeTracker.Core.Data {
 		[ForeignKey("ID")]
 		public virtual Series Series { get; set; }
 		[ForeignKey("EpisodeID")]
-		public virtual ICollection<TrackedEpisode> TrackedEpisodes { get; set; }
+		public virtual ICollection<TrackedEpisode> Tracked { get; set; }
 	}
 }
