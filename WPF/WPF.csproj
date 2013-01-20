@@ -86,6 +86,7 @@
     <Reference Include="PresentationFramework" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Models\SummariseConverter.cs" />
     <Compile Include="Views\Shared\StatusModal.xaml.cs">
       <DependentUpon>StatusModal.xaml</DependentUpon>
     </Compile>
@@ -98,7 +99,7 @@
       <DependentUpon>Index.xaml</DependentUpon>
     </Compile>
     <Compile Include="Views\Shared\AnimatedImage.cs" />
-    <Compile Include="Views\Shared\CommandBase.cs" />
+    <Compile Include="Models\CommandBase.cs" />
     <Compile Include="Views\Shared\NotificationBalloon.xaml.cs">
       <DependentUpon>NotificationBalloon.xaml</DependentUpon>
     </Compile>
@@ -141,13 +142,12 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <None Include="Resources\AppIcon.ico" />
+    <Resource Include="Resources\Images\app.ico" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <Resource Include="Images\app.ico" />
-    <Resource Include="Images\circle_black.gif" />
+    <Resource Include="Resources\Images\circle_black.gif" />
     <Resource Include="app.ico" />
     <Content Include="NLog.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -166,12 +166,16 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Images\Close.png" />
+    <Resource Include="Resources\Images\close.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj">
       <Project>{cedf11ea-b0bc-4f4e-aa05-2b89e5cc4e21}</Project>
       <Name>EpisodeTracker.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MediaReign.Core\MediaReign.Core.csproj">
+      <Project>{8be05c02-2183-4825-b68d-f37c4c8fbf43}</Project>
+      <Name>MediaReign.Core</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

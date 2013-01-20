@@ -24,6 +24,8 @@ using System.Data.Entity;
 using System.IO;
 using EpisodeTracker.Core.Models;
 using System.Threading;
+using EpisodeTracker.WPF.Models;
+using MediaReign.Core;
 
 namespace EpisodeTracker.WPF {
 	/// <summary>
@@ -41,6 +43,7 @@ namespace EpisodeTracker.WPF {
 		class SeriesInfo {
 			public int SeriesID { get; set; }
 			public string Series { get; set; }
+			public string Overview { get; set; }
 			public int Season { get; set; }
 			public int Episode { get; set; }
 			public DateTime Date { get; set; }
@@ -61,7 +64,7 @@ namespace EpisodeTracker.WPF {
 			statusModal.Visibility = System.Windows.Visibility.Collapsed;
 
 			taskbar = new TaskbarIcon();
-			taskbar.Icon = new Icon(Application.GetResourceStream(new Uri("pack://application:,,,/EpisodeTracker;component/images/app.ico")).Stream, 40, 40);
+			taskbar.Icon = new Icon(Application.GetResourceStream(new Uri("pack://application:,,,/EpisodeTracker;component/resources/images/app.ico")).Stream, 40, 40);
 			taskbar.ToolTipText = "Episode Tracker";
 			taskbar.Visibility = Visibility.Visible;
 			taskbar.LeftClickCommand = new ShowSampleWindowCommand { Window = this };
@@ -116,14 +119,10 @@ namespace EpisodeTracker.WPF {
 				foreach(var temp in series) {
 					var s = temp;
 					var task = Task.Factory.StartNew(() => {
-						try {
-							if(!s.TVDBID.HasValue) {
-								TVDBSeriesSyncer.Sync(s.Name, asyncBanners: false);
-							} else {
-								TVDBSeriesSyncer.Sync(s.TVDBID.Value, asyncBanners: false);
-							}
-						} catch(Exception e) {
-							var t = e;
+						if(!s.TVDBID.HasValue) {
+							TVDBSeriesSyncer.Sync(s.Name, asyncBanners: false);
+						} else {
+							TVDBSeriesSyncer.Sync(s.TVDBID.Value, asyncBanners: false);
 						}
 
 						Interlocked.Increment(ref complete);
@@ -173,6 +172,7 @@ namespace EpisodeTracker.WPF {
 					.Select(t => new SeriesInfo {
 						SeriesID = t.Episode.SeriesID,
 						Series = t.Episode.Series.Name,
+						Overview = t.Episode.Series.Overview,
 						Status = t.Episode.Series.Status,
 						Season = t.Episode.Season,
 						Episode = t.Episode.Number,

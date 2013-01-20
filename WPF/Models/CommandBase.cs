@@ -6,7 +6,7 @@ using System.Windows.Markup;
 using System.Windows.Media;
 using Hardcodet.Wpf.TaskbarNotification;
 
-namespace EpisodeTracker.WPF.Views.Shared {
+namespace EpisodeTracker.WPF.Models {
 	/// <summary>
 	/// Basic implementation of the <see cref="ICommand"/>
 	/// interface, which is also accessible as a markup
