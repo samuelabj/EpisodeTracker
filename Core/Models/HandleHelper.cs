@@ -65,7 +65,12 @@ namespace EpisodeTracker.Core.Models {
 						start = false;
 						proc = new HandleItem();
 						var match = Regex.Match(line, @"(?<name>.+)\spid:\s(?<pid>\d+)\s");
-						proc.ProcessName = Path.GetFileNameWithoutExtension(match.Groups["name"].Value);
+						var name = match.Groups["name"].Value;
+						try {
+							proc.ProcessName = Path.GetFileNameWithoutExtension(name);
+						} catch(Exception e) {
+							throw new ApplicationException("Could not get process name from match: " + name, e);
+						}
 						proc.PID = int.Parse(match.Groups["pid"].Value);
 					} else if(proc != null) {
 						var match = Regex.Match(line, @"\sFile\s+?\(.+?\)\s+(?<file>[^\r\n]+)");

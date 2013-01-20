@@ -24,7 +24,7 @@ namespace MediaReign.TVDB {
 		private string Mirror {
 			get {
 				if(mirror == null) {
-					mirror = "http://www.thetvdb.com/api/";
+					mirror = "http://www.thetvdb.com/";
 				}
 				return mirror;
 			}
@@ -54,7 +54,7 @@ namespace MediaReign.TVDB {
 		}
 
 		public void DownloadBanner(string path, string fileName) {
-			new WebClient().DownloadFile("http://www.thetvdb.com/banners/" + path.TrimStart('/'), fileName);
+			new WebClient().DownloadFile(Mirror + "banners/" + path.TrimStart('/'), fileName);
 		}
 
 		private XDocument DownloadXml(bool zip, string request, params object[] args) {
@@ -84,7 +84,7 @@ namespace MediaReign.TVDB {
 		}
 
 		private string BuildRequestPath(string request, params object[] args) {
-			return Mirror + String.Format(request, args.Select(a => (object)Uri.EscapeDataString(a.ToString())).ToArray());
+			return Mirror + "api/" + String.Format(request, args.Select(a => (object)Uri.EscapeDataString(a.ToString())).ToArray());
 		}
 	}
 }

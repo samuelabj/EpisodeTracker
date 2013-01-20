@@ -1,9 +1,10 @@
 ﻿<Window x:Class="EpisodeTracker.WPF.Views.Episodes.Index"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Index" Height="300" Width="300">
+        xmlns:shared="clr-namespace:EpisodeTracker.WPF.Views.Shared"
+        Title="Index" Height="300" Width="1000">
     <Grid>
-        <DataGrid Name="dataGrid" HorizontalAlignment="Stretch" Margin="0,0,-418.4,-79.6" VerticalAlignment="Stretch" AutoGenerateColumns="False" IsReadOnly="True">
+        <DataGrid Name="dataGrid" HorizontalAlignment="Stretch" Margin="0,0,0,0" VerticalAlignment="Stretch" AutoGenerateColumns="False" IsReadOnly="True">
             <DataGrid.RowStyle>
                 <Style TargetType="{x:Type DataGridRow}">
                     <Style.Triggers>
@@ -25,17 +26,24 @@
                     <MenuItem Header="Unwatched" Click="Unwatched_Click" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
-            <DataGrid.Columns> 
-                <DataGridTextColumn Header="Season" Width="50" Binding="{Binding Season}" />
-                <DataGridTextColumn Header="Episode" Width="52" Binding="{Binding Episode}" />
-                <DataGridTextColumn Header="Name" Width="150" Binding="{Binding Name}" />
-                <DataGridTextColumn Header="Overview" Width="200" Binding="{Binding Overview}" />
-                <DataGridTextColumn Header="Aired" Width="100" Binding="{Binding Aired, StringFormat=\{0:dd MMM yyyy\}}" />
-                <DataGridTextColumn Header="Date" Width="100" Binding="{Binding Date, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
+            <DataGrid.Columns>
+                <DataGridTemplateColumn  Header="Banner" Width="200">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Image Source="{Binding BannerPath, IsAsync=True}" />
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Season" Width="50" Binding="{Binding Episode.Season}" />
+                <DataGridTextColumn Header="Episode" Width="52" Binding="{Binding Episode.Number}" />
+                <DataGridTextColumn Header="Name" Width="150" Binding="{Binding Episode.Name}" />
+                <DataGridTextColumn Header="Overview" Width="200" Binding="{Binding Episode.Overview}" />
+                <DataGridTextColumn Header="Aired" Width="100" Binding="{Binding Episode.Aired, StringFormat=\{0:dd MMM yyyy\}}" />
                 <DataGridTextColumn Header="Status" Width="100" Binding="{Binding Status}" />
+                <DataGridTextColumn Header="Date Watched" Width="100" Binding="{Binding Date, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
                 <DataGridTextColumn Header="Tracked" Width="100" Binding="{Binding Tracked}" />
-                <DataGridTextColumn Header="File" Width="200" Binding="{Binding File}" />
             </DataGrid.Columns>
         </DataGrid>
+        <shared:StatusModal x:Name="statusModal" />
     </Grid>
 </Window>

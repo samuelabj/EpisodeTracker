@@ -13,10 +13,10 @@ namespace MediaReign.Core {
 			info.Open(fileName);
 
 			var ms = info.Get(MediaInfoLib.StreamKind.General, 0, "Duration");
-			Duration = TimeSpan.FromMilliseconds(long.Parse(ms));
+			Length = TimeSpan.FromMilliseconds(long.Parse(ms));
 		}
 
-		public TimeSpan Duration { get; private set; }
+		public TimeSpan Length { get; private set; }
 
 		public void Dispose() {
 			info.Close();

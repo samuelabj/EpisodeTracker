@@ -49,7 +49,7 @@ namespace EpisodeTracker.Core.Models {
 					series.AirsTime = tvdbSeries.AirsTime;
 					series.Status = tvdbSeries.Status;
 					series.Overview = tvdbSeries.Overview;
-					series.DurationMinutes = tvdbSeries.DurationMinutes;
+					series.LengthMinutes = tvdbSeries.LengthMinutes;
 
 					series.Updated = DateTime.Now;
 
@@ -61,7 +61,9 @@ namespace EpisodeTracker.Core.Models {
 				}
 
 				// Do this after saving so we can use the ID
-				SyncBanners(series.ID, tvdbSeries);
+				Task.Factory.StartNew(() => {
+					SyncBanners(series, tvdbSeries);
+				});
 
 				lock(syncing) {
 					syncing.Remove(tvdbSeriesID);
@@ -109,17 +111,25 @@ namespace EpisodeTracker.Core.Models {
 			episode.Updated = DateTime.Now;
 		}
 
-		static void SyncBanners(int seriesID, TVDBSeries tvdbSeries) {
-			var root = @"External\Series\" + seriesID;
-			DownloadBanner(tvdbSeries.BannerPath, Path.Combine(root, "banner.jpg"));
-			DownloadBanner(tvdbSeries.FanartPath, Path.Combine(root, "fanart.jpg"));
+		static void SyncBanners(Series series, TVDBSeries tvdbSeries) {
+			var root = @"External\Series\" + series.ID;
+			if(!Directory.Exists(root)) Directory.CreateDirectory(root);
+
+			DownloadBanner(tvdbSeries.BannerPath, root, "banner.jpg");
+			DownloadBanner(tvdbSeries.FanartPath, root, "fanart.jpg");
+
+			foreach(var ep in series.Episodes) {
+				var tvdbEP = tvdbSeries.Episodes.Single(te => te.ID == ep.TVDBID);
+				if(!String.IsNullOrEmpty(tvdbEP.Filename)) {
+					DownloadBanner(tvdbEP.Filename, root, ep.ID + ".jpg");
+				}
+			}
 		}
 
-		static void DownloadBanner(string banner, string fileName) {
-			var dirPath = Path.GetDirectoryName(fileName);
-			if(!Directory.Exists(dirPath)) Directory.CreateDirectory(dirPath);
-			if(File.Exists(fileName)) return;
-			new TVDBRequest().DownloadBanner(banner, fileName);
+		static void DownloadBanner(string banner, string directory, string fileName) {
+			var path = Path.Combine(directory, fileName);
+			if(File.Exists(path)) return;
+			new TVDBRequest().DownloadBanner(banner, path);
 		}
 	}
 }

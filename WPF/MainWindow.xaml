@@ -1,13 +1,20 @@
 ﻿<Window x:Class="EpisodeTracker.WPF.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:shared="clr-namespace:EpisodeTracker.WPF.Views.Shared"
         Title="Episode Tracker" Height="392.2" Width="860.2">
-    <Grid>
+    <Grid x:Name="grid">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="0" />
         </Grid.RowDefinitions>
+        
+        <Grid.ContextMenu>
+            <ContextMenu>
+                <MenuItem Header="Force Update" Click="ForceUpdate_Click" />
+            </ContextMenu>
+        </Grid.ContextMenu>
         
         <DataGrid Grid.Row="0" Name="seriesGrid" HorizontalAlignment="Stretch" Margin="0" VerticalAlignment="Stretch" AutoGenerateColumns="False" IsReadOnly="True">
             <DataGrid.RowStyle>
@@ -19,7 +26,7 @@
                 <DataGridTemplateColumn  Header="Banner" Width="400">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Image Source="{Binding BannerPath}" />
+                            <Image Source="{Binding BannerPath, IsAsync=True}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
@@ -27,8 +34,6 @@
                 <DataGridTextColumn Header="Season" Width="50" Binding="{Binding Season}" />
                 <DataGridTextColumn Header="Episode" Width="52" Binding="{Binding Episode}" />
                 <DataGridTextColumn Header="Date" Width="100" Binding="{Binding Date, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
-                <DataGridTextColumn Header="Watched Status" Width="100" Binding="{Binding WatchedStatus}" />
-                <DataGridTextColumn Header="Tracked Duration" Width="100" Binding="{Binding Tracked}" />
                 <DataGridTemplateColumn Header="Progress" Width="100">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
@@ -62,5 +67,6 @@
                 <DataGridTextColumn Header="Tracked Duration" Width="100" Binding="{Binding Tracked}" />
             </DataGrid.Columns>
         </DataGrid>
+        <shared:StatusModal x:Name="statusModal" />
     </Grid>
 </Window>

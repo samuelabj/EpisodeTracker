@@ -22,7 +22,7 @@ namespace EpisodeTracker.Core.Data {
 		public DateTime? FirstAired { get; set; }
 		public DayOfWeek? AirsDay { get; set; }
 		public DateTime? AirsTime { get; set; }
-		public double? DurationMinutes { get; set; }
+		public double? LengthMinutes { get; set; }
 		public string Overview { get; set; }
 		public int? TVDBID { get; set; }
 

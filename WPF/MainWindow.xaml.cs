@@ -23,6 +23,7 @@ using NLog;
 using System.Data.Entity;
 using System.IO;
 using EpisodeTracker.Core.Models;
+using System.Threading;
 
 namespace EpisodeTracker.WPF {
 	/// <summary>
@@ -44,8 +45,6 @@ namespace EpisodeTracker.WPF {
 			public int Episode { get; set; }
 			public DateTime Date { get; set; }
 			public string Status { get; set; }
-			public string WatchedStatus { get; set; }
-			public TimeSpan Tracked { get; set; }
 			public int Total { get; set; }
 			public int Watched { get; set; }
 			public DateTime? NextAirs { get; set; }
@@ -59,6 +58,8 @@ namespace EpisodeTracker.WPF {
 			Monitor = GetMonitor();
 			Monitor.Start();
 
+			statusModal.Visibility = System.Windows.Visibility.Collapsed;
+
 			taskbar = new TaskbarIcon();
 			taskbar.Icon = new Icon(SystemIcons.Application, 40, 40);
 			taskbar.ToolTipText = "Episode Tracker";
@@ -66,7 +67,7 @@ namespace EpisodeTracker.WPF {
 			taskbar.LeftClickCommand = new ShowSampleWindowCommand { Window = this };
 			taskbar.LeftClickCommandParameter = taskbar;
 
-			this.Hide();
+			//this.Hide();
 			this.StateChanged += (o, ea) => { 
 				if(WindowState == System.Windows.WindowState.Minimized) this.Hide();
 				RefreshLists();
@@ -80,18 +81,38 @@ namespace EpisodeTracker.WPF {
 
 			Task.Factory.StartNew(() => {
 				try {
-					UpdateSeries();
+					UpdateSeries(false);
 				} catch(Exception ex) {
 					Logger.Error("Error running UpdateSeries: " + ex);
 				}
 			});
+
+			RefreshLists();
+
+			this.WindowState = System.Windows.WindowState.Maximized;
 		}
 
-		void UpdateSeries() {
+		void UpdateSeries(bool force) {
 			var tasks = new List<Task>();
+			StatusModal updateStatus = null;
+
 			using(var db = new EpisodeTrackerDBContext()) {
-				var old = DateTime.Now.AddDays(-7);
+				var old = force ? DateTime.Now.AddDays(1) : DateTime.Now.AddDays(-7);
 				var series = db.Series.Where(s => !s.TVDBID.HasValue || s.Updated <= old).ToList();
+
+				if(series.Any()) {
+					this.Dispatcher.BeginInvoke(new Action(() => {
+						updateStatus = new StatusModal();
+						updateStatus.Text = "Updating Series";
+						updateStatus.SubText = "0 / " + series.Count;
+						updateStatus.ShowSubText = true;
+						updateStatus.ShowProgress = true;
+						grid.Children.Add(updateStatus);
+					}));
+				}
+
+				int complete = 0;
+
 				foreach(var temp in series) {
 					var s = temp;
 					var task = Task.Factory.StartNew(() => {
@@ -100,11 +121,24 @@ namespace EpisodeTracker.WPF {
 						} else {
 							TVDBSeriesSyncer.Sync(s.TVDBID.Value);
 						}
+
+						Interlocked.Increment(ref complete);
+						this.Dispatcher.BeginInvoke(new Action(() => {
+							updateStatus.SubText = String.Format("{0} / {1}", complete, series.Count);
+							updateStatus.Progress = complete / (double)series.Count * 100;
+						}));
 					});
 					tasks.Add(task);
 				}
 			}
+
 			Task.WaitAll(tasks.ToArray());
+
+			if(statusModal != null) {
+				this.Dispatcher.BeginInvoke(new Action(() => {
+					grid.Children.Remove(updateStatus);
+				}));
+			}
 		}
 
 		void ShowSeries() {
@@ -112,15 +146,16 @@ namespace EpisodeTracker.WPF {
 				var watching = db.Series
 					.Select(s =>
 						s.Episodes
-							.SelectMany(ep => ep.Tracked.Select(te => te.TrackedFile))
-							.OrderByDescending(f => f.Stop)
+							.SelectMany(ep => ep.Tracked)
+							.Where(t => t.DateWatched.HasValue)
+							.OrderByDescending(t => t.DateWatched)
 							.FirstOrDefault()
 					)
 					.AsQueryable()
-					.Include(f => f.Episodes)
-					.Include(f => f.Episodes.Select(te => te.Episode))
+					.Include(t => t.Episode)
+					.Include(t => t.Episode.Series)
 					.ToList()
-					.Where(f => f != null);
+					.Where(t => t != null);
 
 				var seriesInfo = db.Series.Select(s => new {
 					s.ID,
@@ -131,24 +166,30 @@ namespace EpisodeTracker.WPF {
 				.ToDictionary(s => s.ID);
 
 				var display = watching
-					.Select(f => new SeriesInfo {
-						SeriesID = f.Episodes.First().Episode.SeriesID,
-						Series = f.Episodes.First().Episode.Series.Name,
-						Status = f.Episodes.First().Episode.Series.Status,
-						Season = f.Episodes.First().Episode.Season,
-						Episode = f.Episodes.First().Episode.Number,
-						Date = f.Stop,
-						WatchedStatus = f.Episodes.First().DateWatched.HasValue ? "Probably watched" : "Partial viewing",
-						Tracked = TimeSpan.FromSeconds(f.TrackedSeconds),
-						Total = seriesInfo[f.Episodes.First().Episode.SeriesID].Total,
-						Watched = seriesInfo[f.Episodes.First().Episode.SeriesID].Watched,
-						NextAirs = seriesInfo[f.Episodes.First().Episode.SeriesID].NextAirs,
-						BannerPath = File.Exists(@"External\Series\" + f.Episodes.First().Episode.SeriesID + @"\banner.jpg") ? System.IO.Path.GetFullPath(@"External\Series\" + f.Episodes.First().Episode.SeriesID + @"\banner.jpg") : null
+					.Select(t => new SeriesInfo {
+						SeriesID = t.Episode.SeriesID,
+						Series = t.Episode.Series.Name,
+						Status = t.Episode.Series.Status,
+						Season = t.Episode.Season,
+						Episode = t.Episode.Number,
+						Date = t.DateWatched.Value,
+						Total = seriesInfo[t.Episode.SeriesID].Total,
+						Watched = seriesInfo[t.Episode.SeriesID].Watched,
+						NextAirs = seriesInfo[t.Episode.SeriesID].NextAirs,
+						BannerPath = GetBannerPath(t.Episode.Series)
 					});
 
-				seriesGrid.ItemsSource = display
-					.OrderByDescending(f => f.Date);
+				this.Dispatcher.BeginInvoke(new Action(() => {
+					seriesGrid.ItemsSource = display
+						.OrderByDescending(f => f.Date);
+				}));
 			}
+		}
+
+		string GetBannerPath(Series series) {
+			var path = System.IO.Path.GetFullPath(@"External\Series\" + series.ID + @"\banner.jpg");
+			if(File.Exists(path)) return path;
+			return null;
 		}
 
 		void ShowOther() {
@@ -165,15 +206,26 @@ namespace EpisodeTracker.WPF {
 						Tracked = TimeSpan.FromSeconds(f.TrackedSeconds)
 					});
 
-				otherGrid.ItemsSource = display
-					.OrderByDescending(f => f.File)
-					.OrderByDescending(f => f.Date);
+				this.Dispatcher.BeginInvoke(new Action(() => {
+					otherGrid.ItemsSource = display
+						.OrderByDescending(f => f.File)
+						.OrderByDescending(f => f.Date);
+				}));
 			}
 		}
 
 		void RefreshLists() {
-			ShowSeries();
-			ShowOther();
+			statusModal.Text = "Refreshing...";
+			statusModal.Visibility = System.Windows.Visibility.Visible;
+
+			Task.Factory.StartNew(() => {
+				ShowSeries();
+				ShowOther();
+
+				this.Dispatcher.BeginInvoke(new Action(() => {
+					statusModal.Visibility = System.Windows.Visibility.Collapsed;
+				}));
+			});
 		}
 
 		void SeriesRowDoubleClick(object sender, RoutedEventArgs e) {
@@ -213,6 +265,10 @@ namespace EpisodeTracker.WPF {
 			};
 
 			return mon;
+		}
+
+		private void ForceUpdate_Click(object sender, RoutedEventArgs e) {
+			Task.Factory.StartNew(() => UpdateSeries(true));
 		}
 
 		public class ShowSampleWindowCommand : CommandBase<ShowSampleWindowCommand> {

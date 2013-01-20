@@ -33,7 +33,7 @@ namespace EpisodeTracker.Core.Monitors {
 			public Series Series { get; set; }
 			public IEnumerable<Episode> Episodes { get; set; }
 			public int? TrackedFileID { get; set; }
-			public TimeSpan Duration { get; set; }
+			public TimeSpan Length { get; set; }
 			public bool Tracking { get; set; }
 			public int PreviousTrackedSeconds { get; set; }
 			public bool Watched { get; set; }
@@ -138,7 +138,7 @@ namespace EpisodeTracker.Core.Monitors {
 			};
 
 			using(var info = new MediaInfo(fileName)) {
-				mon.Duration = info.Duration;
+				mon.Length = info.Length;
 			}
 
 			var match = new TvMatcher().Match(fileName);
@@ -237,7 +237,7 @@ namespace EpisodeTracker.Core.Monitors {
 						TrackedFile tracked;
 						using(var db = new EpisodeTrackerDBContext()) {
 							tracked = GetTrackedFile(db, mon);
-							if(tracked.TrackedSeconds >= (mon.Duration.TotalSeconds * .66)) {
+							if(tracked.TrackedSeconds >= (mon.Length.TotalSeconds * .66)) {
 								Logger.Debug("Monitored file has probably been watched: " + mon.FileName);
 								foreach(var ep in tracked.Episodes) {
 									ep.DateWatched = DateTime.Now;
@@ -300,7 +300,7 @@ namespace EpisodeTracker.Core.Monitors {
 				FileName = mon.FileName,
 				Start = DateTime.Now,
 				Stop = DateTime.Now,
-				DurationSeconds = mon.Duration.TotalSeconds
+				LengthSeconds = mon.Length.TotalSeconds
 			};
 			db.TrackedFile.Add(tracked);
 

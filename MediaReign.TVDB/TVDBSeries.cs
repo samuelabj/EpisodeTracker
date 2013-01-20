@@ -19,7 +19,7 @@ namespace MediaReign.TVDB {
 		public string Network { get; private set; }
 		public string Overview { get; private set; }
 		public double Rating { get; private set; }
-		public double DurationMinutes { get; private set; }
+		public double LengthMinutes { get; private set; }
 		public string TvDotComID { get; private set; }
 		public string Name { get; private set; }
 		public string Status { get; private set; }
@@ -48,7 +48,7 @@ namespace MediaReign.TVDB {
 			Network = series.Get("Network");
 			Overview = series.Get("Overview");
 			Rating = series.GetDouble("Rating");
-			DurationMinutes = series.GetDouble("Runtime");
+			LengthMinutes = series.GetDouble("Runtime");
 			TvDotComID = series.Get("SeriesID");
 			Name = series.Get("SeriesName");
 			Status = series.Get("Status");

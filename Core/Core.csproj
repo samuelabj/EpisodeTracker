@@ -111,6 +111,10 @@
     <Compile Include="Migrations\201301131145424_Users.Designer.cs">
       <DependentUpon>201301131145424_Users.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201301200222586_Stuff.cs" />
+    <Compile Include="Migrations\201301200222586_Stuff.Designer.cs">
+      <DependentUpon>201301200222586_Stuff.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Migrations\SQLCompactMigration.cs" />
     <Compile Include="Models\HandleHelper.cs" />
@@ -195,6 +199,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201301131145424_Users.resx">
       <DependentUpon>201301131145424_Users.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201301200222586_Stuff.resx">
+      <DependentUpon>201301200222586_Stuff.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup />

@@ -1,0 +1,49 @@
+﻿<UserControl x:Class="EpisodeTracker.WPF.Views.Shared.StatusModal"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:shared="clr-namespace:EpisodeTracker.WPF.Views.Shared"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+    <Grid Background="Transparent" HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Border HorizontalAlignment="Stretch" VerticalAlignment="Stretch" CornerRadius="10" Background="Black" 
+			Padding="50,20" Opacity=".9"></Border>
+        <StackPanel Margin="50,20">
+            <StackPanel Orientation="Horizontal">
+                <shared:AnimatedImage x:Name="statusProcessing" Source="/EpisodeTracker;component/Images/circle_black.gif" 
+										HorizontalAlignment="Left" Width="20" Height="20" Margin="0,0,10,0" Opacity=".8" />
+                <TextBlock Name="statusText" Text="Text" FontSize="20" Foreground="White" />
+            </StackPanel>
+
+            <TextBlock Name="statusSubText" Text="test" Foreground="White" Margin="0,5,0,0" TextAlignment="Center" HorizontalAlignment="Stretch" />
+            <ProgressBar Height="5" Name="statusProgress" HorizontalAlignment="Stretch" Value="50" Margin="0,5,0,0">
+                <ProgressBar.Style>
+                    <Style TargetType="{x:Type ProgressBar}">
+                        <Setter Property="Template">
+                            <Setter.Value>
+                                <ControlTemplate TargetType="{x:Type ProgressBar}">
+                                    <Grid MinHeight="5" MinWidth="10">
+                                        <Border 
+												Name="PART_Track" 
+												CornerRadius="2" 
+												Background="White"
+												BorderBrush="#888"
+												BorderThickness="0" />
+                                        <Border 
+												Name="PART_Indicator" 
+												CornerRadius="2" 
+												Background="#0480ce" 
+												BorderBrush="Transparent" 
+												BorderThickness="0.0" 
+												HorizontalAlignment="Left" />
+                                    </Grid>
+                                </ControlTemplate>
+                            </Setter.Value>
+                        </Setter>
+                    </Style>
+                </ProgressBar.Style>
+            </ProgressBar>
+        </StackPanel>
+    </Grid>
+</UserControl>

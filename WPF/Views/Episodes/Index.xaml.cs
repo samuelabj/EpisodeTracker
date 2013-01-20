@@ -22,11 +22,11 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 
 		public class EpisodeInfo : INotifyPropertyChanged {
 			public Episode Episode { get; set; }
-			public string File { get; set; }
 			public DateTime? Date { get; set; }
 			public string Status { get; set; }
 			public TimeSpan? Tracked { get; set; }
 			public bool Watched { get; set; }
+			public string BannerPath { get; set; }
 
 			public event PropertyChangedEventHandler PropertyChanged;
 		}
@@ -37,14 +37,25 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 
 		public int SeriesID { get; set; }
 
+		protected override void OnInitialized(EventArgs e) {
+			base.OnInitialized(e);
+			statusModal.Visibility = System.Windows.Visibility.Hidden;
+		}
+
 		protected override void OnActivated(EventArgs e) {
 			base.OnActivated(e);
-			ShowEpisodes();
+
+			statusModal.Text = "Loading...";
+			statusModal.Visibility = System.Windows.Visibility.Visible;
+			Task.Factory.StartNew(() => ShowEpisodes());
 		}
 
 		void ShowEpisodes() {
 			using(var db = new EpisodeTrackerDBContext()) {
-				Title = db.Series.SingleOrDefault(s => s.ID == SeriesID).Name;
+				var title = db.Series.SingleOrDefault(s => s.ID == SeriesID).Name;
+				this.Dispatcher.BeginInvoke(new Action(() => {
+					Title = title;
+				}));
 
 				var episodes = db.Episodes
 					.Where(ep => ep.SeriesID == SeriesID)
@@ -63,13 +74,29 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 						Date = ep.Tracked != null ? ep.Tracked.DateWatched : default(DateTime?),
 						Watched = ep.Tracked != null && ep.Tracked.DateWatched.HasValue,
 						Status = ep.Tracked != null ? ep.Tracked.DateWatched.HasValue ? "Watched" : "Incomplete" : null,
-						Tracked = ep.Tracked != null && ep.Tracked.TrackedFile != null ? TimeSpan.FromSeconds(ep.Tracked.TrackedFile.TrackedSeconds) : default(TimeSpan?)		
-					});
+						Tracked = ep.Tracked != null && ep.Tracked.TrackedFile != null ? TimeSpan.FromSeconds(ep.Tracked.TrackedFile.TrackedSeconds) : default(TimeSpan?),		
+						BannerPath = GetBannerPath(ep.Episode)
+					})
+					.ToList();
 
-				dataGrid.ItemsSource = display
-					.OrderByDescending(ep => ep.Episode.Number)
-					.OrderByDescending(ep => ep.Episode.Season);
+				this.Dispatcher.BeginInvoke(new Action(() => {
+					if(!display.Any(d => d.BannerPath != null)) {
+						dataGrid.Columns.First().Visibility = System.Windows.Visibility.Collapsed;
+					}
+
+					dataGrid.ItemsSource = display
+						.OrderByDescending(ep => ep.Episode.Number)
+						.OrderByDescending(ep => ep.Episode.Season);
+
+					statusModal.Visibility = System.Windows.Visibility.Collapsed;
+				}));
 			}
+		}
+
+		string GetBannerPath(Episode ep) {
+			var path = System.IO.Path.GetFullPath(@"External\Series\" + ep.SeriesID + @"\" + ep.ID + ".jpg");
+			if(System.IO.File.Exists(path)) return path;
+			return null;
 		}
 
 		private void Watched_Click(object sender, RoutedEventArgs e) {
@@ -94,7 +121,8 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			var selectedIDs = selected.Select(s => s.Episode.ID);
 
 			using(var db = new EpisodeTrackerDBContext()) {
-				
+				var tracked = db.TrackedEpisodes.Where(te => selectedIDs.Contains(te.EpisodeID) && te.DateWatched.HasValue);
+				foreach(var t in tracked) db.TrackedEpisodes.Remove(t);
 				db.SaveChanges();
 			}
 		}

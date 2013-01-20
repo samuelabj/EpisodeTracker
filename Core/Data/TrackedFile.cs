@@ -19,7 +19,7 @@ namespace EpisodeTracker.Core.Data {
 		public DateTime Start { get; set; }
 		public DateTime Stop { get; set; }
 		public int TrackedSeconds { get; set; }
-		public double? DurationSeconds { get; set; }
+		public double? LengthSeconds { get; set; }
 
 		[ForeignKey("TrackedFileID")]
 		public virtual ICollection<TrackedEpisode> Episodes { get; set; }
