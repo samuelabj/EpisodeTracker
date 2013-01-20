@@ -17,7 +17,7 @@ namespace EpisodeTracker.Core.Models {
 			public bool Complete { get; set; }
 		}
 
-		public static void Sync(int tvdbSeriesID, string name = null) {
+		public static void Sync(int tvdbSeriesID, string name = null, bool asyncBanners = true) {
 			SyncInfo syncInfo;
 			lock(syncing) {			
 				if(!syncing.TryGetValue(tvdbSeriesID, out syncInfo)) {
@@ -61,9 +61,13 @@ namespace EpisodeTracker.Core.Models {
 				}
 
 				// Do this after saving so we can use the ID
-				Task.Factory.StartNew(() => {
+				if(asyncBanners) {
+					Task.Factory.StartNew(() => {
+						SyncBanners(series, tvdbSeries);
+					});
+				} else {
 					SyncBanners(series, tvdbSeries);
-				});
+				}
 
 				lock(syncing) {
 					syncing.Remove(tvdbSeriesID);
@@ -73,11 +77,11 @@ namespace EpisodeTracker.Core.Models {
 			}
 		}
 
-		public static void Sync(string name) {
+		public static void Sync(string name, bool asyncBanners = true) {
 			var request = new TVDBRequest();
 			var result = request.Search(name).FirstOrDefault();
 			if(result == null) return;
-			Sync(result.ID, name);
+			Sync(result.ID, name, asyncBanners);
 		}
 
 		static void SyncEpisode(TVDBEpisode tvDBEpisode, Series series) {

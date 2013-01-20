@@ -2,7 +2,8 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shared="clr-namespace:EpisodeTracker.WPF.Views.Shared"
-        Title="Episode Tracker" Height="392.2" Width="860.2">
+        Title="Episode Tracker" Height="392.2" Width="860.2"
+        Icon="/EpisodeTracker;component/images/app.ico">
     <Grid x:Name="grid">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />

@@ -61,7 +61,7 @@ namespace EpisodeTracker.WPF {
 			statusModal.Visibility = System.Windows.Visibility.Collapsed;
 
 			taskbar = new TaskbarIcon();
-			taskbar.Icon = new Icon(SystemIcons.Application, 40, 40);
+			taskbar.Icon = new Icon(Application.GetResourceStream(new Uri("pack://application:,,,/EpisodeTracker;component/images/app.ico")).Stream, 40, 40);
 			taskbar.ToolTipText = "Episode Tracker";
 			taskbar.Visibility = Visibility.Visible;
 			taskbar.LeftClickCommand = new ShowSampleWindowCommand { Window = this };
@@ -117,9 +117,9 @@ namespace EpisodeTracker.WPF {
 					var s = temp;
 					var task = Task.Factory.StartNew(() => {
 						if(!s.TVDBID.HasValue) {
-							TVDBSeriesSyncer.Sync(s.Name);
+							TVDBSeriesSyncer.Sync(s.Name, asyncBanners: false);
 						} else {
-							TVDBSeriesSyncer.Sync(s.TVDBID.Value);
+							TVDBSeriesSyncer.Sync(s.TVDBID.Value, asyncBanners: false);
 						}
 
 						Interlocked.Increment(ref complete);
