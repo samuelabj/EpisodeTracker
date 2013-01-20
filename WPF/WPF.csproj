@@ -53,8 +53,7 @@
     <StartupObject>EpisodeTracker.WPF.App</StartupObject>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>
-    </ApplicationIcon>
+    <ApplicationIcon>app.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="EntityFramework, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
@@ -149,6 +148,7 @@
     </EmbeddedResource>
     <Resource Include="Images\app.ico" />
     <Resource Include="Images\circle_black.gif" />
+    <Resource Include="app.ico" />
     <Content Include="NLog.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
