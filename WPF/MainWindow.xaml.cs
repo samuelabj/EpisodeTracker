@@ -116,10 +116,14 @@ namespace EpisodeTracker.WPF {
 				foreach(var temp in series) {
 					var s = temp;
 					var task = Task.Factory.StartNew(() => {
-						if(!s.TVDBID.HasValue) {
-							TVDBSeriesSyncer.Sync(s.Name, asyncBanners: false);
-						} else {
-							TVDBSeriesSyncer.Sync(s.TVDBID.Value, asyncBanners: false);
+						try {
+							if(!s.TVDBID.HasValue) {
+								TVDBSeriesSyncer.Sync(s.Name, asyncBanners: false);
+							} else {
+								TVDBSeriesSyncer.Sync(s.TVDBID.Value, asyncBanners: false);
+							}
+						} catch(Exception e) {
+							var t = e;
 						}
 
 						Interlocked.Increment(ref complete);

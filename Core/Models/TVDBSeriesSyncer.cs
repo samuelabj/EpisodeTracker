@@ -123,7 +123,9 @@ namespace EpisodeTracker.Core.Models {
 			DownloadBanner(tvdbSeries.FanartPath, root, "fanart.jpg");
 
 			foreach(var ep in series.Episodes) {
-				var tvdbEP = tvdbSeries.Episodes.Single(te => te.ID == ep.TVDBID);
+				if(!ep.TVDBID.HasValue) continue;
+				var tvdbEP = tvdbSeries.Episodes.SingleOrDefault(te => te.ID == ep.TVDBID.Value);
+				if(tvdbEP == null) continue;
 				if(!String.IsNullOrEmpty(tvdbEP.Filename)) {
 					DownloadBanner(tvdbEP.Filename, root, ep.ID + ".jpg");
 				}
