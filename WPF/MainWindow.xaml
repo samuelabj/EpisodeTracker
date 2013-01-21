@@ -14,12 +14,35 @@
             <GradientStop Color="#333" Offset="0.7"/>
         </LinearGradientBrush>
 
+        <LinearGradientBrush x:Key="HeaderBrushOver" StartPoint="0.5,0" EndPoint="0.5,1">
+            <GradientStop Color="#344451" Offset="0"/>
+            <GradientStop Color="#000" Offset="1.2"/>
+            <GradientStop Color="#344451" Offset="0.509"/>
+            <GradientStop Color="#344451" Offset="0.7"/>
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="HeaderBrushAsc" StartPoint="0.5,0" EndPoint="0.5,1">
+            <GradientStop Color="#755B6B" Offset="0"/>
+            <GradientStop Color="#000" Offset="1.2"/>
+            <GradientStop Color="#755B6B" Offset="0.509"/>
+            <GradientStop Color="#755B6B" Offset="0.7"/>
+        </LinearGradientBrush>
+
+        <LinearGradientBrush x:Key="HeaderBrushDesc" StartPoint="0.5,0" EndPoint="0.5,1">
+            <GradientStop Color="#3A2D35" Offset="0"/>
+            <GradientStop Color="#000" Offset="1.2"/>
+            <GradientStop Color="#3A2D35" Offset="0.509"/>
+            <GradientStop Color="#3A2D35" Offset="0.7"/>
+        </LinearGradientBrush>
+
         <LinearGradientBrush x:Key="HeaderBorderBrush" StartPoint="0.5,0" EndPoint="0.5,1">
             <GradientStop Color="#000" Offset="0.614"/>
             <GradientStop Color="#000" Offset="0.853"/>
             <GradientStop Color="#000" Offset="1"/>
         </LinearGradientBrush>
         
+        <SolidColorBrush x:Key="SolidBorderBrush" Color="#000" />
+
         <Style x:Key="HeaderStyle" TargetType="DataGridColumnHeader">
             <Setter Property="Background" Value="{StaticResource HeaderBrush}" />
             <Setter Property="Foreground" Value="White" />
@@ -30,6 +53,64 @@
             <Setter Property="MinWidth" Value="0" />
             <Setter Property="MinHeight" Value="40" />
             <Setter Property="Cursor" Value="Hand" />
+            
+            <Style.Triggers>
+                <MultiTrigger>
+                    <MultiTrigger.Conditions>
+                        <Condition Property="IsMouseOver" Value="True" />
+                        <!--<Condition Property="SortDirection" Value="{x:Null}" />-->
+                    </MultiTrigger.Conditions>
+                    <Setter Property="Background" Value="{StaticResource HeaderBrushOver}" />
+                </MultiTrigger>
+                <Trigger Property="SortDirection" Value="Ascending">
+                    <Setter Property="Background" Value="{StaticResource HeaderBrushAsc}" />
+                </Trigger>
+                <Trigger Property="SortDirection" Value="Descending">
+                    <Setter Property="Background" Value="{StaticResource HeaderBrushDesc}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="ExpandedToolTip" TargetType="ToolTip">
+            <Setter Property="OverridesDefaultStyle" Value="true"/>
+            <Setter Property="HasDropShadow" Value="True"/>
+            <Setter Property="ToolTipService.ShowDuration" Value="60000"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToolTip">
+                        <Border Name="Border"
+		                    Background="#333"
+		                    BorderBrush="{StaticResource SolidBorderBrush}"
+		                    BorderThickness="1"
+                            Margin="0,0,11,11" 
+                            Padding="4,2,4,3"
+						    CornerRadius="3"
+                            MaxWidth="300"
+		                    Width="{TemplateBinding Width}"
+		                    Height="{TemplateBinding Height}">
+                            <ContentPresenter
+			                    Margin="10" 
+			                    HorizontalAlignment="Left"
+			                    VerticalAlignment="Top">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock">
+                                        <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
+                                    </Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
+                            <Border.Effect>
+                                <DropShadowEffect BlurRadius="11" ShadowDepth="4" Color="#000" Opacity="0.6"/>
+                            </Border.Effect>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="HasDropShadow" Value="true">
+                                <Setter TargetName="Border" Property="CornerRadius" Value="4"/>
+                                <Setter TargetName="Border" Property="SnapsToDevicePixels" Value="true"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
         </Style>
     </Window.Resources>
     
@@ -70,7 +151,7 @@
                 </Style>     
             </DataGrid.RowStyle>
             <DataGrid.Columns>
-                <DataGridTemplateColumn  Header="Banner" Width="400">
+                <DataGridTemplateColumn Header="Banner" Width="400">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <Image Source="{Binding BannerPath, IsAsync=True}" />
@@ -84,7 +165,16 @@
                             <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
                             <Setter Property="TextBlock.TextAlignment" Value="Left"/>
                         </Style>
-                    </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn.ElementStyle> 
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="ToolTip">
+                                <Setter.Value>
+                                    <ToolTip Style="{StaticResource ExpandedToolTip}" Content="{Binding Overview}" />
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>
                 <DataGridTextColumn Header="Season" Width="50" Binding="{Binding Season}" />
                 <DataGridTextColumn Header="Episode" Width="52" Binding="{Binding Episode}" />
