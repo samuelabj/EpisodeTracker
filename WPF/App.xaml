@@ -3,6 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/EpisodeTracker;component/Resources/Dictionaries/Core.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <!-- Workaround for ResourceDictionary loading bug/optimization -->
+            <Style TargetType="{x:Type Rectangle}" />
+        </ResourceDictionary>
     </Application.Resources>
 </Application>

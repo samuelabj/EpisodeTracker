@@ -1,0 +1,10 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="Brushes/DataGrid.xaml" />
+        <ResourceDictionary Source="Brushes/ToolTip.xaml" />
+        <ResourceDictionary Source="Styles/DataGrid.xaml" />
+        <ResourceDictionary Source="Styles/ToolTip.xaml" />
+        <ResourceDictionary Source="Styles/TextBlock.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+</ResourceDictionary>

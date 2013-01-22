@@ -95,13 +95,22 @@ namespace EpisodeTracker.WPF {
 			this.WindowState = System.Windows.WindowState.Maximized;
 		}
 
-		void UpdateSeries(bool force) {
+		void UpdateSeries(bool force, IEnumerable<int> seriesIDs = null) {
 			var tasks = new List<Task>();
 			StatusModal updateStatus = null;
+			if(seriesIDs == null) seriesIDs = new int[0];
 
 			using(var db = new EpisodeTrackerDBContext()) {
 				var old = force ? DateTime.Now.AddDays(1) : DateTime.Now.AddDays(-7);
-				var series = db.Series.Where(s => !s.TVDBID.HasValue || s.Updated <= old).ToList();
+				var series = db.Series.Where(s => 
+					seriesIDs.Any() 
+					&& seriesIDs.Contains(s.ID)
+					|| !seriesIDs.Any() && (
+						!s.TVDBID.HasValue 
+						|| s.Updated <= old 					
+					)
+				)
+				.ToList();
 
 				if(series.Any()) {
 					this.Dispatcher.BeginInvoke(new Action(() => {
@@ -110,6 +119,7 @@ namespace EpisodeTracker.WPF {
 						updateStatus.SubText = "0 / " + series.Count;
 						updateStatus.ShowSubText = true;
 						updateStatus.ShowProgress = true;
+						updateStatus.SetValue(Grid.RowProperty, 1);
 						grid.Children.Add(updateStatus);
 					}));
 				}
@@ -271,8 +281,13 @@ namespace EpisodeTracker.WPF {
 			return mon;
 		}
 
-		private void ForceUpdate_Click(object sender, RoutedEventArgs e) {
+		private void UpdateAll_Click(object sender, RoutedEventArgs e) {
 			Task.Factory.StartNew(() => UpdateSeries(true));
+		}
+
+		private void UpdateSelected_Click(object sender, RoutedEventArgs e) {
+			var selected = seriesGrid.SelectedItems.Cast<SeriesInfo>().Select(s => s.SeriesID);
+			Task.Factory.StartNew(() => UpdateSeries(true, selected));
 		}
 
 		public class ShowSampleWindowCommand : CommandBase<ShowSampleWindowCommand> {

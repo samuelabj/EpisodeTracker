@@ -3,153 +3,47 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shared="clr-namespace:EpisodeTracker.WPF.Views.Shared"
         xmlns:models="clr-namespace:EpisodeTracker.WPF.Models"
+        xmlns:markext="clr-namespace:EpisodeTracker.WPF.Models.MarkupExtensions"
         Title="Episode Tracker" Height="392.2" Width="860.2"
         Icon="/EpisodeTracker;component/resources/images/app.ico">
-
-    <Window.Resources>
-        <LinearGradientBrush x:Key="HeaderBrush" StartPoint="0.5,0" EndPoint="0.5,1">
-            <GradientStop Color="#333" Offset="0"/>
-            <GradientStop Color="#000" Offset="1.2"/>
-            <GradientStop Color="#333" Offset="0.509"/>
-            <GradientStop Color="#333" Offset="0.7"/>
-        </LinearGradientBrush>
-
-        <LinearGradientBrush x:Key="HeaderBrushOver" StartPoint="0.5,0" EndPoint="0.5,1">
-            <GradientStop Color="#344451" Offset="0"/>
-            <GradientStop Color="#000" Offset="1.2"/>
-            <GradientStop Color="#344451" Offset="0.509"/>
-            <GradientStop Color="#344451" Offset="0.7"/>
-        </LinearGradientBrush>
-
-        <LinearGradientBrush x:Key="HeaderBrushAsc" StartPoint="0.5,0" EndPoint="0.5,1">
-            <GradientStop Color="#755B6B" Offset="0"/>
-            <GradientStop Color="#000" Offset="1.2"/>
-            <GradientStop Color="#755B6B" Offset="0.509"/>
-            <GradientStop Color="#755B6B" Offset="0.7"/>
-        </LinearGradientBrush>
-
-        <LinearGradientBrush x:Key="HeaderBrushDesc" StartPoint="0.5,0" EndPoint="0.5,1">
-            <GradientStop Color="#3A2D35" Offset="0"/>
-            <GradientStop Color="#000" Offset="1.2"/>
-            <GradientStop Color="#3A2D35" Offset="0.509"/>
-            <GradientStop Color="#3A2D35" Offset="0.7"/>
-        </LinearGradientBrush>
-
-        <LinearGradientBrush x:Key="HeaderBorderBrush" StartPoint="0.5,0" EndPoint="0.5,1">
-            <GradientStop Color="#000" Offset="0.614"/>
-            <GradientStop Color="#000" Offset="0.853"/>
-            <GradientStop Color="#000" Offset="1"/>
-        </LinearGradientBrush>
-        
-        <SolidColorBrush x:Key="SolidBorderBrush" Color="#000" />
-
-        <Style x:Key="HeaderStyle" TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="{StaticResource HeaderBrush}" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="{StaticResource HeaderBorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="SnapsToDevicePixels" Value="True" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="MinWidth" Value="0" />
-            <Setter Property="MinHeight" Value="40" />
-            <Setter Property="Cursor" Value="Hand" />
-            
-            <Style.Triggers>
-                <MultiTrigger>
-                    <MultiTrigger.Conditions>
-                        <Condition Property="IsMouseOver" Value="True" />
-                        <!--<Condition Property="SortDirection" Value="{x:Null}" />-->
-                    </MultiTrigger.Conditions>
-                    <Setter Property="Background" Value="{StaticResource HeaderBrushOver}" />
-                </MultiTrigger>
-                <Trigger Property="SortDirection" Value="Ascending">
-                    <Setter Property="Background" Value="{StaticResource HeaderBrushAsc}" />
-                </Trigger>
-                <Trigger Property="SortDirection" Value="Descending">
-                    <Setter Property="Background" Value="{StaticResource HeaderBrushDesc}" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style x:Key="ExpandedToolTip" TargetType="ToolTip">
-            <Setter Property="OverridesDefaultStyle" Value="true"/>
-            <Setter Property="HasDropShadow" Value="True"/>
-            <Setter Property="ToolTipService.ShowDuration" Value="60000"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ToolTip">
-                        <Border Name="Border"
-		                    Background="#333"
-		                    BorderBrush="{StaticResource SolidBorderBrush}"
-		                    BorderThickness="1"
-                            Margin="0,0,11,11" 
-                            Padding="4,2,4,3"
-						    CornerRadius="3"
-                            MaxWidth="300"
-		                    Width="{TemplateBinding Width}"
-		                    Height="{TemplateBinding Height}">
-                            <ContentPresenter
-			                    Margin="10" 
-			                    HorizontalAlignment="Left"
-			                    VerticalAlignment="Top">
-                                <ContentPresenter.Resources>
-                                    <Style TargetType="TextBlock">
-                                        <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
-                                    </Style>
-                                </ContentPresenter.Resources>
-                            </ContentPresenter>
-                            <Border.Effect>
-                                <DropShadowEffect BlurRadius="11" ShadowDepth="4" Color="#000" Opacity="0.6"/>
-                            </Border.Effect>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="HasDropShadow" Value="true">
-                                <Setter TargetName="Border" Property="CornerRadius" Value="4"/>
-                                <Setter TargetName="Border" Property="SnapsToDevicePixels" Value="true"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </Window.Resources>
     
     <Grid x:Name="grid">
         <Grid.RowDefinitions>
+            <RowDefinition Height="20" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="0" />
         </Grid.RowDefinitions>
-        
-        <Grid.ContextMenu>
-            <ContextMenu>
-                <MenuItem Header="Force Update" Click="ForceUpdate_Click" />
-            </ContextMenu>
-        </Grid.ContextMenu>
-        
-        <DataGrid Grid.Row="0" 
+
+        <Menu Grid.Row="0"
+              IsMainMenu="True"
+              HorizontalAlignment="Stretch" 
+              Height="20" 
+              VerticalAlignment="Top">
+            <MenuItem Header="File">
+                <MenuItem Header="Update All" Click="UpdateAll_Click" />
+            </MenuItem>
+        </Menu>
+
+        <DataGrid Grid.Row="1" 
                   Name="seriesGrid" 
                   HorizontalAlignment="Stretch" 
                   Margin="0" 
                   VerticalAlignment="Stretch" 
                   AutoGenerateColumns="False"
                   IsReadOnly="True"
-                  ColumnHeaderStyle="{StaticResource HeaderStyle}"
+                  ColumnHeaderStyle="{StaticResource DataGrid.ColumnHeaderStyle}"
                   AlternationCount="2">
             <DataGrid.RowStyle>
-                <Style TargetType="{x:Type DataGridRow}">
+                <Style TargetType="{x:Type DataGridRow}" BasedOn="{StaticResource DataGrid.RowStyle}">
                     <EventSetter Event="MouseDoubleClick" Handler="SeriesRowDoubleClick"/>
-                    <Setter Property="Foreground" Value="#cccccc" />
-                    <Style.Triggers>
-                        <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-                            <Setter Property="Background" Value="#555"></Setter>
-                        </Trigger>
-                        <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                            <Setter Property="Background" Value="#444"></Setter>
-                        </Trigger>
-                    </Style.Triggers>
-                </Style>     
+                </Style>
             </DataGrid.RowStyle>
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Update" Click="UpdateSelected_Click" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.Columns>
                 <DataGridTemplateColumn Header="Banner" Width="400">
                     <DataGridTemplateColumn.CellTemplate>
@@ -158,23 +52,22 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Series" Width="150" Binding="{Binding Series}" /> 
-                <DataGridTextColumn Header="Overview" Width="200" Binding="{Binding Overview, Converter={models:SummariseConverter}, ConverterParameter=100}">
+                <DataGridTextColumn Header="Series" Width="150" Binding="{Binding Series}" />
+                <DataGridTextColumn Header="Overview" Width="200" Binding="{Binding Overview, Converter={markext:SummariseConverter}, ConverterParameter=100}">
                     <DataGridTextColumn.ElementStyle>
                         <Style>
                             <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
                             <Setter Property="TextBlock.TextAlignment" Value="Left"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle> 
-                    <DataGridTextColumn.CellStyle>
-                        <Style TargetType="DataGridCell">
-                            <Setter Property="ToolTip">
+                            <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+                            <Setter Property="ToolTipService.ToolTip">
                                 <Setter.Value>
-                                    <ToolTip Style="{StaticResource ExpandedToolTip}" Content="{Binding Overview}" />
+                                    <ToolTip 
+                                        Style="{StaticResource ToolTip.Expanded}" 
+                                        Content="{Binding Overview}"/>
                                 </Setter.Value>
                             </Setter>
                         </Style>
-                    </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn.ElementStyle> 
                 </DataGridTextColumn>
                 <DataGridTextColumn Header="Season" Width="50" Binding="{Binding Season}" />
                 <DataGridTextColumn Header="Episode" Width="52" Binding="{Binding Episode}" />
@@ -194,17 +87,19 @@
                 <DataGridTextColumn Header="New Episode" Width="100" Binding="{Binding NextAirs, StringFormat=\{0:dd MMM yyyy\}}" />
             </DataGrid.Columns>
         </DataGrid>
+        
         <GridSplitter 
             ResizeDirection="Rows" 
             Grid.Column="0"
             Grid.ColumnSpan="2"
-            Grid.Row="1" 
+            Grid.Row="2" 
             Width="Auto" 
             Height="3"
             HorizontalAlignment="Stretch" 
             VerticalAlignment="Stretch" 
             Margin="0"/>
-        <DataGrid Grid.Row="2" Name="otherGrid" HorizontalAlignment="Stretch" Margin="0" VerticalAlignment="Stretch" AutoGenerateColumns="False" IsReadOnly="True">
+        
+        <DataGrid Grid.Row="3" Name="otherGrid" HorizontalAlignment="Stretch" Margin="0" VerticalAlignment="Stretch" AutoGenerateColumns="False" IsReadOnly="True">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="File" Width="200" Binding="{Binding File}" />
                 <DataGridTextColumn Header="Date" Width="100" Binding="{Binding Date, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
@@ -212,6 +107,7 @@
                 <DataGridTextColumn Header="Tracked Duration" Width="100" Binding="{Binding Tracked}" />
             </DataGrid.Columns>
         </DataGrid>
-        <shared:StatusModal x:Name="statusModal" />
+        
+        <shared:StatusModal Grid.Row="1" x:Name="statusModal" />
     </Grid>
 </Window>

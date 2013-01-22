@@ -1,0 +1,14 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <Style x:Key="TextBlock.ShowMore" TargetType="{x:Type TextBlock}">
+        <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
+        <Setter Property="TextBlock.TextAlignment" Value="Left"/>
+        <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+        <Setter Property="ToolTipService.ToolTip">
+            <Setter.Value>
+                <ToolTip 
+                    Style="{DynamicResource ToolTip.Expanded}"/>
+            </Setter.Value>
+        </Setter>
+    </Style>
+</ResourceDictionary>

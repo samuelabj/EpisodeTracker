@@ -3,35 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:shared="clr-namespace:EpisodeTracker.WPF.Views.Shared"
         xmlns:models="clr-namespace:EpisodeTracker.WPF.Models"
+        xmlns:markext="clr-namespace:EpisodeTracker.WPF.Models.MarkupExtensions"
         Title="Index" Height="300" Width="1000">
 
-    <Window.Resources>
-        <LinearGradientBrush x:Key="HeaderBrush" StartPoint="0.5,0" EndPoint="0.5,1">
-            <GradientStop Color="#333" Offset="0"/>
-            <GradientStop Color="#000" Offset="1.2"/>
-            <GradientStop Color="#333" Offset="0.509"/>
-            <GradientStop Color="#333" Offset="0.7"/>
-        </LinearGradientBrush>
-
-        <LinearGradientBrush x:Key="HeaderBorderBrush" StartPoint="0.5,0" EndPoint="0.5,1">
-            <GradientStop Color="#000" Offset="0.614"/>
-            <GradientStop Color="#000" Offset="0.853"/>
-            <GradientStop Color="#000" Offset="1"/>
-        </LinearGradientBrush>
-
-        <Style x:Key="HeaderStyle" TargetType="DataGridColumnHeader">
-            <Setter Property="Background" Value="{StaticResource HeaderBrush}" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="{StaticResource HeaderBorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="SnapsToDevicePixels" Value="True" />
-            <Setter Property="HorizontalContentAlignment" Value="Center" />
-            <Setter Property="MinWidth" Value="0" />
-            <Setter Property="MinHeight" Value="40" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-    </Window.Resources>
-    
     <Grid>
         <DataGrid Name="dataGrid" 
                   HorizontalAlignment="Stretch" 
@@ -39,31 +13,29 @@
                   VerticalAlignment="Stretch"
                   AutoGenerateColumns="False"
                   IsReadOnly="True"
-                  ColumnHeaderStyle="{StaticResource HeaderStyle}"
+                  ColumnHeaderStyle="{StaticResource DataGrid.ColumnHeaderStyle}"
                   AlternationCount="2">
             <DataGrid.RowStyle>
-                <Style TargetType="{x:Type DataGridRow}">
-                    <Style.Triggers>                  
-                        <Trigger Property="ItemsControl.AlternationIndex" Value="0">
-                            <Setter Property="Background" Value="#555"></Setter>
-                        </Trigger>
-                        <Trigger Property="ItemsControl.AlternationIndex" Value="1">
-                            <Setter Property="Background" Value="#444"></Setter>
-                        </Trigger>
-                        <DataTrigger Binding="{Binding Status}" Value="Watched">
+                <Style TargetType="{x:Type DataGridRow}" BasedOn="{StaticResource DataGrid.RowStyle}">
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Tracked, Converter={markext:IsNullConverter}}" Value="False" />
+                                <Condition Binding="{Binding Tracked.DateWatched}" Value="{x:Null}" />
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Background" Value="#BF5911"/>
+                        </MultiDataTrigger>
+                        <DataTrigger Binding="{Binding Tracked.DateWatched, Converter={markext:IsNullConverter}}" Value="False">
                             <Setter Property="Background" Value="#00593F"/>
                         </DataTrigger>
-                        <DataTrigger Binding="{Binding Status}" Value="Incomplete">
-                            <Setter Property="Background" Value="#BF5911"/>
-                        </DataTrigger>
                     </Style.Triggers>
-                    <Setter Property="Foreground" Value="#cccccc" />
                 </Style>
             </DataGrid.RowStyle>
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Watched" Click="Watched_Click" />
                     <MenuItem Header="Unwatched" Click="Unwatched_Click" />
+                    <MenuItem Header="Delete" Click="Delete_Click" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
@@ -77,18 +49,44 @@
                 <DataGridTextColumn Header="Season" Width="50" Binding="{Binding Episode.Season}" />
                 <DataGridTextColumn Header="Episode" Width="52" Binding="{Binding Episode.Number}" />
                 <DataGridTextColumn Header="Name" Width="150" Binding="{Binding Episode.Name}" />
-                <DataGridTextColumn Header="Overview" Width="200" Binding="{Binding Episode.Overview, Converter={models:SummariseConverter}, ConverterParameter=200}">
+                <DataGridTextColumn Header="Overview" Width="200" Binding="{Binding Episode.Overview, Converter={markext:SummariseConverter}, ConverterParameter=200}">
                     <DataGridTextColumn.ElementStyle>
                         <Style>
                             <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
                             <Setter Property="TextBlock.TextAlignment" Value="Left"/>
                         </Style>
                     </DataGridTextColumn.ElementStyle>
+                    <DataGridTextColumn.CellStyle>
+                        <Style TargetType="DataGridCell">
+                            <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+                            <Setter Property="ToolTipService.ToolTip">
+                                <Setter.Value>
+                                    <ToolTip 
+                                        Style="{StaticResource ToolTip.Expanded}" 
+                                        Content="{Binding Episode.Overview}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </DataGridTextColumn.CellStyle>
                 </DataGridTextColumn>
                 <DataGridTextColumn Header="Aired" Width="100" Binding="{Binding Episode.Aired, StringFormat=\{0:dd MMM yyyy\}}" />
-                <DataGridTextColumn Header="Status" Width="100" Binding="{Binding Status}" />
-                <DataGridTextColumn Header="Date Watched" Width="100" Binding="{Binding Date, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
-                <DataGridTextColumn Header="Tracked" Width="100" Binding="{Binding Tracked}" />
+                <DataGridTextColumn Header="Status" Width="100">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style>
+                            <Setter Property="TextBlock.Text" Value="Watched" />
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Tracked.DateWatched}" Value="{x:Null}">
+                                    <Setter Property="TextBlock.Text" Value="Inprogress" />
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding Tracked}" Value="{x:Null}">
+                                    <Setter Property="TextBlock.Text" Value="{x:Null}" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Date Watched" Width="100" Binding="{Binding Tracked.DateWatched, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
+                <DataGridTextColumn Header="Tracked" Width="100" Binding="{Binding TrackedTime}" />
             </DataGrid.Columns>
         </DataGrid>
         <shared:StatusModal x:Name="statusModal" />
