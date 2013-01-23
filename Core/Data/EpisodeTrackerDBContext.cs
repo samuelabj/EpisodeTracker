@@ -12,6 +12,8 @@ namespace EpisodeTracker.Core.Data {
 		public DbSet<TrackedFile> TrackedFile { get; set; }
 		public DbSet<TrackedEpisode> TrackedEpisodes { get; set; }
 		public DbSet<User> Users { get; set; }
+		public DbSet<Genre> Genres { get; set; }
+		public DbSet<SeriesGenre> SeriesGenres { get; set; }
 
 		protected override void OnModelCreating(DbModelBuilder modelBuilder) {
 			base.OnModelCreating(modelBuilder);

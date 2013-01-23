@@ -16,7 +16,7 @@ namespace MediaReign.TVDB {
 		public string IMDbID { get; internal set; }
 		public string Language { get; internal set; }
 		public string Overview { get; internal set; }
-		public double Rating { get; internal set; }
+		public double? Rating { get; internal set; }
 		public int Season { get; internal set; }
 		public string[] Writers { get; internal set; }
 		public int? AbsoluteNumber { get; internal set; }
@@ -42,6 +42,7 @@ namespace MediaReign.TVDB {
 			LastUpdated = element.GetUnixDateTime("lastupdated");
 			SeasonID = element.GetInt("seasonid").Value;
 			SeriesID = element.GetInt("seriesid").Value;
+			Rating = element.GetDouble("Rating");
 		}
 	}
 }

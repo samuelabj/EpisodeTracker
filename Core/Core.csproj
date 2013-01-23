@@ -83,7 +83,9 @@
   <ItemGroup>
     <Compile Include="Data\EpisodeTrackerDBContext.cs" />
     <Compile Include="Data\Episode.cs" />
+    <Compile Include="Data\Genre.cs" />
     <Compile Include="Data\Series.cs" />
+    <Compile Include="Data\SeriesGenre.cs" />
     <Compile Include="Data\TrackedFile.cs" />
     <Compile Include="Data\User.cs" />
     <Compile Include="Data\TrackedEpisode.cs" />
@@ -118,6 +120,10 @@
     <Compile Include="Migrations\201301220144479_TrackedEpisodeCleanup.cs" />
     <Compile Include="Migrations\201301220144479_TrackedEpisodeCleanup.Designer.cs">
       <DependentUpon>201301220144479_TrackedEpisodeCleanup.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\201301230010188_Genres.cs" />
+    <Compile Include="Migrations\201301230010188_Genres.Designer.cs">
+      <DependentUpon>201301230010188_Genres.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Migrations\SQLCompactMigration.cs" />
@@ -209,6 +215,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201301220144479_TrackedEpisodeCleanup.resx">
       <DependentUpon>201301220144479_TrackedEpisodeCleanup.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201301230010188_Genres.resx">
+      <DependentUpon>201301230010188_Genres.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup />

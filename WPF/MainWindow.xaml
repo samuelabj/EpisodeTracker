@@ -5,7 +5,8 @@
         xmlns:models="clr-namespace:EpisodeTracker.WPF.Models"
         xmlns:markext="clr-namespace:EpisodeTracker.WPF.Models.MarkupExtensions"
         Title="Episode Tracker" Height="392.2" Width="860.2"
-        Icon="/EpisodeTracker;component/resources/images/app.ico">
+        Icon="/EpisodeTracker;component/resources/images/app.ico"
+        KeyUp="Window_KeyUp">
     
     <Grid x:Name="grid">
         <Grid.RowDefinitions>
@@ -22,6 +23,7 @@
               VerticalAlignment="Top">
             <MenuItem Header="File">
                 <MenuItem Header="Update All" Click="UpdateAll_Click" />
+                <MenuItem Header="Refresh" Click="Refresh_Click" />
             </MenuItem>
         </Menu>
 
@@ -85,6 +87,8 @@
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Series Status" Width="200" Binding="{Binding Status}" />
                 <DataGridTextColumn Header="New Episode" Width="100" Binding="{Binding NextAirs, StringFormat=\{0:dd MMM yyyy\}}" />
+                <DataGridTextColumn Header="Rating" Width="50" Binding="{Binding Rating}" />
+                <DataGridTextColumn Header="Genres" Width="100" Binding="{Binding Genres}" />
             </DataGrid.Columns>
         </DataGrid>
         

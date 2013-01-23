@@ -52,6 +52,8 @@ namespace EpisodeTracker.WPF {
 			public int Watched { get; set; }
 			public DateTime? NextAirs { get; set; }
 			public string BannerPath { get; set; }
+			public string Genres { get; set; }
+			public double? Rating { get; set; }
 		}
 
 		protected override void OnInitialized(EventArgs e) {
@@ -73,7 +75,7 @@ namespace EpisodeTracker.WPF {
 			//this.Hide();
 			this.StateChanged += (o, ea) => { 
 				if(WindowState == System.Windows.WindowState.Minimized) this.Hide();
-				RefreshLists();
+				RefreshListsAsync();
 			};
 
 			this.Closing += (o, ev) => {
@@ -82,15 +84,8 @@ namespace EpisodeTracker.WPF {
 				}
 			};
 
-			Task.Factory.StartNew(() => {
-				try {
-					UpdateSeries(false);
-				} catch(Exception ex) {
-					Logger.Error("Error running UpdateSeries: " + ex);
-				}
-			});
-
-			RefreshLists();
+			UpdateSeriesAsync(false);
+			RefreshListsAsync();
 
 			this.WindowState = System.Windows.WindowState.Maximized;
 		}
@@ -154,6 +149,16 @@ namespace EpisodeTracker.WPF {
 			}
 		}
 
+		void UpdateSeriesAsync(bool force, IEnumerable<int> seriesIDs = null) {
+			Task.Factory.StartNew(() => {
+				try {
+					UpdateSeries(force, seriesIDs);
+				} catch(Exception ex) {
+					Logger.Error("Error running UpdateSeries: " + ex);
+				}
+			});
+		}
+
 		void ShowSeries() {
 			using(var db = new EpisodeTrackerDBContext()) {
 				var watching = db.Series
@@ -167,14 +172,15 @@ namespace EpisodeTracker.WPF {
 					.AsQueryable()
 					.Include(t => t.Episode)
 					.Include(t => t.Episode.Series)
+					.Include(t => t.Episode.Series.Genres.Select(g => g.Genre))
 					.ToList()
 					.Where(t => t != null);
 
 				var seriesInfo = db.Series.Select(s => new {
 					s.ID,
-					Total = s.Episodes.Count(e => e.Season != 0), // don't include specials
+					Total = s.Episodes.Count(e => e.Season != 0 && e.Aired.HasValue && e.Aired <= DateTime.Now), // don't include specials
 					Watched = s.Episodes.Count(e => e.Tracked.Any(te => te.DateWatched.HasValue)),
-					NextAirs = (DateTime?)s.Episodes.Where(e => e.Aired > DateTime.Now).Min(e => e.Aired)
+					NextAirs = (DateTime?)s.Episodes.Where(e => e.Aired > DateTime.Now).Min(e => e.Aired) 
 				})
 				.ToDictionary(s => s.ID);
 
@@ -190,7 +196,9 @@ namespace EpisodeTracker.WPF {
 						Total = seriesInfo[t.Episode.SeriesID].Total,
 						Watched = seriesInfo[t.Episode.SeriesID].Watched,
 						NextAirs = seriesInfo[t.Episode.SeriesID].NextAirs,
-						BannerPath = GetBannerPath(t.Episode.Series)
+						BannerPath = GetBannerPath(t.Episode.Series),
+						Genres = String.Join(", ", t.Episode.Series.Genres.Select(g => g.Genre.Name)),
+						Rating = t.Episode.Series.Rating
 					});
 
 				this.Dispatcher.BeginInvoke(new Action(() => {
@@ -228,7 +236,7 @@ namespace EpisodeTracker.WPF {
 			}
 		}
 
-		void RefreshLists() {
+		void RefreshListsAsync() {
 			statusModal.Text = "Refreshing...";
 			statusModal.Visibility = System.Windows.Visibility.Visible;
 
@@ -258,7 +266,7 @@ namespace EpisodeTracker.WPF {
 
 			mon.FileAdded += (o, e) => {
 				this.Dispatcher.BeginInvoke(new Action(() => {
-					RefreshLists();
+					RefreshListsAsync();
 
 					var bal = new NotificationBalloon();
 					bal.HeaderText = "Episode Tracker";
@@ -269,7 +277,7 @@ namespace EpisodeTracker.WPF {
 
 			mon.FileRemoved += (o, e) => {
 				this.Dispatcher.BeginInvoke(new Action(() => {
-					RefreshLists();
+					RefreshListsAsync();
 
 					var bal = new NotificationBalloon();
 					bal.HeaderText = "Episode Tracker";
@@ -282,12 +290,22 @@ namespace EpisodeTracker.WPF {
 		}
 
 		private void UpdateAll_Click(object sender, RoutedEventArgs e) {
-			Task.Factory.StartNew(() => UpdateSeries(true));
+			UpdateSeriesAsync(true);
 		}
 
 		private void UpdateSelected_Click(object sender, RoutedEventArgs e) {
 			var selected = seriesGrid.SelectedItems.Cast<SeriesInfo>().Select(s => s.SeriesID);
-			Task.Factory.StartNew(() => UpdateSeries(true, selected));
+			UpdateSeriesAsync(true, selected);
+		}
+
+		private void Refresh_Click(object sender, RoutedEventArgs e) {
+			RefreshListsAsync();
+		}
+
+		private void Window_KeyUp(object sender, KeyEventArgs e) {
+			if(e.Key == Key.F5) {
+				RefreshListsAsync();
+			}
 		}
 
 		public class ShowSampleWindowCommand : CommandBase<ShowSampleWindowCommand> {

@@ -47,9 +47,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			base.OnActivated(e);
 
 			if(episodeInfo == null) {
-				statusModal.Text = "Loading...";
-				statusModal.Visibility = System.Windows.Visibility.Visible;
-				Task.Factory.StartNew(() => ShowEpisodes());
+				ShowEpisodesAsync();
 			}
 		}
 
@@ -90,10 +88,18 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 						.OrderByDescending(ep => ep.Episode.Number)
 						.OrderByDescending(ep => ep.Episode.Season)
 					);
-
-					statusModal.Visibility = System.Windows.Visibility.Collapsed;
 				}));
 			}
+		}
+
+		void ShowEpisodesAsync() {
+			statusModal.Text = "Loading...";
+			statusModal.Visibility = System.Windows.Visibility.Visible;
+			Task.Factory
+				.StartNew(() => {
+					ShowEpisodes();
+					Dispatcher.BeginInvoke(new Action(() => statusModal.Visibility = System.Windows.Visibility.Collapsed));
+				});
 		}
 
 		string GetBannerPath(Episode ep) {
@@ -153,6 +159,12 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 
 					db.SaveChanges();
 				}
+			}
+		}
+
+		private void Window_KeyUp(object sender, KeyEventArgs e) {
+			if(e.Key == Key.F5) {
+				ShowEpisodesAsync();
 			}
 		}
 	}

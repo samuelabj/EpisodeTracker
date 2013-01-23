@@ -10,6 +10,7 @@ namespace EpisodeTracker.Core.Data {
 	public class Series {
 		public Series() {
 			Episodes = new List<Episode>();
+			Genres = new List<SeriesGenre>();
 		}
 
 		[Key, Required, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -25,8 +26,11 @@ namespace EpisodeTracker.Core.Data {
 		public double? LengthMinutes { get; set; }
 		public string Overview { get; set; }
 		public int? TVDBID { get; set; }
+		public double? Rating { get; set; }
 
 		[ForeignKey("SeriesID")]
 		public virtual ICollection<Episode> Episodes { get; set; }
+		[ForeignKey("SeriesID")]
+		public virtual ICollection<SeriesGenre> Genres { get; set; }
 	}
 }

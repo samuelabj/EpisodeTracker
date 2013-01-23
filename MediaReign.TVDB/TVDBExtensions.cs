@@ -16,8 +16,8 @@ namespace MediaReign.TVDB {
 			return Get<int?>(parent, name, v => int.Parse(v));
 		}
 
-		public static double GetDouble(this XElement parent, string name) {
-			return Get<double>(parent, name, v => double.Parse(v));
+		public static double? GetDouble(this XElement parent, string name) {
+			return Get<double?>(parent, name, v => double.Parse(v));
 		}
 
 		public static DateTime? GetDateTime(this XElement parent, string name) {

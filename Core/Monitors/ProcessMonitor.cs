@@ -146,8 +146,9 @@ namespace EpisodeTracker.Core.Monitors {
 				Logger.Debug("Found episode info - name: " + match.Name + ", season: " + match.Season + ", episode: " + match.Episode);
 				
 				mon.TvMatch = match;
-				// try and look it up
-				// do movies later
+				
+				// Try and look it up
+				// TODO: movies
 				var results = new TVDBRequest().Search(match.Name);
 				var first = results.FirstOrDefault();
 
@@ -161,7 +162,10 @@ namespace EpisodeTracker.Core.Monitors {
 						}
 
 						// Pull out series again as it might have been updated
-						series = db.Series.Include(s => s.Episodes).Single(s => s.TVDBID == first.ID);
+						series = db.Series
+							.Include(s => s.Episodes)
+							.Single(s => s.TVDBID == first.ID);
+
 						mon.Series = series;
 
 						if(match.Season.HasValue) {
@@ -333,7 +337,7 @@ namespace EpisodeTracker.Core.Monitors {
 						tracked.Episodes.Add(new TrackedEpisode { Episode = ep });
 					}
 				} else {
-					// check for loose reference
+					// Check for loose reference
 					episodes = series.Episodes
 						.Where(ep =>
 							ep.Season == mon.TvMatch.Season

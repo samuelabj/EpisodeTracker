@@ -13,13 +13,13 @@ namespace MediaReign.TVDB {
 		public DateTime? AirsTime { get; private set; }
 		public string ContentRating { get; private set; }
 		public DateTime? FirstAired { get; private set; }
-		public string[] Genre { get; private set; }
+		public string[] Genres { get; private set; }
 		public string IMDbID { get; private set; }
 		public string Language { get; private set; }
 		public string Network { get; private set; }
 		public string Overview { get; private set; }
-		public double Rating { get; private set; }
-		public double LengthMinutes { get; private set; }
+		public double? Rating { get; private set; }
+		public double? LengthMinutes { get; private set; }
 		public string TvDotComID { get; private set; }
 		public string Name { get; private set; }
 		public string Status { get; private set; }
@@ -42,7 +42,7 @@ namespace MediaReign.TVDB {
 			AirsTime = series.GetDateTime("Airs_Time");
 			ContentRating = series.Get("ContentRating");
 			FirstAired = series.GetDateTime("FirstAired");
-			Genre = series.Split("Genre");
+			Genres = series.Split("Genre");
 			IMDbID = series.Get("IMDB_ID");
 			Language = series.Get("Language");
 			Network = series.Get("Network");

@@ -12,6 +12,7 @@ using System.Data.Entity;
 namespace EpisodeTracker.Core.Models {
 	public class TVDBSeriesSyncer {
 		static Dictionary<int, SyncInfo> syncing = new Dictionary<int, SyncInfo>();
+		static object genreLock = new object();
 		struct SyncInfo {
 			public object Lock { get; set; }
 			public bool Complete { get; set; }
@@ -50,6 +51,10 @@ namespace EpisodeTracker.Core.Models {
 					series.Status = tvdbSeries.Status;
 					series.Overview = tvdbSeries.Overview;
 					series.LengthMinutes = tvdbSeries.LengthMinutes;
+					series.Rating = tvdbSeries.Rating;
+					
+					series.Genres.Clear();
+					GenresSync(series, tvdbSeries.Genres);
 
 					series.Updated = DateTime.Now;
 
@@ -74,6 +79,31 @@ namespace EpisodeTracker.Core.Models {
 				}
 
 				syncInfo.Complete = true;
+			}
+		}
+
+		static void GenresSync(Series series, string[] genres) {
+			lock(genreLock) {
+				var dbGenres = new List<Genre>();
+				using(var db = new EpisodeTrackerDBContext()) {
+					foreach(var tvdbGenre in genres) {
+						var genre = db.Genres.SingleOrDefault(g => g.Name == tvdbGenre);
+						if(genre == null) {
+							genre = new Genre {
+								Name = tvdbGenre
+							};
+							db.Genres.Add(genre);
+						}
+						dbGenres.Add(genre);
+					}
+					db.SaveChanges();
+				}
+
+				foreach(var genre in dbGenres) {
+					series.Genres.Add(new SeriesGenre {
+						GenreID = genre.ID
+					});
+				}
 			}
 		}
 
@@ -112,6 +142,7 @@ namespace EpisodeTracker.Core.Models {
 			episode.Overview = tvDBEpisode.Overview;
 			episode.Aired = tvDBEpisode.Aired <= SqlDateTime.MaxValue.Value && tvDBEpisode.Aired >= SqlDateTime.MinValue.Value ? tvDBEpisode.Aired : default(DateTime?);
 			episode.AbsoluteNumber = tvDBEpisode.AbsoluteNumber;
+			episode.Rating = tvDBEpisode.Rating;
 			episode.Updated = DateTime.Now;
 		}
 

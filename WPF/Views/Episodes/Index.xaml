@@ -4,7 +4,8 @@
         xmlns:shared="clr-namespace:EpisodeTracker.WPF.Views.Shared"
         xmlns:models="clr-namespace:EpisodeTracker.WPF.Models"
         xmlns:markext="clr-namespace:EpisodeTracker.WPF.Models.MarkupExtensions"
-        Title="Index" Height="300" Width="1000">
+        Title="Index" Height="300" Width="1000"
+        KeyUp="Window_KeyUp">
 
     <Grid>
         <DataGrid Name="dataGrid" 
@@ -54,10 +55,6 @@
                         <Style>
                             <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
                             <Setter Property="TextBlock.TextAlignment" Value="Left"/>
-                        </Style>
-                    </DataGridTextColumn.ElementStyle>
-                    <DataGridTextColumn.CellStyle>
-                        <Style TargetType="DataGridCell">
                             <Setter Property="ToolTipService.ShowDuration" Value="60000" />
                             <Setter Property="ToolTipService.ToolTip">
                                 <Setter.Value>
@@ -67,7 +64,7 @@
                                 </Setter.Value>
                             </Setter>
                         </Style>
-                    </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
                 <DataGridTextColumn Header="Aired" Width="100" Binding="{Binding Episode.Aired, StringFormat=\{0:dd MMM yyyy\}}" />
                 <DataGridTextColumn Header="Status" Width="100">
@@ -87,6 +84,7 @@
                 </DataGridTextColumn>
                 <DataGridTextColumn Header="Date Watched" Width="100" Binding="{Binding Tracked.DateWatched, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
                 <DataGridTextColumn Header="Tracked" Width="100" Binding="{Binding TrackedTime}" />
+                <DataGridTextColumn Header="Rating" Width="50" Binding="{Binding Episode.Rating}" />
             </DataGrid.Columns>
         </DataGrid>
         <shared:StatusModal x:Name="statusModal" />
