@@ -15,18 +15,19 @@
                   AutoGenerateColumns="False"
                   IsReadOnly="True"
                   ColumnHeaderStyle="{StaticResource DataGrid.ColumnHeaderStyle}"
-                  AlternationCount="2">
+                  AlternationCount="2"
+                  Background="#555">
             <DataGrid.RowStyle>
                 <Style TargetType="{x:Type DataGridRow}" BasedOn="{StaticResource DataGrid.RowStyle}">
                     <Style.Triggers>
                         <MultiDataTrigger>
                             <MultiDataTrigger.Conditions>
                                 <Condition Binding="{Binding Tracked, Converter={markext:IsNullConverter}}" Value="False" />
-                                <Condition Binding="{Binding Tracked.DateWatched}" Value="{x:Null}" />
+                                <Condition Binding="{Binding Tracked.Watched}" Value="False" />
                             </MultiDataTrigger.Conditions>
                             <Setter Property="Background" Value="#BF5911"/>
                         </MultiDataTrigger>
-                        <DataTrigger Binding="{Binding Tracked.DateWatched, Converter={markext:IsNullConverter}}" Value="False">
+                        <DataTrigger Binding="{Binding Tracked.Watched}" Value="True">
                             <Setter Property="Background" Value="#00593F"/>
                         </DataTrigger>
                     </Style.Triggers>
@@ -72,7 +73,7 @@
                         <Style>
                             <Setter Property="TextBlock.Text" Value="Watched" />
                             <Style.Triggers>
-                                <DataTrigger Binding="{Binding Tracked.DateWatched}" Value="{x:Null}">
+                                <DataTrigger Binding="{Binding Tracked.Watched}" Value="False">
                                     <Setter Property="TextBlock.Text" Value="Inprogress" />
                                 </DataTrigger>
                                 <DataTrigger Binding="{Binding Tracked}" Value="{x:Null}">
@@ -82,7 +83,7 @@
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Date Watched" Width="100" Binding="{Binding Tracked.DateWatched, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
+                <DataGridTextColumn Header="Date Watched" Width="100" Binding="{Binding Tracked.Updated, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
                 <DataGridTextColumn Header="Tracked" Width="100" Binding="{Binding TrackedTime}" />
                 <DataGridTextColumn Header="Rating" Width="50" Binding="{Binding Episode.Rating}" />
             </DataGrid.Columns>

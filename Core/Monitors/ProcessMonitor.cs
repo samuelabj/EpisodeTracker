@@ -219,7 +219,8 @@ namespace EpisodeTracker.Core.Monitors {
 
 						tracked.TrackedSeconds = (int)DateTime.Now.Subtract(mon.Start).TotalSeconds + mon.PreviousTrackedSeconds;
 						tracked.Stop = DateTime.Now;
-						Logger.Trace("Total tracked seconds: " + tracked.TrackedSeconds);
+						foreach(var te in tracked.Episodes) te.Updated = DateTime.Now;
+
 						db.SaveChanges();
 					}
 				}
@@ -244,7 +245,8 @@ namespace EpisodeTracker.Core.Monitors {
 							if(tracked.TrackedSeconds >= (mon.Length.TotalSeconds * .66)) {
 								Logger.Debug("Monitored file has probably been watched: " + mon.FileName);
 								foreach(var ep in tracked.Episodes) {
-									ep.DateWatched = DateTime.Now;
+									ep.Watched = true;
+									ep.Updated = DateTime.Now;
 								}
 								db.SaveChanges();
 							}
@@ -253,7 +255,7 @@ namespace EpisodeTracker.Core.Monitors {
 							FileRemoved(this, new MonitoredFileEventArgs {
 								Filename = mon.FileName,
 								FriendlyName = mon.FriendlyName,
-								Watched = tracked.Episodes.Any(ep => ep.DateWatched.HasValue)
+								Watched = tracked.Episodes.Any(ep => ep.Watched)
 							});
 						}
 					}
@@ -334,7 +336,11 @@ namespace EpisodeTracker.Core.Monitors {
 						.Where(ep => ids.Contains(ep.ID));
 
 					foreach(var ep in episodes) {
-						tracked.Episodes.Add(new TrackedEpisode { Episode = ep });
+						tracked.Episodes.Add(new TrackedEpisode { 
+							Episode = ep,
+ 							Added = DateTime.Now,
+							Updated = DateTime.Now
+						});
 					}
 				} else {
 					// Check for loose reference
@@ -360,7 +366,11 @@ namespace EpisodeTracker.Core.Monitors {
 						}
 
 						episode.Updated = DateTime.Now;
-						tracked.Episodes.Add(new TrackedEpisode { Episode = episode });
+						tracked.Episodes.Add(new TrackedEpisode { 
+							Episode = episode,
+							Added = DateTime.Now,
+							Updated = DateTime.Now
+						});
 					}
 
 					series.Updated = DateTime.Now;

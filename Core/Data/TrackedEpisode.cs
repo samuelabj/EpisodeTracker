@@ -12,7 +12,9 @@ namespace EpisodeTracker.Core.Data {
 		public int ID { get; set; }
 		public int EpisodeID { get; set; }
 		public int? UserID { get; set; }
-		public DateTime? DateWatched { get; set; }
+		public DateTime Added { get; set; }
+		public DateTime Updated { get; set; }
+		public bool Watched { get; set; }
 		public int? TrackedFileID { get; set; }
 
 		[ForeignKey("EpisodeID")]

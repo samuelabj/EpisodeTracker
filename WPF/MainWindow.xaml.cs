@@ -90,83 +90,67 @@ namespace EpisodeTracker.WPF {
 			this.WindowState = System.Windows.WindowState.Maximized;
 		}
 
-		void UpdateSeries(bool force, IEnumerable<int> seriesIDs = null) {
-			var tasks = new List<Task>();
-			StatusModal updateStatus = null;
+		List<Series> GetSeriesToUpdate(bool force, IEnumerable<int> seriesIDs = null) {
 			if(seriesIDs == null) seriesIDs = new int[0];
 
 			using(var db = new EpisodeTrackerDBContext()) {
 				var old = force ? DateTime.Now.AddDays(1) : DateTime.Now.AddDays(-7);
-				var series = db.Series.Where(s => 
-					seriesIDs.Any() 
+				return db.Series.Where(s =>
+					seriesIDs.Any()
 					&& seriesIDs.Contains(s.ID)
 					|| !seriesIDs.Any() && (
-						!s.TVDBID.HasValue 
-						|| s.Updated <= old 					
+						!s.TVDBID.HasValue
+						|| s.Updated <= old
 					)
 				)
 				.ToList();
+			}
+		}
 
-				if(series.Any()) {
+		async void UpdateSeriesAsync(bool force, IEnumerable<int> seriesIDs = null) {
+			var series = await Task.Factory.StartNew(() => GetSeriesToUpdate(force, seriesIDs));
+			if(!series.Any()) return;
+
+			var updateStatus = new StatusModal();
+			updateStatus.Text = "Updating Series";
+			updateStatus.SubText = "0 / " + series.Count;
+			updateStatus.ShowSubText = true;
+			updateStatus.ShowProgress = true;
+			updateStatus.SetValue(Grid.RowProperty, 1);
+			grid.Children.Add(updateStatus);
+
+			int complete = 0;
+			var tasks = new List<Task>();
+
+			foreach(var temp in series) {
+				var s = temp;
+				var task = Task.Factory.StartNew(() => {
+					if(!s.TVDBID.HasValue) {
+						TVDBSeriesSyncer.Sync(s.Name, asyncBanners: false);
+					} else {
+						TVDBSeriesSyncer.Sync(s.TVDBID.Value, asyncBanners: false);
+					}
+
+					Interlocked.Increment(ref complete);
 					this.Dispatcher.BeginInvoke(new Action(() => {
-						updateStatus = new StatusModal();
-						updateStatus.Text = "Updating Series";
-						updateStatus.SubText = "0 / " + series.Count;
-						updateStatus.ShowSubText = true;
-						updateStatus.ShowProgress = true;
-						updateStatus.SetValue(Grid.RowProperty, 1);
-						grid.Children.Add(updateStatus);
+						updateStatus.SubText = String.Format("{0} / {1}", complete, series.Count);
+						updateStatus.Progress = complete / (double)series.Count * 100;
 					}));
-				}
-
-				int complete = 0;
-
-				foreach(var temp in series) {
-					var s = temp;
-					var task = Task.Factory.StartNew(() => {
-						if(!s.TVDBID.HasValue) {
-							TVDBSeriesSyncer.Sync(s.Name, asyncBanners: false);
-						} else {
-							TVDBSeriesSyncer.Sync(s.TVDBID.Value, asyncBanners: false);
-						}
-
-						Interlocked.Increment(ref complete);
-						this.Dispatcher.BeginInvoke(new Action(() => {
-							updateStatus.SubText = String.Format("{0} / {1}", complete, series.Count);
-							updateStatus.Progress = complete / (double)series.Count * 100;
-						}));
-					});
-					tasks.Add(task);
-				}
+				});
+				tasks.Add(task);
 			}
 
-			Task.WaitAll(tasks.ToArray());
-
-			if(statusModal != null) {
-				this.Dispatcher.BeginInvoke(new Action(() => {
-					grid.Children.Remove(updateStatus);
-				}));
-			}
+			await Task.WhenAll(tasks);
+			grid.Children.Remove(updateStatus);
 		}
 
-		void UpdateSeriesAsync(bool force, IEnumerable<int> seriesIDs = null) {
-			Task.Factory.StartNew(() => {
-				try {
-					UpdateSeries(force, seriesIDs);
-				} catch(Exception ex) {
-					Logger.Error("Error running UpdateSeries: " + ex);
-				}
-			});
-		}
-
-		void ShowSeries() {
+		List<SeriesInfo> GetSeries() {
 			using(var db = new EpisodeTrackerDBContext()) {
 				var watching = db.Series
 					.Select(s =>
 						s.Episodes
 							.SelectMany(ep => ep.Tracked)
-							.Where(t => t.DateWatched.HasValue)
-							.OrderByDescending(t => t.DateWatched)
+							.OrderByDescending(t => t.Updated)
 							.FirstOrDefault()
 					)
 					.AsQueryable()
@@ -179,12 +163,12 @@ namespace EpisodeTracker.WPF {
 				var seriesInfo = db.Series.Select(s => new {
 					s.ID,
 					Total = s.Episodes.Count(e => e.Season != 0 && e.Aired.HasValue && e.Aired <= DateTime.Now), // don't include specials
-					Watched = s.Episodes.Count(e => e.Tracked.Any(te => te.DateWatched.HasValue)),
+					Watched = s.Episodes.Count(e => e.Tracked.Any(te => te.Watched)),
 					NextAirs = (DateTime?)s.Episodes.Where(e => e.Aired > DateTime.Now).Min(e => e.Aired) 
 				})
 				.ToDictionary(s => s.ID);
 
-				var display = watching
+				return watching
 					.Select(t => new SeriesInfo {
 						SeriesID = t.Episode.SeriesID,
 						Series = t.Episode.Series.Name,
@@ -192,19 +176,15 @@ namespace EpisodeTracker.WPF {
 						Status = t.Episode.Series.Status,
 						Season = t.Episode.Season,
 						Episode = t.Episode.Number,
-						Date = t.DateWatched.Value,
+						Date = t.Updated,
 						Total = seriesInfo[t.Episode.SeriesID].Total,
 						Watched = seriesInfo[t.Episode.SeriesID].Watched,
 						NextAirs = seriesInfo[t.Episode.SeriesID].NextAirs,
 						BannerPath = GetBannerPath(t.Episode.Series),
 						Genres = String.Join(", ", t.Episode.Series.Genres.Select(g => g.Genre.Name)),
 						Rating = t.Episode.Series.Rating
-					});
-
-				this.Dispatcher.BeginInvoke(new Action(() => {
-					seriesGrid.ItemsSource = display
-						.OrderByDescending(f => f.Date);
-				}));
+					})
+					.ToList();
 			}
 		}
 
@@ -214,7 +194,7 @@ namespace EpisodeTracker.WPF {
 			return null;
 		}
 
-		void ShowOther() {
+		List<object> GetOther() {
 			using(var db = new EpisodeTrackerDBContext()) {
 				var watching = db.TrackedFile
 					.Where(f => !f.Episodes.Any())
@@ -228,26 +208,29 @@ namespace EpisodeTracker.WPF {
 						Tracked = TimeSpan.FromSeconds(f.TrackedSeconds)
 					});
 
-				this.Dispatcher.BeginInvoke(new Action(() => {
-					otherGrid.ItemsSource = display
+				return display
 						.OrderByDescending(f => f.File)
-						.OrderByDescending(f => f.Date);
-				}));
+						.OrderByDescending(f => f.Date)
+						.Cast<object>()
+						.ToList();
 			}
 		}
 
-		void RefreshListsAsync() {
+		async void RefreshListsAsync() {
 			statusModal.Text = "Refreshing...";
 			statusModal.Visibility = System.Windows.Visibility.Visible;
 
-			Task.Factory.StartNew(() => {
-				ShowSeries();
-				ShowOther();
+			var series = Task.Factory.StartNew(() => GetSeries());
+			var other = Task.Factory.StartNew(() => GetOther());
 
-				this.Dispatcher.BeginInvoke(new Action(() => {
-					statusModal.Visibility = System.Windows.Visibility.Collapsed;
-				}));
-			});
+			await Task.WhenAll(series, other);
+
+			seriesGrid.ItemsSource = series.Result
+						.OrderByDescending(f => f.Date);
+
+			otherGrid.ItemsSource = other.Result;
+
+			statusModal.Visibility = System.Windows.Visibility.Collapsed;
 		}
 
 		void SeriesRowDoubleClick(object sender, RoutedEventArgs e) {

@@ -7,7 +7,7 @@
         Title="Episode Tracker" Height="392.2" Width="860.2"
         Icon="/EpisodeTracker;component/resources/images/app.ico"
         KeyUp="Window_KeyUp">
-    
+
     <Grid x:Name="grid">
         <Grid.RowDefinitions>
             <RowDefinition Height="20" />
@@ -35,7 +35,8 @@
                   AutoGenerateColumns="False"
                   IsReadOnly="True"
                   ColumnHeaderStyle="{StaticResource DataGrid.ColumnHeaderStyle}"
-                  AlternationCount="2">
+                  AlternationCount="2"
+                  Background="#555">
             <DataGrid.RowStyle>
                 <Style TargetType="{x:Type DataGridRow}" BasedOn="{StaticResource DataGrid.RowStyle}">
                     <EventSetter Event="MouseDoubleClick" Handler="SeriesRowDoubleClick"/>

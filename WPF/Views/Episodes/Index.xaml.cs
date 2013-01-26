@@ -47,59 +47,56 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			base.OnActivated(e);
 
 			if(episodeInfo == null) {
+				using(var db = new EpisodeTrackerDBContext()) {
+					var title = db.Series.SingleOrDefault(s => s.ID == SeriesID).Name;
+					Title = title;
+				}
+
 				ShowEpisodesAsync();
 			}
 		}
 
-		void ShowEpisodes() {
+		List<EpisodeInfo> GetEpisodes() {
 			using(var db = new EpisodeTrackerDBContext()) {
-				var title = db.Series.SingleOrDefault(s => s.ID == SeriesID).Name;
-				this.Dispatcher.BeginInvoke(new Action(() => {
-					Title = title;
-				}));
-
 				var episodes = db.Episodes
 					.Where(ep => ep.SeriesID == SeriesID)
 					.Select(ep => new {
 						Episode = ep,
 						Tracked = ep.Tracked
-							.Where(t => t.DateWatched.HasValue)
-							.OrderByDescending(t => t.DateWatched)
+							.OrderByDescending(t => t.Updated)
+							.OrderByDescending(t => t.Watched)
 							.FirstOrDefault()
 					})
 					.ToList();
 
-				var display = episodes
+				return episodes
 					.Select(ep => new EpisodeInfo {
 						Episode = ep.Episode,
 						Tracked = ep.Tracked,
-						TrackedTime = ep.Tracked != null && ep.Tracked.TrackedFile != null ? TimeSpan.FromSeconds(ep.Tracked.TrackedFile.TrackedSeconds) : default(TimeSpan?),		
+						TrackedTime = ep.Tracked != null && ep.Tracked.TrackedFile != null ? TimeSpan.FromSeconds(ep.Tracked.TrackedFile.TrackedSeconds) : default(TimeSpan?),
 						BannerPath = GetBannerPath(ep.Episode)
 					})
 					.ToList();
-
-				this.Dispatcher.BeginInvoke(new Action(() => {
-					if(!display.Any(d => d.BannerPath != null)) {
-						dataGrid.Columns.First().Visibility = System.Windows.Visibility.Collapsed;
-					}
-
-					dataGrid.ItemsSource = episodeInfo = new ObservableCollection<EpisodeInfo>(
-						display
-						.OrderByDescending(ep => ep.Episode.Number)
-						.OrderByDescending(ep => ep.Episode.Season)
-					);
-				}));
 			}
 		}
 
-		void ShowEpisodesAsync() {
+		async void ShowEpisodesAsync() {
 			statusModal.Text = "Loading...";
 			statusModal.Visibility = System.Windows.Visibility.Visible;
-			Task.Factory
-				.StartNew(() => {
-					ShowEpisodes();
-					Dispatcher.BeginInvoke(new Action(() => statusModal.Visibility = System.Windows.Visibility.Collapsed));
-				});
+			
+			var episodes = await Task.Factory.StartNew(() => GetEpisodes());
+
+			if(!episodes.Any(d => d.BannerPath != null)) {
+				dataGrid.Columns.First().Visibility = System.Windows.Visibility.Collapsed;
+			}
+
+			dataGrid.ItemsSource = episodeInfo = new ObservableCollection<EpisodeInfo>(
+				episodes
+				.OrderByDescending(ep => ep.Episode.Number)
+				.OrderByDescending(ep => ep.Episode.Season)
+			);
+
+			statusModal.Visibility = System.Windows.Visibility.Collapsed;
 		}
 
 		string GetBannerPath(Episode ep) {
@@ -114,11 +111,13 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 
 			using(var db = new EpisodeTrackerDBContext()) {
 				foreach(var info in selected) {
-					if(info.Tracked != null && info.Tracked.DateWatched.HasValue) continue;
+					if(info.Tracked != null && info.Tracked.Watched) continue;
 					
 					info.Tracked = new TrackedEpisode {
 						EpisodeID = info.Episode.ID,
-						DateWatched = DateTime.Now
+						Added = DateTime.Now,
+						Updated = DateTime.Now,
+						Watched = true
 					};
 
 					db.TrackedEpisodes.Add(info.Tracked);
@@ -134,7 +133,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 
 			using(var db = new EpisodeTrackerDBContext()) {
 				foreach(var info in selected) {
-					var tracked = db.TrackedEpisodes.Where(te => te.EpisodeID == info.Episode.ID && te.DateWatched.HasValue);
+					var tracked = db.TrackedEpisodes.Where(te => te.EpisodeID == info.Episode.ID && te.Watched);
 					if(!tracked.Any()) continue;
 
 					foreach(var te in tracked) db.TrackedEpisodes.Remove(te);
