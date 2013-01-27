@@ -173,7 +173,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			}
 		}
 
-		void RowDoubleClick(object sender, RoutedEventArgs e) {
+		void Watch_Click(object sender, RoutedEventArgs e) {
 			var row = sender as DataGridRow;
 			var info = row.Item as EpisodeInfo;
 

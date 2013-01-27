@@ -1,0 +1,382 @@
+﻿<#@ template language="C#" hostspecific="True" #>
+<#@ assembly name="System.Configuration" #>
+<#@ assembly name="System.Core" #>
+<#@ assembly name="System.Xml" #>
+<#@ assembly name="System.Xml.Linq" #>
+<#@ import namespace="System.Xml.Linq" #>
+<#@ import namespace="System.IO" #>
+<#@ import namespace="System.Configuration" #>
+<#@ import namespace="System.Linq" #>
+<#
+// Settings
+// ######################################################################################
+const string Namespace = "EpisodeTracker.Core.Models";
+
+// ######################################################################################
+
+string xmlPath = Path.Combine(Path.GetDirectoryName(Host.TemplateFile), "Settings.xml");
+var xml = XDocument.Load(xmlPath);
+
+#>
+using System;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Data.SqlClient;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
+using  System.Globalization;
+
+namespace <#= Namespace #> {
+	public partial class Settings {		
+<#
+		foreach(var el in xml.Root.Elements()) {
+			if(el.Name.LocalName == "setting") {
+				OutputSetting(el);
+			} else if(el.Name.LocalName == "group") {
+				OutputGroup(el);
+			}
+		}
+#>
+
+		private void InitChildren(Settings parent, Dictionary<string, string> loadFrom) {
+<#		if(xml.Root.Elements("setting").Count() > 0) { #>
+			string val = null;
+<#		} #>
+<#			foreach(var el in xml.Root.Elements()) {
+				if(el.Name.LocalName == "setting") {
+					LoadSetting(el);
+				} else if(el.Name.LocalName == "group") {
+					LoadGroup(el);
+				}
+			}
+#>
+		}
+	}
+}
+
+<#+ private void OutputSetting(XElement el) {
+		string elType = el.Name.LocalName;
+		var nameAttr = el.Attribute("name");
+		var typeAttr = el.Attribute("type");
+		
+		if(nameAttr == null) {
+			Error("Setting \"" + GetFullName(el) + "\" is missing name attribute");
+			return;
+		}
+		if(typeAttr == null) {
+			Error("Setting \"" + GetFullName(el) + "\" is missing type attribute");
+			return;
+		}
+		string name = nameAttr.Value;
+		string type = typeAttr.Value;
+		string privateType = type;
+		string outputType = type;
+		string initalizer = String.Empty;
+		bool hasDefault = HasDefault(el);
+		string returnName = "_" + name;
+		
+		if(type == "int?" && hasDefault) {
+			outputType = "int";
+			returnName += ".Value";
+		} else if(type == "TimeSpan") {
+			privateType = "TimeSpan?";
+			returnName += ".Value";
+		}
+
+		if(type == "int" || type == "bool") {
+			privateType = type + "?";
+			returnName += ".Value";
+		}
+
+		if(privateType == "string[]") {
+			initalizer = " = null";
+		} else if(privateType.EndsWith("?") || privateType == "string") {
+			initalizer = " = null";
+		}
+#>
+	
+			// <#= name #>
+			private <#= privateType #> _<#= name #><#= initalizer #>;
+			private object _lock<#= name #> = new object();
+			<#+ OutputDefault(el); #>
+		
+			public <#= outputType #> <#= name #> {
+				get {
+					lock(_lock<#= name #>) {
+						<#+ OutputGetDefault(el); #>
+
+						return <#= returnName #>;
+					}
+				}
+				set {
+					lock(_lock<#= name #>) {
+						_<#= name #> = value;
+					
+						<#+ SaveSetting(el); #>
+					}
+				}
+			}
+<#+
+}
+
+private bool HasDefault(XElement el) {
+	if(el.Attribute("default") != null) return true;
+	if(el.Attribute("defaultFile") != null) return true;
+	return false;
+}
+
+private void OutputDefault(XElement el) {
+	string name = el.Attribute("name").Value;
+	string type = el.Attribute("type").Value;
+	var defaultAttr = el.Attribute("default");
+	var defaultFileAttr = el.Attribute("defaultFile");
+	if(defaultAttr != null) {
+		switch(type) {
+			case "bool":
+				Write("public const bool " + name + "Default = " + defaultAttr.Value + ";");
+				break;
+			case "string":
+				Write("public const string " + name + "Default = @\"" + defaultAttr.Value + "\";");
+				break;
+			case "int":
+			case "int?":
+				Write("public const int " + name + "Default = " + defaultAttr.Value + ";");
+				break;
+			case "TimeSpan":
+				Write("public static readonly TimeSpan " + name + "Default = TimeSpan.Parse(\"" + defaultAttr.Value + "\");");
+				break;
+			case "string[]":
+				Write("public static readonly string[] " + name + "Default = ToStringArray(\"" + defaultAttr.Value + "\");");
+				break;
+			default:
+				Error("Defaults not implemented for type '" + type + "' on property '" + GetFullName(el) + "'.");
+				break;
+		}
+	} else if(type == "bool") {
+		Write("public const bool " + name + "Default = false;");	
+ 	} else if(defaultFileAttr != null) {
+		if(type != "string") {
+			Error("defaultFile attribute can only be used for string settings (" + GetFullName(el) + ").");
+			return;
+		}
+		string basePath = Host.ResolvePath("..\\");
+		var path = Path.Combine(basePath, defaultFileAttr.Value);
+		if(!File.Exists(path)) {
+			Error("Couldn't find the file: " + path);
+			return;
+		}
+		string def = File.ReadAllText(path);
+		
+		Write("public const string " + name + "Default = @\"" + def.Replace("\"", "\\\"") + "\";");
+	}
+}
+
+private void OutputGetDefault(XElement el) {
+	string name = el.Attribute("name").Value;
+	string type = el.Attribute("type").Value;
+	var defaultAttr = el.Attribute("default");
+	var defaultFileAttr = el.Attribute("defaultFile");
+
+	if(defaultAttr != null || defaultFileAttr != null || new [] { "TimeSpan", "bool", "string[]" }.Contains(type)) {
+		switch(type) {
+			case "string":
+				Write("if(_" + name + " == null) return " + name + "Default;");
+				break;
+			case "int":
+			case "bool":
+			case "int?":
+				Write("if(!_" + name + ".HasValue) return " + name + "Default;");
+				break;
+			case "TimeSpan":
+				Write("if(_" + name + " == null) return " + (defaultAttr != null ? name + "Default" : "new TimeSpan()") + ";");
+				break;
+			case "string[]":
+				Write("if(_" + name + " == null) return " + (defaultAttr != null ? name + "Default" : "new string[0]") + ";");
+				break;
+			default:
+				Error("Defaults not implemented for type '" + type + "' on property '" + GetFullName(el) + "'.");
+				break;
+		}
+	}
+}
+
+private void OutputGroup(XElement el) {
+	string name = el.Attribute("name").Value;
+	
+#>
+
+		public <#= name #>Settings <#= name #> { get; set; }
+		public class <#= name #>Settings {
+			protected Settings Settings { get; private set; }
+			
+			public <#= name #>Settings() { }
+			
+			public <#= name #>Settings(Settings settings, Dictionary<string, string> loadFrom) {
+				Settings = settings;
+				LoadSettings(loadFrom);
+			}
+			
+			<#+ foreach(var sel in el.Elements()) {
+				if(sel.Name.LocalName == "setting") {
+					OutputSetting(sel);
+				} else if(sel.Name.LocalName == "group") {
+					OutputGroup(sel);
+				}
+			} #>
+			
+			private void LoadSettings(Dictionary<string, string> loadFrom) {
+			<#+ if(el.Elements("setting").Count() > 0) { #>
+				string val = null;
+			<#+ } #>
+			<#+ foreach(var sel in el.Elements()) {
+					if(sel.Name.LocalName == "setting") {
+						LoadSetting(sel);
+					} else if(sel.Name.LocalName == "group") {
+						LoadGroup(sel);
+					}
+				}
+			#>
+			}	
+		}
+<#+
+}
+
+private void OutputDisconnectedCopy(XElement el) {
+	foreach(var subel in el.Elements()) {
+		if(subel.Name.LocalName == "setting") {
+			OutputSettingCopy(subel);
+		} else if(subel.Name.LocalName == "group") {
+			OutputGroupCopy(subel);
+		}
+	}
+}
+
+private void OutputGroupCopy(XElement el) {
+	var name = el.Attribute("name").Value;
+	var last = !el.ElementsAfterSelf().Any();
+
+	WriteLine("\t\t\t\t" + name + " = this." + name + ".DisconnectedCopy()" + (!last ? "," : ""));
+}
+
+private void OutputSettingCopy(XElement el) {
+	var name = el.Attribute("name").Value;
+	var last = !el.ElementsAfterSelf().Any();
+
+	WriteLine("\t\t\t\t" + name + " = this." + name + (!last ? "," : ""));
+}
+
+private void LoadSetting(XElement el) {
+	var name = el.Attribute("name").Value;
+	var type = el.Attribute("type").Value;
+	string tabs = "\t\t\t\t\t\t";
+#>
+
+				if(loadFrom.TryGetValue("<#= GetFullName(el) #>", out val)) {
+					try {
+<#+					switch(type) {
+						case "string":
+							WriteLine(tabs + "_" + name + " = val;");
+							break;
+						case "string[]":
+							WriteLine(tabs + "_" + name + " = ToStringArray(val);");
+							// clean up
+							WriteLine(tabs + "for(int i = 0; i < _" + name + ".Length; i++) { _" + name + "[i] = _" + name + "[i].Trim(); }");
+							break;
+						case "bool":
+						case "bool?":
+							WriteLine(tabs + "_" + name + " = bool.Parse(val);");
+							break;
+						case "int":
+						case "int?":
+							WriteLine(tabs + "_" + name + " = int.Parse(val);");
+							break;
+						case "DateTime":
+						case "DateTime?":
+							WriteLine(tabs + "DateTime date;");
+							WriteLine(tabs + "if(DateTime.TryParseExact(val, \"yyyyMMddHHmmss\", CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeLocal, out date)) _" + name + " = date; ");
+							break;
+						case "TimeSpan":
+							WriteLine(tabs + "TimeSpan span;");
+							WriteLine(tabs + "if(TimeSpan.TryParse(val, out span)) _" + name + " = span; ");
+							break;
+						default:
+							Error("Setting type '" + type + "' for setting " + GetFullName(el) + " is not implemented");
+							break;
+					} 
+#>
+					} catch { } // ignore invalid values
+				}
+<#+
+}
+
+private void LoadGroup(XElement el) {
+	var name = el.Attribute("name").Value;
+	
+	WriteLine("\t\t\t" + name + " = new " + name + "Settings(" + (IsTopLevelSetting(el) ? "parent" : "Settings") + ", loadFrom);");
+}
+
+private bool IsTopLevelSetting(XElement el) {
+	if(el.Parent.Name.LocalName == "settings") return true;
+	return false;
+}
+
+private string GetFullName(XElement el) {
+	string full = el.Attribute("name").Value;
+	
+	while(!IsTopLevelSetting(el)) {
+		el = el.Parent;
+		full = el.Attribute("name").Value + "." + full;
+	}
+	
+	return full;
+}
+
+private string GetFullClassName(XElement el) {
+	string full = el.Attribute("name").Value + "Settings";
+	
+	while(!IsTopLevelSetting(el)) {
+		el = el.Parent;
+		full = el.Attribute("name").Value + "Settings." + full;
+	}
+	
+	return full;
+}
+
+private void SaveSetting(XElement el) {
+	string type = el.Attribute("type").Value;
+	string fullName = GetFullName(el);
+	string name = el.Attribute("name").Value;
+	var defaultAttr = el.Attribute("default");
+	
+	if(!IsTopLevelSetting(el)) {
+		WriteLine("if(Settings != null) {");
+		Write("\t\t\t\t\t\t\tSettings.");
+	}
+	
+	switch(type) {
+		case "string":
+			WriteLine("SaveSetting(\"" + fullName + "\", value, " + (defaultAttr == null ? "null" : name + "Default") + ");");
+			break;
+		case "string[]":
+			WriteLine("SaveSetting(\"" + fullName + "\", FromStringArray(value), " + (defaultAttr == null ? "\"\"" : "FromStringArray(" + name + "Default)") + ");");
+			break;
+		case "DateTime":
+			WriteLine("SaveSetting(\"" + fullName + "\", value.ToString(\"yyyyMMddHHmmss\"), null);");
+			break;
+		case "DateTime?":
+			WriteLine("SaveSetting(\"" + fullName + "\", value != null ? value.Value.ToString(\"yyyyMMddHHmmss\") : null, null);");
+			break;
+		case "TimeSpan":
+			WriteLine("SaveSetting(\"" + fullName + "\", value.ToString(@\"hh\\:mm\\:ss\"), " + (defaultAttr == null ? "null" : name + "Default.ToString(@\"hh\\:mm\\:ss\")") + ");");
+			break;
+		default:
+			WriteLine("SaveSetting(\"" + fullName + "\", value.ToString(), " + (defaultAttr == null ? "string.Empty" : name + "Default.ToString()") + ");");
+			break;
+	}
+
+	if(!IsTopLevelSetting(el)) {
+		WriteLine("\t\t\t\t\t\t}");
+	}
+}
+
+#>

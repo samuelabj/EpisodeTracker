@@ -19,6 +19,7 @@ namespace EpisodeTracker.Core.Data {
 		public string Name { get; set; }
 		public DateTime Added { get; set; }
 		public DateTime Updated { get; set; }
+		[MaxLength(200)]
 		public string Status { get; set; }
 		public DateTime? FirstAired { get; set; }
 		public DayOfWeek? AirsDay { get; set; }

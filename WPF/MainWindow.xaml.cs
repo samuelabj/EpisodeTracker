@@ -120,18 +120,18 @@ namespace EpisodeTracker.WPF {
 
 			var updateStatus = new StatusModal();
 			updateStatus.Text = "Updating Series";
-			updateStatus.SubText = series.Count == 1 ? series.First().Name : "0 / " + series.Count;
+			updateStatus.SubText = series.Count == 1 ? series.First().Name : "0 / " + series.Count + " series";
 			updateStatus.ShowSubText = true;
 			updateStatus.ShowProgress = true;
 			updateStatus.SetValue(Grid.RowProperty, 1);
 			grid.Children.Add(updateStatus);
 
 			int complete = 0;
-			var tasks = new List<Task>();
+			int completeBanners = 0;
+			var totalBanners = new Dictionary<int, int>();
 
-			foreach(var temp in series) {
-				var s = temp;
-				var task = Task.Factory.StartNew(() => {
+			await Task.Factory.StartNew(() => {
+				Parallel.ForEach(series, s => {
 					if(!s.TVDBID.HasValue) {
 						var tvdbResult = TVDBSeriesSearcher.Search(s.Name);
 						if(tvdbResult != null) {
@@ -145,27 +145,36 @@ namespace EpisodeTracker.WPF {
 							TVDBID = s.TVDBID.Value,
 							DownloadBanners = true
 						};
-						if(series.Count == 1) {
-							syncer.BannerDownloaded += (o, e) => {
-								this.Dispatcher.BeginInvoke(new Action(() => {
-									updateStatus.SubText = String.Format("{0} / {1} banners downloaded", e.Complete, e.Total);
+
+						syncer.BannerDownloaded += (o, e) => {
+							Interlocked.Increment(ref completeBanners);
+							var total = 0;
+							lock(totalBanners) {
+								totalBanners[s.TVDBID.Value] = e.Total;
+								total = totalBanners.Sum(t => t.Value);
+							}
+
+							this.Dispatcher.BeginInvoke(new Action(() => {
+								if(series.Count == 1) {
+									updateStatus.SubText = String.Format("{0} / {1} banners", e.Complete, e.Total);
 									updateStatus.UpdateProgress(e.Complete, e.Total);
-								}));
-							};
-						}
+								} else {
+									updateStatus.SubText = String.Format("{0} / {1} series, {2} / {3} banners", complete, series.Count, completeBanners, total);
+								}
+							}));
+						};
+
 						syncer.Sync();
 					}
 
 					Interlocked.Increment(ref complete);
 					this.Dispatcher.BeginInvoke(new Action(() => {
-						updateStatus.SubText = String.Format("{0} / {1}", complete, series.Count);
+						updateStatus.SubText = String.Format("{0} / {1} series, {2} banners", complete, series.Count, completeBanners);
 						updateStatus.Progress = complete / (double)series.Count * 100;
 					}));
 				});
-				tasks.Add(task);
-			}
+			});
 
-			await Task.WhenAll(tasks);
 			grid.Children.Remove(updateStatus);
 		}
 
@@ -370,6 +379,11 @@ namespace EpisodeTracker.WPF {
 				MessageBox.Show("Problem opening file: " + ex.Message);
 				Logger.Error("Error opening filename: " + selected.WatchNext.FileName + " - " + ex);
 			}
+		}
+
+		private void Settings_Click(object sender, RoutedEventArgs e) {
+			var settings = new Views.Settings.Index();
+			settings.ShowDialog();
 		}
 
 		public class ShowSampleWindowCommand : CommandBase<ShowSampleWindowCommand> {

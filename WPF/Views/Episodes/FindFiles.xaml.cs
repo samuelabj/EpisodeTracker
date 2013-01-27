@@ -57,16 +57,6 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			};
 			grid.Children.Add(status);
 
-			var host = @"\\192.168.1.21";
-			var paths = new[] {
-				@"g\Anime",
-				@"g\Documentaries",
-				@"g\TV Shows",
-				@"e\TV Shows",
-				@"h\Downloads\Downloaded"
-			};
-			paths = paths.Select(p => System.IO.Path.Combine(host, p)).ToArray();
-
 			var tasks = new List<Task<List<EpisodeFileSearchResult>>>();
 			var searcher = new EpisodeFileSearcher();
 			var totalFound = 0;
@@ -78,7 +68,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 				}));
 			};
 
-			foreach(var path in paths) {
+			foreach(var path in Core.Models.Settings.Default.Libraries) {
 				tasks.Add(searcher.SearchAsync(path));
 			}
 
@@ -102,26 +92,19 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			status.ShowProgress = true;
 			
 			var completed = 0;
-			var syncTasks = new List<Task>();
 
-			foreach(var temp in foundFiles) {
-				var info = temp; 
-				var task = Task.Factory.StartNew(() => {
+			await Task.Factory.StartNew(() => {
+				Parallel.ForEach(foundFiles, info => {
 					ProcessFiles(info);
-				});
-
-				task.ContinueWith(t => {
 					Interlocked.Increment(ref completed);
 
-					//this.Dispatcher.BeginInvoke(new Action(() => {
-					status.SubText = String.Format("{0} / {1} series", completed, total);
-					status.UpdateProgress(completed, total);
-					//}));
-				}, TaskScheduler.FromCurrentSynchronizationContext());
-				syncTasks.Add(task);
-			}
+					this.Dispatcher.BeginInvoke(new Action(() => {			
+						status.SubText = String.Format("{0} / {1} series", completed, total);
+						status.UpdateProgress(completed, total);
+					}));
+				});
+			});
 
-			await Task.WhenAll(syncTasks);
 			grid.Children.Remove(status);
 		}
 

@@ -14,6 +14,7 @@ namespace EpisodeTracker.Core.Data {
 		public int SeriesID { get; set; }
 		public int Season { get; set; }
 		public int Number { get; set; }
+		[MaxLength(200)]
 		public string Name { get; set; }
 		public DateTime? Aired { get; set; }
 		public string Overview { get; set; }
@@ -22,7 +23,7 @@ namespace EpisodeTracker.Core.Data {
 		public DateTime Updated { get; set; }
 		public int? AbsoluteNumber { get; set; }
 		public double? Rating { get; set; }
-		[MaxLength(500)]
+		[MaxLength(2000)]
 		public string FileName { get; set; }
 
 		[ForeignKey("ID")]

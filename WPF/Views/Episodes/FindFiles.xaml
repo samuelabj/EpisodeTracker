@@ -30,7 +30,7 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Series" Binding="{Binding SeriesName}" Width="200" />
                 <DataGridTextColumn Header="Files" Binding="{Binding Results.Count}" Width="100" />
-                <DataGridTextColumn Header="Download Status" Binding="{Binding Status}" Width="*" />
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" />
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

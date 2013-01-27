@@ -31,7 +31,7 @@
                             <Setter Property="Background" Value="#00593F"/>
                         </DataTrigger>
                     </Style.Triggers>
-                    <EventSetter Event="MouseDoubleClick" Handler="RowDoubleClick"/>
+                    <EventSetter Event="MouseDoubleClick" Handler="Watch_Click"/>
                 </Style>
             </DataGrid.RowStyle>
             <DataGrid.ContextMenu>
@@ -39,6 +39,7 @@
                     <MenuItem Header="Watched" Click="Watched_Click" />
                     <MenuItem Header="Unwatched" Click="Unwatched_Click" />
                     <MenuItem Header="Delete" Click="Delete_Click" />
+                    <MenuItem Header="Watch Now" Click="Watch_Click" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>

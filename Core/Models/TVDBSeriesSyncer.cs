@@ -9,6 +9,7 @@ using EpisodeTracker.Core.Data;
 using MediaReign.TVDB;
 using System.Data.Entity;
 using System.Threading;
+using NLog;
 
 namespace EpisodeTracker.Core.Models {
 	public class TVDBSeriesSyncer {
@@ -27,6 +28,11 @@ namespace EpisodeTracker.Core.Models {
 
 		int TotalBanners = 0;
 		int CompleteBanners = 0;
+		Logger Logger;
+
+		public TVDBSeriesSyncer() {
+			Logger = LogManager.GetLogger("EpisodeTracker");
+		}
 
 		public event BannerDownloadProgressEventHandler BannerDownloaded;
 		public string Name { get; set; }
@@ -45,6 +51,11 @@ namespace EpisodeTracker.Core.Models {
 			lock(syncInfo.Lock) {
 				Sync(syncInfo);
 			}
+		}
+
+		void LogLength(Series series, string prop, string val) {
+			if(val == null) return;
+			Logger.Debug(series.Name + " - " + prop + ": " + val.Length);
 		}
 
 		private void Sync(SyncInfo syncInfo) {
@@ -67,10 +78,12 @@ namespace EpisodeTracker.Core.Models {
 
 				series.TVDBID = tvdbSeries.ID;
 				series.Name = tvdbSeries.Name;
+				LogLength(series, "name", tvdbSeries.Name);
 				series.AirsDay = tvdbSeries.AirsDay;
 				series.AirsTime = tvdbSeries.AirsTime;
 				series.Status = tvdbSeries.Status;
 				series.Overview = tvdbSeries.Overview;
+				LogLength(series, "overview", tvdbSeries.Overview);
 				series.LengthMinutes = tvdbSeries.LengthMinutes;
 				series.Rating = tvdbSeries.Rating;
 
@@ -148,8 +161,10 @@ namespace EpisodeTracker.Core.Models {
 			}
 
 			episode.TVDBID = tvDBEpisode.ID;
-			episode.Name = tvDBEpisode.Name;	
+			episode.Name = tvDBEpisode.Name;
+			LogLength(series, "ep name", tvDBEpisode.Name);
 			episode.Overview = tvDBEpisode.Overview;
+			LogLength(series, "ep overview", tvDBEpisode.Overview);
 			episode.Aired = tvDBEpisode.Aired <= SqlDateTime.MaxValue.Value && tvDBEpisode.Aired >= SqlDateTime.MinValue.Value ? tvDBEpisode.Aired : default(DateTime?);
 			episode.AbsoluteNumber = tvDBEpisode.AbsoluteNumber;
 			episode.Rating = tvDBEpisode.Rating;
@@ -198,26 +213,30 @@ namespace EpisodeTracker.Core.Models {
 		}
 
 		bool ValidJPG(string path) {
-			using(var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
-			using(var br = new BinaryReader(fs)) {
-				byte lastByte = byte.MinValue;
-				var buffer = new byte[1024];
-				var read = 0;
+			try {
+				using(var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+				using(var br = new BinaryReader(fs)) {
+					byte lastByte = byte.MinValue;
+					var buffer = new byte[1024];
+					var read = 0;
 
-				do {
-					read = br.Read(buffer, 0, buffer.Length);
-					for(var i = 0; i < read; i++) {
-						var b = buffer[i];
-						// EOI (end of image) marker
-						if(b == 0xd9 && lastByte == 0xff) {
-							return true;
+					do {
+						read = br.Read(buffer, 0, buffer.Length);
+						for(var i = 0; i < read; i++) {
+							var b = buffer[i];
+							// EOI (end of image) marker
+							if(b == 0xd9 && lastByte == 0xff) {
+								return true;
+							}
+							lastByte = b;
 						}
-						lastByte = b;
-					}
-				} while(read == buffer.Length);
-			}
+					} while(read == buffer.Length);
+				}
 
-			return false;
+				return false;
+			} catch(Exception) {
+				return true;
+			}
 		}
 	}
 }
