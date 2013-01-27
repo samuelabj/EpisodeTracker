@@ -5,13 +5,13 @@ namespace EpisodeTracker.Core.Migrations
     using System.Data.Entity.Migrations.Infrastructure;
     using System.Resources;
     
-    public sealed partial class ConvertToTrackedFile : IMigrationMetadata
+    public sealed partial class InitialCreate : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(ConvertToTrackedFile));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(InitialCreate));
         
         string IMigrationMetadata.Id
         {
-            get { return "201212310139031_ConvertToTrackedFile"; }
+            get { return "201301270600095_InitialCreate"; }
         }
         
         string IMigrationMetadata.Source

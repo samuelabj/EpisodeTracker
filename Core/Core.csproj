@@ -89,52 +89,11 @@
     <Compile Include="Data\TrackedFile.cs" />
     <Compile Include="Data\User.cs" />
     <Compile Include="Data\TrackedEpisode.cs" />
-    <Compile Include="Migrations\201210280828547_InitialCreate.cs" />
-    <Compile Include="Migrations\201210280828547_InitialCreate.Designer.cs">
-      <DependentUpon>201210280828547_InitialCreate.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201212310139031_ConvertToTrackedFile.cs" />
-    <Compile Include="Migrations\201212310139031_ConvertToTrackedFile.Designer.cs">
-      <DependentUpon>201212310139031_ConvertToTrackedFile.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201212311144375_EnsureUniqueSeriesEpisodes.cs" />
-    <Compile Include="Migrations\201212311144375_EnsureUniqueSeriesEpisodes.Designer.cs">
-      <DependentUpon>201212311144375_EnsureUniqueSeriesEpisodes.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201301010410533_AllowNullableEpisodeProps.cs" />
-    <Compile Include="Migrations\201301010410533_AllowNullableEpisodeProps.Designer.cs">
-      <DependentUpon>201301010410533_AllowNullableEpisodeProps.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201301031109044_MultipleTrackedEpisodes.cs" />
-    <Compile Include="Migrations\201301031109044_MultipleTrackedEpisodes.Designer.cs">
-      <DependentUpon>201301031109044_MultipleTrackedEpisodes.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201301131145424_Users.cs" />
-    <Compile Include="Migrations\201301131145424_Users.Designer.cs">
-      <DependentUpon>201301131145424_Users.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201301200222586_Stuff.cs" />
-    <Compile Include="Migrations\201301200222586_Stuff.Designer.cs">
-      <DependentUpon>201301200222586_Stuff.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201301220144479_TrackedEpisodeCleanup.cs" />
-    <Compile Include="Migrations\201301220144479_TrackedEpisodeCleanup.Designer.cs">
-      <DependentUpon>201301220144479_TrackedEpisodeCleanup.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201301230010188_Genres.cs" />
-    <Compile Include="Migrations\201301230010188_Genres.Designer.cs">
-      <DependentUpon>201301230010188_Genres.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201301232201511_MoreTrackedEpisodeData.cs" />
-    <Compile Include="Migrations\201301232201511_MoreTrackedEpisodeData.Designer.cs">
-      <DependentUpon>201301232201511_MoreTrackedEpisodeData.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Migrations\201301270426501_EpisodeFileName.cs" />
-    <Compile Include="Migrations\201301270426501_EpisodeFileName.Designer.cs">
-      <DependentUpon>201301270426501_EpisodeFileName.cs</DependentUpon>
+    <Compile Include="Migrations\201301270600095_InitialCreate.cs" />
+    <Compile Include="Migrations\201301270600095_InitialCreate.Designer.cs">
+      <DependentUpon>201301270600095_InitialCreate.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
-    <Compile Include="Migrations\SQLCompactMigration.cs" />
     <Compile Include="Models\EpisodeFileSearcher.cs" />
     <Compile Include="Models\EpisodeFileSearchResult.cs" />
     <Compile Include="Models\HandleHelper.cs" />
@@ -203,41 +162,10 @@
     </COMReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201210280828547_InitialCreate.resx">
-      <DependentUpon>201210280828547_InitialCreate.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201212310139031_ConvertToTrackedFile.resx">
-      <DependentUpon>201212310139031_ConvertToTrackedFile.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201212311144375_EnsureUniqueSeriesEpisodes.resx">
-      <DependentUpon>201212311144375_EnsureUniqueSeriesEpisodes.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201301010410533_AllowNullableEpisodeProps.resx">
-      <DependentUpon>201301010410533_AllowNullableEpisodeProps.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201301031109044_MultipleTrackedEpisodes.resx">
-      <DependentUpon>201301031109044_MultipleTrackedEpisodes.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201301131145424_Users.resx">
-      <DependentUpon>201301131145424_Users.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201301200222586_Stuff.resx">
-      <DependentUpon>201301200222586_Stuff.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201301220144479_TrackedEpisodeCleanup.resx">
-      <DependentUpon>201301220144479_TrackedEpisodeCleanup.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201301230010188_Genres.resx">
-      <DependentUpon>201301230010188_Genres.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201301232201511_MoreTrackedEpisodeData.resx">
-      <DependentUpon>201301232201511_MoreTrackedEpisodeData.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201301270426501_EpisodeFileName.resx">
-      <DependentUpon>201301270426501_EpisodeFileName.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201301270600095_InitialCreate.resx">
+      <DependentUpon>201301270600095_InitialCreate.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
