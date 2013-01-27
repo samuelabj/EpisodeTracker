@@ -129,11 +129,16 @@
     <Compile Include="Migrations\201301232201511_MoreTrackedEpisodeData.Designer.cs">
       <DependentUpon>201301232201511_MoreTrackedEpisodeData.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201301270426501_EpisodeFileName.cs" />
+    <Compile Include="Migrations\201301270426501_EpisodeFileName.Designer.cs">
+      <DependentUpon>201301270426501_EpisodeFileName.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Migrations\SQLCompactMigration.cs" />
     <Compile Include="Models\EpisodeFileSearcher.cs" />
     <Compile Include="Models\EpisodeFileSearchResult.cs" />
     <Compile Include="Models\HandleHelper.cs" />
+    <Compile Include="Models\TVDBSeriesSearcher.cs" />
     <Compile Include="Models\TVDBSeriesSyncer.cs" />
     <Compile Include="Monitors\ProcessMonitor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -227,6 +232,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201301232201511_MoreTrackedEpisodeData.resx">
       <DependentUpon>201301232201511_MoreTrackedEpisodeData.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201301270426501_EpisodeFileName.resx">
+      <DependentUpon>201301270426501_EpisodeFileName.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup />

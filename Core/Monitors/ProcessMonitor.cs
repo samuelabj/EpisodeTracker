@@ -123,7 +123,13 @@ namespace EpisodeTracker.Core.Monitors {
 				Logger.Trace("Found file: " + f);
 				var mon = monitored.SingleOrDefault(m => m.FileName.Equals(f, StringComparison.OrdinalIgnoreCase));
 				if(mon == null) {
-					CheckUnmonitoredFile(f);
+					var fileName = f;
+					// Remove weird mup prefix if it exists
+					var mupPrefix = @"\Device\Mup\";
+					if(f.StartsWith(mupPrefix, StringComparison.OrdinalIgnoreCase)) {
+						fileName = @"\\" + fileName.Remove(0, mupPrefix.Length);
+					}
+					CheckUnmonitoredFile(fileName);
 				} else {
 					CheckMonitoredFile(mon);
 				}
@@ -158,7 +164,12 @@ namespace EpisodeTracker.Core.Monitors {
 					using(var db = new EpisodeTrackerDBContext()) {
 						var series = db.Series.SingleOrDefault(s => s.TVDBID == first.ID);
 						if(series == null || series.Updated <= DateTime.Now.AddDays(-7)) {
-							TVDBSeriesSyncer.Sync(first.ID, match.Name);
+							var syncer = new TVDBSeriesSyncer {
+								TVDBID = first.ID,
+								Name = match.Name,
+								DownloadBannersAsync = true
+							};
+							syncer.Sync();
 						}
 
 						// Pull out series again as it might have been updated

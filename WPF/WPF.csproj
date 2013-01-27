@@ -93,6 +93,9 @@
     <Compile Include="Models\MarkupExtensions\IsNullConverter.cs" />
     <Compile Include="Models\MarkupExtensions\SummariseConverter.cs" />
     <Compile Include="Models\MarkupExtensions\MultiStyles.cs" />
+    <Compile Include="Views\Episodes\FindFiles.xaml.cs">
+      <DependentUpon>FindFiles.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\Shared\StatusModal.xaml.cs">
       <DependentUpon>StatusModal.xaml</DependentUpon>
     </Compile>
@@ -142,6 +145,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Resources\Dictionaries\Styles\ToolTip.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Episodes\FindFiles.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -206,6 +213,10 @@
     <ProjectReference Include="..\MediaReign.Core\MediaReign.Core.csproj">
       <Project>{8be05c02-2183-4825-b68d-f37c4c8fbf43}</Project>
       <Name>MediaReign.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\MediaReign.TVDB\MediaReign.TVDB.csproj">
+      <Project>{b825aa41-99d4-4856-8bc1-f72d8ffbef15}</Project>
+      <Name>MediaReign.TVDB</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

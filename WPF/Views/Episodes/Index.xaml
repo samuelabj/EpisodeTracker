@@ -31,6 +31,7 @@
                             <Setter Property="Background" Value="#00593F"/>
                         </DataTrigger>
                     </Style.Triggers>
+                    <EventSetter Event="MouseDoubleClick" Handler="RowDoubleClick"/>
                 </Style>
             </DataGrid.RowStyle>
             <DataGrid.ContextMenu>

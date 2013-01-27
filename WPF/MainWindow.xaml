@@ -24,6 +24,7 @@
             <MenuItem Header="File">
                 <MenuItem Header="Update All" Click="UpdateAll_Click" />
                 <MenuItem Header="Refresh" Click="Refresh_Click" />
+                <MenuItem Header="Locate Episode Files" Click="LocateEpisodeFiles_Click" />
             </MenuItem>
         </Menu>
 
@@ -45,6 +46,8 @@
             <DataGrid.ContextMenu>
                 <ContextMenu>
                     <MenuItem Header="Update" Click="UpdateSelected_Click" />
+                    <MenuItem Header="Delete" Click="Delete_Click" />
+                    <MenuItem Header="Watch Next" Click="WatchNext_Click" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
@@ -72,9 +75,21 @@
                         </Style>
                     </DataGridTextColumn.ElementStyle> 
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Season" Width="50" Binding="{Binding Season}" />
-                <DataGridTextColumn Header="Episode" Width="52" Binding="{Binding Episode}" />
-                <DataGridTextColumn Header="Date" Width="100" Binding="{Binding Date, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
+                <DataGridTemplateColumn Header="Next Episode" Width="100">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <TextBlock>
+                                <TextBlock.Text>
+                                    <MultiBinding StringFormat="S{0:00}E{1:00}">
+                                        <Binding Path="WatchNext.Season" />
+                                        <Binding Path="WatchNext.Number"/>
+                                    </MultiBinding>
+                                </TextBlock.Text>
+                            </TextBlock>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+                <DataGridTextColumn Header="Last Watched" Width="100" Binding="{Binding LastWatched, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
                 <DataGridTemplateColumn Header="Progress" Width="100">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>

@@ -26,34 +26,41 @@ using EpisodeTracker.Core.Models;
 using System.Threading;
 using EpisodeTracker.WPF.Models;
 using MediaReign.Core;
+using EpisodeTracker.WPF.Views.Episodes;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 
 namespace EpisodeTracker.WPF {
 	/// <summary>
 	/// Interaction logic for MainWindow.xaml
 	/// </summary>
 	public partial class MainWindow : Window {
-		TaskbarIcon taskbar;
-		Logger Logger;
-		ProcessMonitor Monitor;
+		class SeriesInfo : INotifyPropertyChanged {
+			public event PropertyChangedEventHandler PropertyChanged;
 
-		public MainWindow() {
-			InitializeComponent();
-		}
-
-		class SeriesInfo {
 			public int SeriesID { get; set; }
 			public string Series { get; set; }
 			public string Overview { get; set; }
 			public int Season { get; set; }
 			public int Episode { get; set; }
-			public DateTime Date { get; set; }
+			public DateTime? LastWatched { get; set; }
 			public string Status { get; set; }
 			public int Total { get; set; }
 			public int Watched { get; set; }
+			public Episode WatchNext { get; set; }
 			public DateTime? NextAirs { get; set; }
 			public string BannerPath { get; set; }
 			public string Genres { get; set; }
 			public double? Rating { get; set; }
+		}
+
+		TaskbarIcon taskbar;
+		Logger Logger;
+		ProcessMonitor Monitor;
+		ObservableCollection<SeriesInfo> seriesList;
+
+		public MainWindow() {
+			InitializeComponent();
 		}
 
 		protected override void OnInitialized(EventArgs e) {
@@ -75,7 +82,7 @@ namespace EpisodeTracker.WPF {
 			//this.Hide();
 			this.StateChanged += (o, ea) => { 
 				if(WindowState == System.Windows.WindowState.Minimized) this.Hide();
-				RefreshListsAsync();
+				LoadListsAsync();
 			};
 
 			this.Closing += (o, ev) => {
@@ -85,7 +92,7 @@ namespace EpisodeTracker.WPF {
 			};
 
 			UpdateSeriesAsync(false);
-			RefreshListsAsync();
+			LoadListsAsync();
 
 			this.WindowState = System.Windows.WindowState.Maximized;
 		}
@@ -113,7 +120,7 @@ namespace EpisodeTracker.WPF {
 
 			var updateStatus = new StatusModal();
 			updateStatus.Text = "Updating Series";
-			updateStatus.SubText = "0 / " + series.Count;
+			updateStatus.SubText = series.Count == 1 ? series.First().Name : "0 / " + series.Count;
 			updateStatus.ShowSubText = true;
 			updateStatus.ShowProgress = true;
 			updateStatus.SetValue(Grid.RowProperty, 1);
@@ -126,9 +133,27 @@ namespace EpisodeTracker.WPF {
 				var s = temp;
 				var task = Task.Factory.StartNew(() => {
 					if(!s.TVDBID.HasValue) {
-						TVDBSeriesSyncer.Sync(s.Name, asyncBanners: false);
-					} else {
-						TVDBSeriesSyncer.Sync(s.TVDBID.Value, asyncBanners: false);
+						var tvdbResult = TVDBSeriesSearcher.Search(s.Name);
+						if(tvdbResult != null) {
+							s.TVDBID = tvdbResult.ID;
+						}
+					}
+
+					if(s.TVDBID.HasValue) {
+						var syncer = new TVDBSeriesSyncer {
+							Name = s.Name,
+							TVDBID = s.TVDBID.Value,
+							DownloadBanners = true
+						};
+						if(series.Count == 1) {
+							syncer.BannerDownloaded += (o, e) => {
+								this.Dispatcher.BeginInvoke(new Action(() => {
+									updateStatus.SubText = String.Format("{0} / {1} banners downloaded", e.Complete, e.Total);
+									updateStatus.UpdateProgress(e.Complete, e.Total);
+								}));
+							};
+						}
+						syncer.Sync();
 					}
 
 					Interlocked.Increment(ref complete);
@@ -149,16 +174,18 @@ namespace EpisodeTracker.WPF {
 				var watching = db.Series
 					.Select(s =>
 						s.Episodes
-							.SelectMany(ep => ep.Tracked)
-							.OrderByDescending(t => t.Updated)
+							.Where(e => e.Season != 0)
+							.OrderBy(e => e.Number)
+							.OrderBy(e => e.Season)
+							.OrderByDescending(e => e.Tracked.FirstOrDefault().Updated)
 							.FirstOrDefault()
 					)
 					.AsQueryable()
-					.Include(t => t.Episode)
-					.Include(t => t.Episode.Series)
-					.Include(t => t.Episode.Series.Genres.Select(g => g.Genre))
+					.Include(e => e.Series)
+					.Include(e => e.Series.Genres.Select(g => g.Genre))
+					.Include(e => e.Tracked)
 					.ToList()
-					.Where(t => t != null);
+					.Where(e => e != null);
 
 				var seriesInfo = db.Series.Select(s => new {
 					s.ID,
@@ -168,28 +195,43 @@ namespace EpisodeTracker.WPF {
 				})
 				.ToDictionary(s => s.ID);
 
-				return watching
-					.Select(t => new SeriesInfo {
-						SeriesID = t.Episode.SeriesID,
-						Series = t.Episode.Series.Name,
-						Overview = t.Episode.Series.Overview,
-						Status = t.Episode.Series.Status,
-						Season = t.Episode.Season,
-						Episode = t.Episode.Number,
-						Date = t.Updated,
-						Total = seriesInfo[t.Episode.SeriesID].Total,
-						Watched = seriesInfo[t.Episode.SeriesID].Watched,
-						NextAirs = seriesInfo[t.Episode.SeriesID].NextAirs,
-						BannerPath = GetBannerPath(t.Episode.Series),
-						Genres = String.Join(", ", t.Episode.Series.Genres.Select(g => g.Genre.Name)),
-						Rating = t.Episode.Series.Rating
-					})
-					.ToList();
+				var display = new List<SeriesInfo>();
+				foreach(var e in watching) {
+					display.Add(new SeriesInfo {
+						SeriesID = e.SeriesID,
+						Series = e.Series.Name,
+						Overview = e.Series.Overview,
+						Status = e.Series.Status,
+						Season = e.Season,
+						Episode = e.Number,
+						LastWatched = e.Tracked.Max(t => (DateTime?)t.Updated),
+						Total = seriesInfo[e.SeriesID].Total,
+						Watched = seriesInfo[e.SeriesID].Watched,
+						WatchNext = !e.Tracked.Any(t => t.Watched) ? e : db.Episodes.Where(e2 => 
+							e2.SeriesID == e.SeriesID 
+							&& !e2.Tracked.Any(t => t.Watched) 
+							&& (
+								e2.Season > e.Season 
+								|| e2.Season == e.Season 
+								&& e2.Number > e.Number
+							)
+						)
+						.OrderBy(e2 => e2.Number)
+						.OrderBy(e2 => e2.Season)
+						.FirstOrDefault(),
+						NextAirs = seriesInfo[e.SeriesID].NextAirs,
+						BannerPath = GetBannerPath(e.Series),
+						Genres = String.Join(", ", e.Series.Genres.Select(g => g.Genre.Name)),
+						Rating = e.Series.Rating
+					});
+				}
+
+				return display;
 			}
 		}
 
 		string GetBannerPath(Series series) {
-			var path = System.IO.Path.GetFullPath(@"External\Series\" + series.ID + @"\banner.jpg");
+			var path = System.IO.Path.GetFullPath(@"Resources\Series\" + series.ID + @"\banner.jpg");
 			if(File.Exists(path)) return path;
 			return null;
 		}
@@ -216,8 +258,8 @@ namespace EpisodeTracker.WPF {
 			}
 		}
 
-		async void RefreshListsAsync() {
-			statusModal.Text = "Refreshing...";
+		async void LoadListsAsync() {
+			statusModal.Text = "Loading...";
 			statusModal.Visibility = System.Windows.Visibility.Visible;
 
 			var series = Task.Factory.StartNew(() => GetSeries());
@@ -225,8 +267,10 @@ namespace EpisodeTracker.WPF {
 
 			await Task.WhenAll(series, other);
 
-			seriesGrid.ItemsSource = series.Result
-						.OrderByDescending(f => f.Date);
+			seriesGrid.ItemsSource = seriesList = new ObservableCollection<SeriesInfo>(
+				series.Result
+						.OrderByDescending(f => f.LastWatched)
+			);
 
 			otherGrid.ItemsSource = other.Result;
 
@@ -249,7 +293,7 @@ namespace EpisodeTracker.WPF {
 
 			mon.FileAdded += (o, e) => {
 				this.Dispatcher.BeginInvoke(new Action(() => {
-					RefreshListsAsync();
+					LoadListsAsync();
 
 					var bal = new NotificationBalloon();
 					bal.HeaderText = "Episode Tracker";
@@ -260,7 +304,7 @@ namespace EpisodeTracker.WPF {
 
 			mon.FileRemoved += (o, e) => {
 				this.Dispatcher.BeginInvoke(new Action(() => {
-					RefreshListsAsync();
+					LoadListsAsync();
 
 					var bal = new NotificationBalloon();
 					bal.HeaderText = "Episode Tracker";
@@ -282,12 +326,49 @@ namespace EpisodeTracker.WPF {
 		}
 
 		private void Refresh_Click(object sender, RoutedEventArgs e) {
-			RefreshListsAsync();
+			LoadListsAsync();
 		}
 
 		private void Window_KeyUp(object sender, KeyEventArgs e) {
 			if(e.Key == Key.F5) {
-				RefreshListsAsync();
+				LoadListsAsync();
+			}
+		}
+
+		private void Delete_Click(object sender, RoutedEventArgs e) {
+			var selected = seriesGrid.SelectedItems.Cast<SeriesInfo>().Select(s => seriesList.Single(s2 => s2.SeriesID == s.SeriesID));
+			if(MessageBox.Show("Are you sure you want to delete these " + selected.Count() + " series?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes) {
+				using(var db = new EpisodeTrackerDBContext()) {
+					for(var i = 0; i < selected.Count(); i++) {
+						var series = selected.ElementAt(i);
+						var se = db.Series.Single(s => s.ID == series.SeriesID);
+						
+						db.Series.Remove(se);
+						seriesList.Remove(series);
+					}
+					db.SaveChanges();
+				}
+			}
+		}
+
+		private void LocateEpisodeFiles_Click(object sender, RoutedEventArgs e) {
+			var findWindow = new FindFiles();
+			findWindow.WindowState = System.Windows.WindowState.Maximized;
+			findWindow.ShowDialog();
+		}
+
+		private void WatchNext_Click(object sender, RoutedEventArgs e) {
+			var selected = seriesGrid.SelectedItem as SeriesInfo;
+			if(selected.WatchNext.FileName == null || !File.Exists(selected.WatchNext.FileName)) {
+				MessageBox.Show("Could not find file");
+				return;
+			}
+
+			try {
+				Process.Start(selected.WatchNext.FileName);
+			} catch(Exception ex) {
+				MessageBox.Show("Problem opening file: " + ex.Message);
+				Logger.Error("Error opening filename: " + selected.WatchNext.FileName + " - " + ex);
 			}
 		}
 

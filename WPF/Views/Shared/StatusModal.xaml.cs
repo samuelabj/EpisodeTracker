@@ -47,6 +47,10 @@ namespace EpisodeTracker.WPF.Views.Shared {
 			set { statusProgress.Value = value; }
 		}
 
+		public void UpdateProgress(double increment, double total) {
+			Progress = increment / total * 100;
+		}
+
 		protected override void OnInitialized(EventArgs e) {
 			base.OnInitialized(e);
 

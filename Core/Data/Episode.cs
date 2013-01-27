@@ -22,6 +22,8 @@ namespace EpisodeTracker.Core.Data {
 		public DateTime Updated { get; set; }
 		public int? AbsoluteNumber { get; set; }
 		public double? Rating { get; set; }
+		[MaxLength(500)]
+		public string FileName { get; set; }
 
 		[ForeignKey("ID")]
 		public virtual Series Series { get; set; }

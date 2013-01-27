@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -14,6 +16,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using EpisodeTracker.Core.Data;
+using NLog;
 
 namespace EpisodeTracker.WPF.Views.Episodes {
 	/// <summary>
@@ -31,6 +34,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 		}
 
 		ObservableCollection<EpisodeInfo> episodeInfo;
+		Logger Logger;
 
 		public Index() {
 			InitializeComponent();
@@ -40,6 +44,8 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 
 		protected override void OnInitialized(EventArgs e) {
 			base.OnInitialized(e);
+
+			Logger = LogManager.GetLogger("EpisodeTracker");
 			statusModal.Visibility = System.Windows.Visibility.Hidden;
 		}
 
@@ -59,7 +65,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 		List<EpisodeInfo> GetEpisodes() {
 			using(var db = new EpisodeTrackerDBContext()) {
 				var episodes = db.Episodes
-					.Where(ep => ep.SeriesID == SeriesID)
+					.Where(ep => ep.SeriesID == SeriesID && ep.Season != 0)
 					.Select(ep => new {
 						Episode = ep,
 						Tracked = ep.Tracked
@@ -100,7 +106,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 		}
 
 		string GetBannerPath(Episode ep) {
-			var path = System.IO.Path.GetFullPath(@"External\Series\" + ep.SeriesID + @"\" + ep.ID + ".jpg");
+			var path = System.IO.Path.GetFullPath(@"Resources\Series\" + ep.SeriesID + @"\" + ep.ID + ".jpg");
 			if(System.IO.File.Exists(path)) return path;
 			return null;
 		}
@@ -164,6 +170,23 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 		private void Window_KeyUp(object sender, KeyEventArgs e) {
 			if(e.Key == Key.F5) {
 				ShowEpisodesAsync();
+			}
+		}
+
+		void RowDoubleClick(object sender, RoutedEventArgs e) {
+			var row = sender as DataGridRow;
+			var info = row.Item as EpisodeInfo;
+
+			if(info.Episode.FileName == null || !File.Exists(info.Episode.FileName)) {
+				MessageBox.Show("Could not find file");
+				return;
+			}
+
+			try {
+				Process.Start(info.Episode.FileName);
+			} catch(Exception ex) {
+				MessageBox.Show("Problem opening file: " + ex.Message);
+				Logger.Error("Error opening filename: " + info.Episode.FileName + " - " + ex);
 			}
 		}
 	}
