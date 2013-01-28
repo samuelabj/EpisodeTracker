@@ -39,7 +39,13 @@ namespace EpisodeTracker.Core.Models {
 		public Task<List<EpisodeFileSearchResult>> SearchAsync(string path) {
 			return Task.Factory.StartNew(() => {
 				var results = new List<EpisodeFileSearchResult>();
-				var files = Directory.GetFiles(path);
+				string[] files;
+				
+				try {
+					files = Directory.GetFiles(path);
+				} catch(Exception e) {
+					throw new ApplicationException("Could not get files for path: " + path, e);
+				}
 
 				foreach(var file in files) {
 					var ext = System.IO.Path.GetExtension(file);

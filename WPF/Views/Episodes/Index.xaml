@@ -63,6 +63,7 @@
                                 <Setter.Value>
                                     <ToolTip 
                                         Style="{StaticResource ToolTip.Expanded}" 
+                                        MaxWidth="500"
                                         Content="{Binding Episode.Overview}"/>
                                 </Setter.Value>
                             </Setter>

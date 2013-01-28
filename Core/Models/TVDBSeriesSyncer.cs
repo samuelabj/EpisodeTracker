@@ -65,9 +65,20 @@ namespace EpisodeTracker.Core.Models {
 			Series series = null;
 
 			using(var db = new EpisodeTrackerDBContext()) {
-				var seriesQuery = db.Series.Include(s => s.Episodes);
+				var seriesQuery = db.Series
+					.Include(s => s.Episodes)
+					.Include(s => s.Aliases);
+
 				series = seriesQuery.SingleOrDefault(s => s.TVDBID == tvdbSeries.ID);
-				if(series == null) series = seriesQuery.SingleOrDefault(s => s.Name == tvdbSeries.Name || s.Name == Name);
+				
+				if(series == null) {
+					series = seriesQuery
+						.SingleOrDefault(s => 
+							s.Name == tvdbSeries.Name 
+							|| s.Name == Name 
+							|| s.Aliases.Any(a => a.Name == Name)
+						);
+				}
 
 				if(series == null) {
 					series = new Series {
@@ -86,6 +97,10 @@ namespace EpisodeTracker.Core.Models {
 				LogLength(series, "overview", tvdbSeries.Overview);
 				series.LengthMinutes = tvdbSeries.LengthMinutes;
 				series.Rating = tvdbSeries.Rating;
+
+				if(Name != null && !Name.Equals(series.Name, StringComparison.OrdinalIgnoreCase) && !db.SeriesAliases.Any(a => a.Name == Name)) {
+					series.Aliases.Add(new SeriesAlias { Name = Name });
+				}
 
 				series.Genres.Clear();
 				GenresSync(series, tvdbSeries.Genres);

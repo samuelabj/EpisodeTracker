@@ -131,7 +131,11 @@ namespace EpisodeTracker.WPF {
 			var totalBanners = new Dictionary<int, int>();
 
 			await Task.Factory.StartNew(() => {
-				Parallel.ForEach(series, s => {
+				var para = series
+					.AsParallel()
+					.WithDegreeOfParallelism(5);
+
+				para.ForAll(s => {
 					if(!s.TVDBID.HasValue) {
 						var tvdbResult = TVDBSeriesSearcher.Search(s.Name);
 						if(tvdbResult != null) {
@@ -363,7 +367,12 @@ namespace EpisodeTracker.WPF {
 		private void LocateEpisodeFiles_Click(object sender, RoutedEventArgs e) {
 			var findWindow = new FindFiles();
 			findWindow.WindowState = System.Windows.WindowState.Maximized;
-			findWindow.ShowDialog();
+			try {
+				findWindow.ShowDialog();
+			} catch(Exception ex) {
+				MessageBox.Show(ex.ToString());
+				Logger.Error(ex);
+			}
 		}
 
 		private void WatchNext_Click(object sender, RoutedEventArgs e) {

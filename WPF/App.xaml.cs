@@ -14,6 +14,7 @@ using EpisodeTracker.WPF.Views.Shared;
 using Hardcodet.Wpf.TaskbarNotification;
 using EpisodeTracker.Core.Data;
 using Microsoft.Shell;
+using NLog;
 
 namespace EpisodeTracker.WPF {
 	/// <summary>
@@ -28,7 +29,12 @@ namespace EpisodeTracker.WPF {
 				var application = new App();
 
 				application.InitializeComponent();
-				application.Run();
+				try {
+					application.Run();
+				} catch(Exception e) {
+					LogManager.GetLogger("EpisodeTracker").Fatal(e);
+					throw new ApplicationException("Unhandled exception", e);
+				}
 
 				// Allow single instance code to perform cleanup operations
 				SingleInstance<App>.Cleanup();

@@ -15,6 +15,8 @@ namespace EpisodeTracker.Core.Data {
 		public DbSet<Genre> Genres { get; set; }
 		public DbSet<SeriesGenre> SeriesGenres { get; set; }
 		public DbSet<Setting> Settings { get; set; }
+		public DbSet<SeriesAlias> SeriesAliases { get; set; }
+		public DbSet<SeriesIgnore> SeriesIgnore { get; set; }
 
 		protected override void OnModelCreating(DbModelBuilder modelBuilder) {
 			base.OnModelCreating(modelBuilder);

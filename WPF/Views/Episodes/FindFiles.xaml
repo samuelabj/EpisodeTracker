@@ -5,32 +5,63 @@
     <Grid x:Name="grid">
         <DataGrid x:Name="dataGrid"
                   AutoGenerateColumns="False"
-                  IsReadOnly="true"
                   HorizontalAlignment="Stretch" 
                   Margin="0" 
                   VerticalAlignment="Stretch"
                   ColumnHeaderStyle="{StaticResource DataGrid.ColumnHeaderStyle}"
                   AlternationCount="2"
                   Background="#555">
+            <DataGrid.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Sync" Click="Sync_Click" />
+                    <MenuItem Header="Ignore" Click="Ignore_Click" />
+                </ContextMenu>
+            </DataGrid.ContextMenu>
             <DataGrid.RowStyle>
                 <Style TargetType="DataGridRow" BasedOn="{StaticResource DataGrid.RowStyle}">
                     <Style.Triggers>
-                        <DataTrigger Binding="{Binding Complete}" Value="True">
+                        <DataTrigger Binding="{Binding State}" Value="Synced">
                             <Setter Property="Background" Value="#00593F" />
                         </DataTrigger>
-                        <DataTrigger Binding="{Binding Error}" Value="True">
+                        <DataTrigger Binding="{Binding State}" Value="Found">
+                            <Setter Property="Background" Value="#FF2E576F" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding State}" Value="Error">
                             <Setter Property="Background" Value="#FF802E2E" />
                         </DataTrigger>
-                        <DataTrigger Binding="{Binding NotFound}" Value="True">
+                        <DataTrigger Binding="{Binding State}" Value="NotFound">
                             <Setter Property="Background" Value="#BF5911" />
+                        </DataTrigger>
+                        <DataTrigger Binding="{Binding State}" Value="Ignored">
+                            <Setter Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Series" Binding="{Binding SeriesName}" Width="200" />
-                <DataGridTextColumn Header="Files" Binding="{Binding Results.Count}" Width="100" />
-                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" />
+                <DataGridTextColumn Header="Series" Binding="{Binding SeriesName}" Width="200" IsReadOnly="True" />
+                <DataGridTextColumn Header="Files" Binding="{Binding Results.Count}" Width="100" IsReadOnly="True">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style>
+                            <Setter Property="ToolTipService.ShowDuration" Value="60000" />
+                            <Setter Property="ToolTipService.ToolTip">
+                                <Setter.Value>
+                                    <ToolTip 
+                                        Style="{StaticResource ToolTip.Expanded}" 
+                                        Content="{Binding FileNames}"/>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="200" IsReadOnly="True" />
+                <DataGridTextColumn Header="Suggested Name" Binding="{Binding SuggestedName}" Width="200">
+                    <DataGridTextColumn.EditingElementStyle>
+                        <Style TargetType="TextBox">
+                            <EventSetter Event="LostFocus" Handler="SuggestedName_LostFocus" />
+                        </Style>
+                    </DataGridTextColumn.EditingElementStyle>
+                </DataGridTextColumn>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

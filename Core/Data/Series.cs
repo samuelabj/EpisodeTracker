@@ -11,6 +11,7 @@ namespace EpisodeTracker.Core.Data {
 		public Series() {
 			Episodes = new List<Episode>();
 			Genres = new List<SeriesGenre>();
+			Aliases = new List<SeriesAlias>();
 		}
 
 		[Key, Required, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -33,5 +34,7 @@ namespace EpisodeTracker.Core.Data {
 		public virtual ICollection<Episode> Episodes { get; set; }
 		[ForeignKey("SeriesID")]
 		public virtual ICollection<SeriesGenre> Genres { get; set; }
+		[ForeignKey("SeriesID")]
+		public virtual ICollection<SeriesAlias> Aliases { get; set; }
 	}
 }

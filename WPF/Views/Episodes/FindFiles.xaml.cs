@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -29,17 +30,28 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			InitializeComponent();
 		}
 
-		class FindFilesInfo : INotifyPropertyChanged {
+		public enum SeriesFileInfoState {
+			None,
+			Found,
+			NotFound,
+			Ignored,
+			Synced,
+			Error
+		}
+
+		class SeriesFileInfo : INotifyPropertyChanged {
 			public event PropertyChangedEventHandler PropertyChanged;
 			public string SeriesName { get; set; }
 			public List<EpisodeFileSearchResult> Results { get; set; }
+			public string FileNames { get { return String.Join("\n", Results.Select(r => r.FileName)); } }
 			public string Status { get; set; }
-			public bool Complete { get; set; }
-			public bool Error { get; set; }
-			public bool NotFound { get; set; }
+			public SeriesFileInfoState State { get; set; }
+			public int? TVDBID { get; set; }
+			public int? SeriesID { get; set; }
+			public string SuggestedName { get; set; }
 		};
 
-		ObservableCollection<FindFilesInfo> foundFiles;
+		ObservableCollection<SeriesFileInfo> foundFiles;
 		Logger Logger;
 
 		protected override void OnInitialized(EventArgs e) {
@@ -77,28 +89,32 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			var groups = tasks
 				.SelectMany(t => t.Result)
 				.GroupBy(r => r.Match.Name, StringComparer.OrdinalIgnoreCase)
-				.Select(g => new FindFilesInfo {
+				.Select(g => new SeriesFileInfo {
 					SeriesName = g.Key,
 					Results = g.ToList()
-				});
+				})
+				.OrderBy(g => g.SeriesName);
 
-			foundFiles = new ObservableCollection<FindFilesInfo>(groups);
+			foundFiles = new ObservableCollection<SeriesFileInfo>(groups);
 			dataGrid.ItemsSource = foundFiles;
 
 			var total = groups.Count();
 
-			status.Text = "Processing " + foundFiles.Sum(g => g.Results.Count()) + " files...";
+			status.Text = "Downloading series info...";
 			status.SubText = String.Format("{0} / {1} series", 0, total);
 			status.ShowProgress = true;
 			
 			var completed = 0;
-
 			await Task.Factory.StartNew(() => {
-				Parallel.ForEach(foundFiles, info => {
-					ProcessFiles(info);
+				var para = foundFiles
+					.AsParallel()
+					.WithDegreeOfParallelism(5);
+
+				para.ForAll(info => {
+					FindSeries(info);
 					Interlocked.Increment(ref completed);
 
-					this.Dispatcher.BeginInvoke(new Action(() => {			
+					this.Dispatcher.BeginInvoke(new Action(() => {
 						status.SubText = String.Format("{0} / {1} series", completed, total);
 						status.UpdateProgress(completed, total);
 					}));
@@ -108,49 +124,91 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			grid.Children.Remove(status);
 		}
 
-		void ProcessFiles(FindFilesInfo info) {
+		void FindSeries(SeriesFileInfo info) {
 			Series series;
-			using(var db = new EpisodeTrackerDBContext()) {
-				series = db.Series.SingleOrDefault(s => s.Name == info.SeriesName);
+			info.State = SeriesFileInfoState.None;
+			info.TVDBID = null;
+			info.SeriesID = null;
 
-				if(series == null) {
+			using(var db = new EpisodeTrackerDBContext()) {
+				var seriesName = info.SuggestedName ?? info.SeriesName;
+
+				if(db.SeriesIgnore.Any(s => s.Name == seriesName)) {
+					info.State = SeriesFileInfoState.Ignored;
+					info.Status = "Ignored";
+					return;
+				}
+
+				series = db.Series.SingleOrDefault(s => s.Name == seriesName || s.Aliases.Any(a => a.Name == seriesName));
+
+				if(series == null || !series.TVDBID.HasValue) {
 					info.Status = "Searching for series on TVDB...";
 					TVDBSearchResult tvdbResult;
 					try {
-						tvdbResult = TVDBSeriesSearcher.Search(info.SeriesName);
+						tvdbResult = TVDBSeriesSearcher.Search(seriesName);
 					} catch(Exception e) {
 						info.Status = "Error searching TVDB for series: " + e.Message;
-						info.Error = true;
-						Logger.Error("Error searching for series: " + info.SeriesName + " - " + e);
+						info.State = SeriesFileInfoState.Error;
+						Logger.Error("Error searching for series: " + seriesName + " - " + e);
 						return;
 					}
 
 					if(tvdbResult == null) {
 						info.Status = "Series does not exist on TVDB";
-						info.NotFound = true;
+						info.State = SeriesFileInfoState.NotFound;
 						return;
 					}
 
-					series = db.Series.SingleOrDefault(s => s.TVDBID == tvdbResult.ID);
-
 					if(series == null) {
-						info.Status = "Syncing TVDB series...";
-						try {
-							var syncer = new TVDBSeriesSyncer {
-								Name = info.SeriesName,
-								TVDBID = tvdbResult.ID,
-								DownloadBanners = true
-							};
-							syncer.BannerDownloaded += (o, e) => info.Status = String.Format("Banners downloaded: {0}/{1}", e.Complete, e.Total);
-							syncer.Sync();
-						} catch(Exception e) {
-							info.Status = "Error syncing with TVDB: " + e.Message;
-							info.Error = true;
-							Logger.Error("Error syncing with TVDB: " + tvdbResult.Name + " - " + e);
-							return;
-						}
-						series = db.Series.SingleOrDefault(s => s.TVDBID == tvdbResult.ID);
-						info.Status = "Synced";
+						series = db.Series.SingleOrDefault(s => s.Name == tvdbResult.Name || s.Aliases.Any(a => a.Name == tvdbResult.Name));
+						if(series != null) info.SeriesID = series.ID;
+					}
+
+					info.SuggestedName = tvdbResult.Name;
+					info.TVDBID = tvdbResult.ID;
+				} else {
+					info.SuggestedName = series.Name;
+					info.TVDBID = series.TVDBID;
+					info.SeriesID = series.ID;
+				}
+
+				info.Status = "Found series info: " + info.TVDBID;
+				info.State = SeriesFileInfoState.Found;
+			}
+		}
+
+		void SyncFiles(SeriesFileInfo info) {
+			Series series;
+			info.State = SeriesFileInfoState.None;
+
+			using(var db = new EpisodeTrackerDBContext()) {
+				series = db.Series.SingleOrDefault(s => s.ID == info.SeriesID || s.TVDBID == info.TVDBID);
+
+				if(series == null || series.Updated <= DateTime.Now.AddDays(-7)) {
+					info.Status = "Syncing TVDB series...";
+					try {
+						var syncer = new TVDBSeriesSyncer {
+							Name = info.SeriesName,
+							TVDBID = info.TVDBID.Value,
+							DownloadBanners = true
+						};
+						syncer.BannerDownloaded += (o, e) => info.Status = String.Format("Banners downloaded: {0}/{1}", e.Complete, e.Total);
+						syncer.Sync();
+					} catch(Exception e) {
+						info.Status = "Error syncing with TVDB: " + e.Message;
+						info.State = SeriesFileInfoState.Error;
+						Logger.Error("Error syncing with TVDB: " + info.TVDBID + " - " + e);
+						return;
+					}
+					series = db.Series.SingleOrDefault(s => s.TVDBID == info.TVDBID);
+					info.Status = "Synced";
+				} else if(!series.Name.Equals(info.SeriesName, StringComparison.OrdinalIgnoreCase)) {
+					// Save alias
+					if(!db.SeriesAliases.Any(a => a.Name == info.SeriesName)) {
+						db.SeriesAliases.Add(new SeriesAlias {
+							SeriesID = series.ID,
+							Name = info.SeriesName
+						});
 					}
 				}
 
@@ -175,13 +233,81 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 					db.SaveChanges();
 				} catch(Exception e) {
 					info.Status = "Could not update episodes: " + e.Message;
-					info.Error = true;
+					info.State = SeriesFileInfoState.Error;
 					Logger.Error("Error update episodes with file names: " + e.Message);
 					return;
 				}
 
-				info.Status = "Complete";
-				info.Complete = true;
+				info.Status = "Synced";
+				info.State = SeriesFileInfoState.Synced;
+			}
+		}
+
+		private async void SuggestedName_LostFocus(object sender, RoutedEventArgs e) {
+			var info = dataGrid.SelectedItem as SeriesFileInfo;
+			var txtbox = sender as TextBox;
+			info.SuggestedName = txtbox.Text;
+
+			if(!info.SuggestedName.Equals(info.SeriesName)) {
+				await Task.Factory.StartNew(() => FindSeries(info));
+			}
+		}
+
+		private async void Sync_Click(object sender, RoutedEventArgs e) {
+			var selected = dataGrid.SelectedItems
+				.Cast<object>()
+				.Where(o => o is SeriesFileInfo)
+				.Cast<SeriesFileInfo>()
+				.Where(s => s.TVDBID.HasValue);
+
+			var total = selected.Count();
+
+			var status = new StatusModal {
+				Text = "Processing " + foundFiles.Sum(g => g.Results.Count()) + " files...",
+				SubText = String.Format("{0} / {1} series", 0, total),
+				ShowSubText = true,
+				ShowProgress = true,
+			};
+
+			grid.Children.Add(status);
+
+			var completed = 0;
+			await Task.Factory.StartNew(() => {
+				var para = selected
+					.AsParallel()
+					.WithDegreeOfParallelism(5);
+
+				para.ForAll(info => {
+					SyncFiles(info);
+					Interlocked.Increment(ref completed);
+
+					this.Dispatcher.BeginInvoke(new Action(() => {
+						status.SubText = String.Format("{0} / {1} series", completed, total);
+						status.UpdateProgress(completed, total);
+					}));
+				});
+			});
+
+			grid.Children.Remove(status);
+		}
+
+		private void Ignore_Click(object sender, RoutedEventArgs e) {
+			var selected = dataGrid.SelectedItems
+				.Cast<object>()
+				.Where(o => o is SeriesFileInfo)
+				.Cast<SeriesFileInfo>();
+
+			using(var db = new EpisodeTrackerDBContext()) {
+				foreach(var info in selected) {
+					if(!db.SeriesIgnore.Any(i => i.Name == info.SeriesName)) {
+						db.SeriesIgnore.Add(new SeriesIgnore {
+							Name = info.SeriesName
+						});
+						info.Status = "Added to ignore list";
+						info.State = SeriesFileInfoState.Ignored;
+					}
+				}
+				db.SaveChanges();
 			}
 		}
 	}

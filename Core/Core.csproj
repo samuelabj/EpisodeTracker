@@ -85,7 +85,9 @@
     <Compile Include="Data\Episode.cs" />
     <Compile Include="Data\Genre.cs" />
     <Compile Include="Data\Series.cs" />
+    <Compile Include="Data\SeriesAlias.cs" />
     <Compile Include="Data\SeriesGenre.cs" />
+    <Compile Include="Data\SeriesIgnore.cs" />
     <Compile Include="Data\Setting.cs" />
     <Compile Include="Data\TrackedFile.cs" />
     <Compile Include="Data\User.cs" />
@@ -98,6 +100,10 @@
     <Compile Include="Migrations\201301270801527_EpisodeFileNameSize.Designer.cs">
       <DependentUpon>201301270801527_EpisodeFileNameSize.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201301272321198_SeriesAliasIgnore.cs" />
+    <Compile Include="Migrations\201301272321198_SeriesAliasIgnore.Designer.cs">
+      <DependentUpon>201301272321198_SeriesAliasIgnore.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\EpisodeFileSearcher.cs" />
     <Compile Include="Models\EpisodeFileSearchResult.cs" />
@@ -109,9 +115,9 @@
     </Compile>
     <Compile Include="Models\TVDBSeriesSearcher.cs" />
     <Compile Include="Models\TVDBSeriesSyncer.cs" />
-		<Compile Include="Models\Settings.cs">
-			<DependentUpon>Settings.tt</DependentUpon>
-		</Compile>
+    <Compile Include="Models\Settings.cs">
+      <DependentUpon>Settings.tt</DependentUpon>
+    </Compile>
     <Compile Include="Monitors\ProcessMonitor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -127,7 +133,7 @@
     <None Include="Models\Settings.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>Settings.designer.cs</LastGenOutput>
-			<DependentUpon>Settings.xml</DependentUpon>
+      <DependentUpon>Settings.xml</DependentUpon>
     </None>
     <None Include="NLog.xsd">
       <SubType>Designer</SubType>
@@ -186,6 +192,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201301270801527_EpisodeFileNameSize.resx">
       <DependentUpon>201301270801527_EpisodeFileNameSize.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201301272321198_SeriesAliasIgnore.resx">
+      <DependentUpon>201301272321198_SeriesAliasIgnore.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

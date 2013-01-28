@@ -155,17 +155,27 @@ namespace EpisodeTracker.Core.Monitors {
 				
 				// Try and look it up
 				// TODO: movies
-				var results = new TVDBRequest().Search(match.Name);
-				var first = results.FirstOrDefault();
+				Series series;
+				using(var db = new EpisodeTrackerDBContext()) {
+					series = db.Series.SingleOrDefault(s => s.Name == match.Name || s.Aliases.Any(a => a.Name == match.Name));
 
-				if(first != null) {
-					Logger.Debug("Found TVDB result: " + first.Name);
-					
-					using(var db = new EpisodeTrackerDBContext()) {
-						var series = db.Series.SingleOrDefault(s => s.TVDBID == first.ID);
+					int? tvdbid = null;
+					if(series == null) {
+						var results = new TVDBRequest().Search(match.Name);
+						var first = results.FirstOrDefault();
+						if(first != null) {
+							Logger.Debug("Found TVDB result: " + first.Name);
+							series = db.Series.SingleOrDefault(s => s.TVDBID == first.ID || s.Name == first.Name || s.Aliases.Any(a => a.Name == first.Name));
+							tvdbid = first.ID;
+						}
+					}else {
+						tvdbid = series.TVDBID;
+					}
+
+					if(tvdbid.HasValue) {
 						if(series == null || series.Updated <= DateTime.Now.AddDays(-7)) {
 							var syncer = new TVDBSeriesSyncer {
-								TVDBID = first.ID,
+								TVDBID = tvdbid.Value,
 								Name = match.Name,
 								DownloadBannersAsync = true
 							};
@@ -175,7 +185,7 @@ namespace EpisodeTracker.Core.Monitors {
 						// Pull out series again as it might have been updated
 						series = db.Series
 							.Include(s => s.Episodes)
-							.Single(s => s.TVDBID == first.ID);
+							.Single(s => s.TVDBID == tvdbid.Value);
 
 						mon.Series = series;
 
@@ -189,9 +199,9 @@ namespace EpisodeTracker.Core.Monitors {
 						} else {
 							mon.Episodes = series.Episodes.Where(ep => ep.AbsoluteNumber == match.Episode);
 						}
-					}					
 
-					if(mon.Episodes != null) Logger.Debug("Found TVDB episodes: " + String.Join(" + ", mon.Episodes.Select(e => e.Name)));
+						if(mon.Episodes != null) Logger.Debug("Found TVDB episodes: " + String.Join(" + ", mon.Episodes.Select(e => e.Name)));
+					}
 				}
 			}
 
@@ -326,7 +336,7 @@ namespace EpisodeTracker.Core.Monitors {
 				Series series = null;
 				if(mon.Series != null) {
 					series = db.Series.SingleOrDefault(s => s.ID == mon.Series.ID);
-				} else if(series == null) {
+				} else {
 					// Series is only null when no TVDB match was found
 					series = seriesQuery.SingleOrDefault(s => s.Name == mon.TvMatch.Name);
 				}
