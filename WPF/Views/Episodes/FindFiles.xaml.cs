@@ -258,7 +258,8 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 				.Cast<object>()
 				.Where(o => o is SeriesFileInfo)
 				.Cast<SeriesFileInfo>()
-				.Where(s => s.TVDBID.HasValue);
+				.Where(s => s.TVDBID.HasValue)
+				.ToList();
 
 			var total = selected.Count();
 
@@ -295,7 +296,8 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			var selected = dataGrid.SelectedItems
 				.Cast<object>()
 				.Where(o => o is SeriesFileInfo)
-				.Cast<SeriesFileInfo>();
+				.Cast<SeriesFileInfo>()
+				.ToList();
 
 			using(var db = new EpisodeTrackerDBContext()) {
 				foreach(var info in selected) {

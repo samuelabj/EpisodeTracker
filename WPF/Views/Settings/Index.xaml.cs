@@ -24,11 +24,11 @@ namespace EpisodeTracker.WPF.Views.Settings {
 		protected override void OnInitialized(EventArgs e) {
 			base.OnInitialized(e);
 
-			librariesTextBox.Text = String.Join("\n", EpisodeTracker.Core.Models.Settings.Default.Libraries);
+			librariesTextBox.Text = String.Join("\r\n", EpisodeTracker.Core.Models.Settings.Default.Libraries);
 		}
 
 		private void Save_Click(object sender, RoutedEventArgs e) {
-			EpisodeTracker.Core.Models.Settings.Default.Libraries = librariesTextBox.Text.Split(new[] { "\n" }, StringSplitOptions.RemoveEmptyEntries);
+			EpisodeTracker.Core.Models.Settings.Default.Libraries = librariesTextBox.Text.Split(new[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries);
 			this.Close();
 		}
 	}

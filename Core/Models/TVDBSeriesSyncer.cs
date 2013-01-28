@@ -53,11 +53,6 @@ namespace EpisodeTracker.Core.Models {
 			}
 		}
 
-		void LogLength(Series series, string prop, string val) {
-			if(val == null) return;
-			Logger.Debug(series.Name + " - " + prop + ": " + val.Length);
-		}
-
 		private void Sync(SyncInfo syncInfo) {
 			if(syncInfo.Complete) return;
 
@@ -89,12 +84,10 @@ namespace EpisodeTracker.Core.Models {
 
 				series.TVDBID = tvdbSeries.ID;
 				series.Name = tvdbSeries.Name;
-				LogLength(series, "name", tvdbSeries.Name);
 				series.AirsDay = tvdbSeries.AirsDay;
 				series.AirsTime = tvdbSeries.AirsTime;
 				series.Status = tvdbSeries.Status;
 				series.Overview = tvdbSeries.Overview;
-				LogLength(series, "overview", tvdbSeries.Overview);
 				series.LengthMinutes = tvdbSeries.LengthMinutes;
 				series.Rating = tvdbSeries.Rating;
 
@@ -177,9 +170,7 @@ namespace EpisodeTracker.Core.Models {
 
 			episode.TVDBID = tvDBEpisode.ID;
 			episode.Name = tvDBEpisode.Name;
-			LogLength(series, "ep name", tvDBEpisode.Name);
 			episode.Overview = tvDBEpisode.Overview;
-			LogLength(series, "ep overview", tvDBEpisode.Overview);
 			episode.Aired = tvDBEpisode.Aired <= SqlDateTime.MaxValue.Value && tvDBEpisode.Aired >= SqlDateTime.MinValue.Value ? tvDBEpisode.Aired : default(DateTime?);
 			episode.AbsoluteNumber = tvDBEpisode.AbsoluteNumber;
 			episode.Rating = tvDBEpisode.Rating;
