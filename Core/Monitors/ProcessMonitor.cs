@@ -37,7 +37,6 @@ namespace EpisodeTracker.Core.Monitors {
 			public bool Tracking { get; set; }
 			public int PreviousTrackedSeconds { get; set; }
 			public bool Watched { get; set; }
-			public int MissingStrikes { get; set; }
 			public string FriendlyName {
 				get {
 					if(Episodes != null && Episodes.Any()) {
@@ -121,15 +120,10 @@ namespace EpisodeTracker.Core.Monitors {
 		void CheckFiles(IEnumerable<string> files) {
 			foreach(var f in files) {
 				Logger.Trace("Found file: " + f);
+
 				var mon = monitored.SingleOrDefault(m => m.FileName.Equals(f, StringComparison.OrdinalIgnoreCase));
 				if(mon == null) {
-					var fileName = f;
-					// Remove weird mup prefix if it exists
-					var mupPrefix = @"\Device\Mup\";
-					if(f.StartsWith(mupPrefix, StringComparison.OrdinalIgnoreCase)) {
-						fileName = @"\\" + fileName.Remove(0, mupPrefix.Length);
-					}
-					CheckUnmonitoredFile(fileName);
+					CheckUnmonitoredFile(f);
 				} else {
 					CheckMonitoredFile(mon);
 				}
@@ -210,7 +204,6 @@ namespace EpisodeTracker.Core.Monitors {
 
 		void CheckMonitoredFile(MonitoredFile mon) {
 			Logger.Trace("File is monitored");
-			mon.MissingStrikes = 0;
 
 			if(!mon.Watched) {
 				using(var db = new EpisodeTrackerDBContext()) {
@@ -256,15 +249,23 @@ namespace EpisodeTracker.Core.Monitors {
 					Logger.Debug("Monitored file is no longer open: " + mon.FileName);
 					//Logger.Debug("Process output: " + processOutput);
 
-					if(mon.MissingStrikes++ < 1) continue;
+					// Double check - sometimes the file seems to be released from the process
+					// Might need to delay this a tiny bit
+					if(GetMediaFiles().Any(f => f.Equals(mon.FileName, StringComparison.OrdinalIgnoreCase))) {
+						CheckMonitoredFile(mon);
+						return;
+					}
 
-					// not open anymore
+					// Not open anymore
 					if(mon.Tracking) {
 						TrackedFile tracked;
+						bool watched = false;
+
 						using(var db = new EpisodeTrackerDBContext()) {
 							tracked = GetTrackedFile(db, mon);
 							if(tracked.TrackedSeconds >= (mon.Length.TotalSeconds * .66)) {
 								Logger.Debug("Monitored file has probably been watched: " + mon.FileName);
+								watched = true;
 								foreach(var ep in tracked.Episodes) {
 									ep.Watched = true;
 									ep.Updated = DateTime.Now;
@@ -272,11 +273,12 @@ namespace EpisodeTracker.Core.Monitors {
 								db.SaveChanges();
 							}
 						}
+
 						if(FileRemoved != null) {
 							FileRemoved(this, new MonitoredFileEventArgs {
 								Filename = mon.FileName,
 								FriendlyName = mon.FriendlyName,
-								Watched = tracked.Episodes.Any(ep => ep.Watched)
+								Watched = watched
 							});
 						}
 					}
@@ -420,7 +422,15 @@ namespace EpisodeTracker.Core.Monitors {
 					var ext = Path.GetExtension(f);
 					if(ext.Length > 1) ext = ext.Substring(1);
 					if(VideoExtensions.Contains(ext.ToLower()) && !videoFiles.Contains(f, StringComparer.OrdinalIgnoreCase)) {
-						videoFiles.Add(f);
+						// Remove weird mup prefix if it exists
+						var mupPrefix = @"\Device\Mup\";
+						var fileName = f;
+						if(f.StartsWith(mupPrefix, StringComparison.OrdinalIgnoreCase)) {
+							fileName = @"\\" + fileName.Remove(0, mupPrefix.Length);
+							Logger.Debug("Removed mup prefix: " + fileName);
+						}
+
+						videoFiles.Add(fileName);
 					}
 				}
 			}
