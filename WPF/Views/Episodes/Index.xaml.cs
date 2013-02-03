@@ -6,6 +6,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -16,6 +17,8 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using EpisodeTracker.Core.Data;
+using EpisodeTracker.Core.Models;
+using EpisodeTracker.WPF.Views.Shared;
 using NLog;
 
 namespace EpisodeTracker.WPF.Views.Episodes {
@@ -96,6 +99,16 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 				dataGrid.Columns.First().Visibility = System.Windows.Visibility.Collapsed;
 			}
 
+			EventHandler loaded = null;
+			loaded = new EventHandler((o, e) => {
+				dataGrid.SelectedIndex = 0;
+				DataGridRow row = (DataGridRow)dataGrid.ItemContainerGenerator.ContainerFromIndex(0);
+				row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+
+				dataGrid.LayoutUpdated -= loaded;
+			});
+			dataGrid.LayoutUpdated += loaded;
+
 			dataGrid.ItemsSource = episodeInfo = new ObservableCollection<EpisodeInfo>(
 				episodes
 				.OrderByDescending(ep => ep.Episode.Number)
@@ -170,6 +183,8 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 		private void Window_KeyUp(object sender, KeyEventArgs e) {
 			if(e.Key == Key.F5) {
 				ShowEpisodesAsync();
+			} else if(e.Key == Key.Escape) {
+				this.Close();
 			}
 		}
 
@@ -177,16 +192,140 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			var row = sender as DataGridRow;
 			var info = row.Item as EpisodeInfo;
 
-			if(info.Episode.FileName == null || !File.Exists(info.Episode.FileName)) {
-				MessageBox.Show("Could not find file");
-				return;
+			PerformWatch(info.Episode);
+		}
+
+		void Row_KeyDown(object sender, KeyEventArgs e) {
+			var row = sender as DataGridRow;
+			var info = row.Item as EpisodeInfo;
+
+			if(e.Key == Key.Enter) {
+				PerformWatch(info.Episode);
+			}
+		}
+
+		async void PerformWatch(Episode episode) {
+			if(episode == null) {
+				MessageBox.Show("Nothing to watch");
+			}
+
+			if(episode.FileName == null || !File.Exists(episode.FileName)) {
+				// Try and find
+				var status = new StatusModal {
+					Text = "Searching for episode file...",
+					SubText = "Parsing files: 0",
+					ShowSubText = true
+				};
+				status.SetValue(Grid.RowProperty, 1);
+				grid.Children.Add(status);
+
+				var tasks = new List<Task<List<EpisodeFileSearchResult>>>();
+				var searcher = new EpisodeFileSearcher();
+				var totalFound = 0;
+
+				searcher.FilesFound += (o, ea) => {
+					this.Dispatcher.BeginInvoke(new Action(() => {
+						Interlocked.Add(ref totalFound, ea.Results);
+						status.SubText = "Parsing files: " + totalFound;
+					}));
+				};
+
+				foreach(var path in Core.Models.Settings.Default.Libraries) {
+					tasks.Add(searcher.SearchAsync(path));
+				}
+
+				try {
+					await Task.WhenAll(tasks);
+				} catch(ApplicationException ex) {
+					Logger.Error("Error searching for file: " + ex);
+					MessageBox.Show(ex.Message);
+				}
+
+				var groups = tasks
+				.Where(t => !t.IsFaulted)
+				.SelectMany(t => t.Result)
+				.GroupBy(r => r.Match.Name, StringComparer.OrdinalIgnoreCase)
+				.Select(g => new {
+					SeriesName = g.Key,
+					Results = g.ToList()
+				})
+				.OrderBy(g => g.SeriesName);
+
+				var total = groups.Count();
+
+				status.Text = "Checking results...";
+				status.SubText = String.Format("{0} / {1} series", 0, total);
+				status.ShowProgress = true;
+
+				var completed = 0;
+				EpisodeFileSearchResult result = null;
+
+				await Task.Factory.StartNew(() => {
+					var para = groups
+						.AsParallel()
+						.WithDegreeOfParallelism(5);
+
+					para.ForAll(info => {
+						try {
+							using(var db = new EpisodeTrackerDBContext()) {
+								var seriesName = info.SeriesName;
+
+								if(db.SeriesIgnore.Any(s => s.Name == seriesName)) {
+									return;
+								}
+
+								var series = db.Series.SingleOrDefault(s => s.Name == seriesName || s.Aliases.Any(a => a.Name == seriesName));
+								if(series == null || series.ID != episode.SeriesID) return;
+
+								var ep = episode;
+								var r = info.Results.FirstOrDefault(f =>
+									!f.Match.Season.HasValue
+									&& f.Match.Episode == ep.AbsoluteNumber
+									|| (
+										f.Match.Season.HasValue
+										&& f.Match.Season == ep.Season
+										&& (
+											f.Match.Episode == ep.Number
+											|| f.Match.ToEpisode.HasValue
+											&& f.Match.Episode <= ep.Number
+											&& f.Match.ToEpisode >= ep.Number
+										)
+									)
+								);
+
+								if(r != null) result = r;
+							}
+						} finally {
+							Interlocked.Increment(ref completed);
+
+							this.Dispatcher.BeginInvoke(new Action(() => {
+								status.SubText = String.Format("{0} / {1} series", completed, total);
+								status.UpdateProgress(completed, total);
+							}));
+						}
+					});
+				});
+
+				grid.Children.Remove(status);
+
+				if(result != null) {
+					using(var db = new EpisodeTrackerDBContext()) {
+						var episodeDB = db.Episodes.Single(ep => ep.ID == episode.ID);
+						episodeDB.FileName = result.FileName;
+						episode.FileName = result.FileName;
+						db.SaveChanges();
+					}
+				} else {
+					MessageBox.Show("Could not find file");
+					return;
+				}
 			}
 
 			try {
-				Process.Start(info.Episode.FileName);
+				Process.Start(episode.FileName);
 			} catch(Exception ex) {
 				MessageBox.Show("Problem opening file: " + ex.Message);
-				Logger.Error("Error opening filename: " + info.Episode.FileName + " - " + ex);
+				Logger.Error("Error opening filename: " + episode.FileName + " - " + ex);
 			}
 		}
 	}

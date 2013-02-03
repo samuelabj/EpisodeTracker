@@ -7,7 +7,7 @@
         Title="Index" Height="300" Width="1000"
         KeyUp="Window_KeyUp">
 
-    <Grid>
+    <Grid x:Name="grid">
         <DataGrid Name="dataGrid" 
                   HorizontalAlignment="Stretch" 
                   Margin="0,0,0,0"
@@ -32,6 +32,7 @@
                         </DataTrigger>
                     </Style.Triggers>
                     <EventSetter Event="MouseDoubleClick" Handler="Watch_Click"/>
+                    <EventSetter Event="KeyDown" Handler="Row_KeyDown" />
                 </Style>
             </DataGrid.RowStyle>
             <DataGrid.ContextMenu>
@@ -89,6 +90,7 @@
                 <DataGridTextColumn Header="Date Watched" Width="100" Binding="{Binding Tracked.Updated, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
                 <DataGridTextColumn Header="Tracked" Width="100" Binding="{Binding TrackedTime}" />
                 <DataGridTextColumn Header="Rating" Width="50" Binding="{Binding Episode.Rating}" />
+                <DataGridTextColumn Header="File" Width="150" Binding="{Binding Episode.FileName}" />
             </DataGrid.Columns>
         </DataGrid>
         <shared:StatusModal x:Name="statusModal" />

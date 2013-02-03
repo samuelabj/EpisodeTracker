@@ -62,16 +62,19 @@ namespace EpisodeTracker.Core.Models {
 						}
 						if(line != null) start = true;
 					} else if(start) {
-						start = false;
-						proc = new HandleItem();
+						start = false;						
 						var match = Regex.Match(line, @"(?<name>.+)\spid:\s(?<pid>\d+)\s");
 						var name = match.Groups["name"].Value;
-						try {
-							proc.ProcessName = Path.GetFileNameWithoutExtension(name);
-						} catch(Exception e) {
-							throw new ApplicationException("Could not get process name from match: " + name, e);
+
+						if(name != "<Non-existant Process>") {
+							proc = new HandleItem();
+							try {
+								proc.ProcessName = Path.GetFileNameWithoutExtension(name);
+							} catch(Exception e) {
+								throw new ApplicationException("Could not get process name from match: " + name, e);
+							}
+							proc.PID = int.Parse(match.Groups["pid"].Value);
 						}
-						proc.PID = int.Parse(match.Groups["pid"].Value);
 					} else if(proc != null) {
 						var match = Regex.Match(line, @"\sFile\s+?\(.+?\)\s+(?<file>[^\r\n]+)");
 						if(match.Success) {

@@ -72,10 +72,10 @@ namespace EpisodeTracker.Core.Monitors {
 		Task checkTask;
 		AutoResetEvent checkEvent = new AutoResetEvent(false);
 
-		public ProcessMonitor(Logger logger) {
+		public ProcessMonitor() {
 			ApplicationNames = new List<string>();
 			ApplicationNames.Add("PotPlayerMini64");
-			Logger = logger;
+			Logger = LogManager.GetLogger("ProcessMonitor");
 		}
 
 		public event MonitoredFileHandler FileAdded;

@@ -41,7 +41,9 @@
                   Background="#555">
             <DataGrid.RowStyle>
                 <Style TargetType="{x:Type DataGridRow}" BasedOn="{StaticResource DataGrid.RowStyle}">
-                    <EventSetter Event="MouseDoubleClick" Handler="SeriesRowDoubleClick"/>
+                    <EventSetter Event="MouseDoubleClick" Handler="SeriesRow_DoubleClick"/>
+                    <EventSetter Event="KeyUp" Handler="SeriesRow_KeyUp" />
+                    <EventSetter Event="KeyDown" Handler="SeriesRow_KeyDown" />
                 </Style>
             </DataGrid.RowStyle>
             <DataGrid.ContextMenu>
@@ -59,8 +61,8 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Series" Width="150" Binding="{Binding Series}" />
-                <DataGridTextColumn Header="Overview" Width="200" Binding="{Binding Overview, Converter={markext:SummariseConverter}, ConverterParameter=100}">
+                <DataGridTextColumn Header="Series" Width="150" Binding="{Binding Series.Name}" />
+                <DataGridTextColumn Header="Overview" Width="200" Binding="{Binding Series.Overview, Converter={markext:SummariseConverter}, ConverterParameter=100}">
                     <DataGridTextColumn.ElementStyle>
                         <Style>
                             <Setter Property="TextBlock.TextWrapping" Value="Wrap" />
@@ -71,7 +73,7 @@
                                     <ToolTip 
                                         Style="{StaticResource ToolTip.Expanded}" 
                                         MaxWidth="500"
-                                        Content="{Binding Overview}"/>
+                                        Content="{Binding Series.Overview}"/>
                                 </Setter.Value>
                             </Setter>
                         </Style>
@@ -83,8 +85,8 @@
                             <TextBlock>
                                 <TextBlock.Text>
                                     <MultiBinding StringFormat="S{0:00}E{1:00}">
-                                        <Binding Path="WatchNext.Season" />
-                                        <Binding Path="WatchNext.Number"/>
+                                        <Binding Path="NextEpisode.Season" />
+                                        <Binding Path="NextEpisode.Number"/>
                                     </MultiBinding>
                                 </TextBlock.Text>
                             </TextBlock>
@@ -103,9 +105,9 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Series Status" Width="200" Binding="{Binding Status}" />
+                <DataGridTextColumn Header="Series Status" Width="200" Binding="{Binding Series.Status}" />
                 <DataGridTextColumn Header="New Episode" Width="100" Binding="{Binding NextAirs, StringFormat=\{0:dd MMM yyyy\}}" />
-                <DataGridTextColumn Header="Rating" Width="50" Binding="{Binding Rating}" />
+                <DataGridTextColumn Header="Rating" Width="50" Binding="{Binding Series.Rating}" />
                 <DataGridTextColumn Header="Genres" Width="100" Binding="{Binding Genres}" />
             </DataGrid.Columns>
         </DataGrid>

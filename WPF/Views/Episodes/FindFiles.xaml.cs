@@ -84,9 +84,15 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 				tasks.Add(searcher.SearchAsync(path));
 			}
 
-			await Task.WhenAll(tasks);
+			try {
+				await Task.WhenAll(tasks);
+			} catch(ApplicationException e) {
+				Logger.Error("Error searching for files: " + e);
+				MessageBox.Show(e.Message);
+			}
 
 			var groups = tasks
+				.Where(t => !t.IsFaulted)
 				.SelectMany(t => t.Result)
 				.GroupBy(r => r.Match.Name, StringComparer.OrdinalIgnoreCase)
 				.Select(g => new SeriesFileInfo {
@@ -170,6 +176,34 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 					info.SuggestedName = series.Name;
 					info.TVDBID = series.TVDBID;
 					info.SeriesID = series.ID;
+
+					// Confirmed series, check if there's any new files
+					var episodes = series.Episodes.ToList();
+					List<EpisodeFileSearchResult> newFiles = new List<EpisodeFileSearchResult>();
+
+					foreach(var f in info.Results) {
+						var eps = episodes.Where(ep =>
+							f.Match.Season.HasValue
+							&& ep.Season == f.Match.Season
+							&& (
+								ep.Number == f.Match.Episode
+								|| f.Match.ToEpisode.HasValue
+								&& ep.Number >= f.Match.Episode
+								&& ep.Number <= f.Match.ToEpisode
+							)
+						);
+
+						if(eps.Any(ep => ep.FileName != f.FileName)) {
+							newFiles.Add(f);
+						}
+					}
+
+					info.Results = newFiles;
+
+					if(!newFiles.Any()) {
+						info.State = SeriesFileInfoState.Ignored;
+						return;
+					}
 				}
 
 				info.Status = "Found series info: " + info.TVDBID;

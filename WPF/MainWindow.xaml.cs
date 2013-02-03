@@ -38,20 +38,15 @@ namespace EpisodeTracker.WPF {
 		class SeriesInfo : INotifyPropertyChanged {
 			public event PropertyChangedEventHandler PropertyChanged;
 
-			public int SeriesID { get; set; }
-			public string Series { get; set; }
-			public string Overview { get; set; }
-			public int Season { get; set; }
-			public int Episode { get; set; }
+			public Series Series { get; set; }
+			public Episode CurrentEpisode { get; set; }
 			public DateTime? LastWatched { get; set; }
-			public string Status { get; set; }
 			public int Total { get; set; }
 			public int Watched { get; set; }
-			public Episode WatchNext { get; set; }
+			public Episode NextEpisode { get; set; }
 			public DateTime? NextAirs { get; set; }
 			public string BannerPath { get; set; }
 			public string Genres { get; set; }
-			public double? Rating { get; set; }
 		}
 
 		TaskbarIcon taskbar;
@@ -211,16 +206,12 @@ namespace EpisodeTracker.WPF {
 				var display = new List<SeriesInfo>();
 				foreach(var e in watching) {
 					display.Add(new SeriesInfo {
-						SeriesID = e.SeriesID,
-						Series = e.Series.Name,
-						Overview = e.Series.Overview,
-						Status = e.Series.Status,
-						Season = e.Season,
-						Episode = e.Number,
+						Series = e.Series,
+						CurrentEpisode = e,
 						LastWatched = e.Tracked.Max(t => (DateTime?)t.Updated),
 						Total = seriesInfo[e.SeriesID].Total,
 						Watched = seriesInfo[e.SeriesID].Watched,
-						WatchNext = !e.Tracked.Any(t => t.Watched) ? e : db.Episodes.Where(e2 => 
+						NextEpisode = !e.Tracked.Any(t => t.Watched) ? e : db.Episodes.Where(e2 => 
 							e2.SeriesID == e.SeriesID 
 							&& !e2.Tracked.Any(t => t.Watched) 
 							&& (
@@ -235,7 +226,6 @@ namespace EpisodeTracker.WPF {
 						NextAirs = seriesInfo[e.SeriesID].NextAirs,
 						BannerPath = GetBannerPath(e.Series),
 						Genres = String.Join(", ", e.Series.Genres.Select(g => g.Genre.Name)),
-						Rating = e.Series.Rating
 					});
 				}
 
@@ -280,6 +270,16 @@ namespace EpisodeTracker.WPF {
 
 			await Task.WhenAll(series, other);
 
+			EventHandler loaded = null;
+			loaded = new EventHandler((o, e) => {
+				seriesGrid.SelectedIndex = 0;
+				DataGridRow row = (DataGridRow)seriesGrid.ItemContainerGenerator.ContainerFromIndex(0);
+				row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+
+				seriesGrid.LayoutUpdated -= loaded;
+			});
+			seriesGrid.LayoutUpdated += loaded;
+
 			seriesGrid.ItemsSource = seriesList = new ObservableCollection<SeriesInfo>(
 				series.Result
 						.OrderByDescending(f => f.LastWatched)
@@ -290,19 +290,45 @@ namespace EpisodeTracker.WPF {
 			statusModal.Visibility = System.Windows.Visibility.Collapsed;
 		}
 
-		void SeriesRowDoubleClick(object sender, RoutedEventArgs e) {
+		void SeriesRow_DoubleClick(object sender, RoutedEventArgs e) {
 			var row = sender as DataGridRow;
 			var info = row.Item as SeriesInfo;
 
+			ShowEpisodes(info);
+		}
+
+		void ShowEpisodes(SeriesInfo info) {
 			var episodesView = new EpisodeTracker.WPF.Views.Episodes.Index {
-				SeriesID = info.SeriesID
+				SeriesID = info.Series.ID
 			};
 			episodesView.WindowState = System.Windows.WindowState.Maximized;
 			episodesView.ShowDialog();
 		}
 
+		void SeriesRow_KeyUp(object sender, KeyEventArgs e) {
+			var row = sender as DataGridRow;
+			var info = row.Item as SeriesInfo;
+
+			if(e.Key == Key.Delete) {
+				PerformDelete(new[] { info });
+			} else if(e.Key == Key.W) {
+				PerformWatch(info.NextEpisode);
+			} else if(e.Key == Key.L) {
+				PerformWatch(info.CurrentEpisode);
+			}
+		}
+
+		void SeriesRow_KeyDown(object sender, KeyEventArgs e) {
+			var row = sender as DataGridRow;
+			var info = row.Item as SeriesInfo;
+
+			if(e.Key == Key.Enter) {
+				ShowEpisodes(info);
+			}
+		}
+
 		ProcessMonitor GetMonitor() {
-			var mon = new ProcessMonitor(Logger);
+			var mon = new ProcessMonitor();
 
 			mon.FileAdded += (o, e) => {
 				this.Dispatcher.BeginInvoke(new Action(() => {
@@ -334,7 +360,7 @@ namespace EpisodeTracker.WPF {
 		}
 
 		private void UpdateSelected_Click(object sender, RoutedEventArgs e) {
-			var selected = seriesGrid.SelectedItems.Cast<SeriesInfo>().Select(s => s.SeriesID);
+			var selected = seriesGrid.SelectedItems.Cast<SeriesInfo>().Select(s => s.Series.ID);
 			UpdateSeriesAsync(true, selected);
 		}
 
@@ -349,13 +375,17 @@ namespace EpisodeTracker.WPF {
 		}
 
 		private void Delete_Click(object sender, RoutedEventArgs e) {
-			var selected = seriesGrid.SelectedItems.Cast<SeriesInfo>().Select(s => seriesList.Single(s2 => s2.SeriesID == s.SeriesID));
+			var selected = seriesGrid.SelectedItems.Cast<SeriesInfo>().Select(s => seriesList.Single(s2 => s2.Series.ID == s.Series.ID));
+			PerformDelete(selected);
+		}
+
+		void PerformDelete(IEnumerable<SeriesInfo> selected) {
 			if(MessageBox.Show("Are you sure you want to delete these " + selected.Count() + " series?", "Confirm Delete", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes) {
 				using(var db = new EpisodeTrackerDBContext()) {
 					for(var i = 0; i < selected.Count(); i++) {
 						var series = selected.ElementAt(i);
-						var se = db.Series.Single(s => s.ID == series.SeriesID);
-						
+						var se = db.Series.Single(s => s.ID == series.Series.ID);
+
 						db.Series.Remove(se);
 						seriesList.Remove(series);
 					}
@@ -377,16 +407,131 @@ namespace EpisodeTracker.WPF {
 
 		private void WatchNext_Click(object sender, RoutedEventArgs e) {
 			var selected = seriesGrid.SelectedItem as SeriesInfo;
-			if(selected.WatchNext.FileName == null || !File.Exists(selected.WatchNext.FileName)) {
-				MessageBox.Show("Could not find file");
-				return;
+			PerformWatch(selected.NextEpisode);
+		}
+
+		async void PerformWatch(Episode episode) {
+			if(episode == null) {
+				MessageBox.Show("Nothing to watch");
+			}
+
+			if(episode.FileName == null || !File.Exists(episode.FileName)) {
+				// Try and find
+				var status = new StatusModal {
+					Text = "Searching for episode file...",
+					SubText = "Parsing files: 0",
+					ShowSubText = true
+				};
+				status.SetValue(Grid.RowProperty, 1);
+				grid.Children.Add(status);
+
+				var tasks = new List<Task<List<EpisodeFileSearchResult>>>();
+				var searcher = new EpisodeFileSearcher();
+				var totalFound = 0;
+
+				searcher.FilesFound += (o, ea) => {
+					this.Dispatcher.BeginInvoke(new Action(() => {
+						Interlocked.Add(ref totalFound, ea.Results);
+						status.SubText = "Parsing files: " + totalFound;
+					}));
+				};
+
+				foreach(var path in Core.Models.Settings.Default.Libraries) {
+					tasks.Add(searcher.SearchAsync(path));
+				}
+
+				try {
+					await Task.WhenAll(tasks);
+				} catch(ApplicationException ex) {
+					Logger.Error("Error searching for file: " + ex);
+					MessageBox.Show(ex.Message);
+				}
+
+				var groups = tasks
+				.Where(t => !t.IsFaulted)
+				.SelectMany(t => t.Result)
+				.GroupBy(r => r.Match.Name, StringComparer.OrdinalIgnoreCase)
+				.Select(g => new {
+					SeriesName = g.Key,
+					Results = g.ToList()
+				})
+				.OrderBy(g => g.SeriesName);
+
+				var total = groups.Count();
+
+				status.Text = "Checking results...";
+				status.SubText = String.Format("{0} / {1} series", 0, total);
+				status.ShowProgress = true;
+
+				var completed = 0;
+				EpisodeFileSearchResult result = null;
+
+				await Task.Factory.StartNew(() => {
+					var para = groups
+						.AsParallel()
+						.WithDegreeOfParallelism(5);
+
+					para.ForAll(info => {
+						try {
+							using(var db = new EpisodeTrackerDBContext()) {
+								var seriesName = info.SeriesName;
+
+								if(db.SeriesIgnore.Any(s => s.Name == seriesName)) {
+									return;
+								}
+
+								var series = db.Series.SingleOrDefault(s => s.Name == seriesName || s.Aliases.Any(a => a.Name == seriesName));
+								if(series == null || series.ID != episode.SeriesID) return;
+
+								var ep = episode;
+								var r = info.Results.FirstOrDefault(f =>
+									!f.Match.Season.HasValue
+									&& f.Match.Episode == ep.AbsoluteNumber
+									|| (
+										f.Match.Season.HasValue
+										&& f.Match.Season == ep.Season
+										&& (
+											f.Match.Episode == ep.Number
+											|| f.Match.ToEpisode.HasValue
+											&& f.Match.Episode <= ep.Number
+											&& f.Match.ToEpisode >= ep.Number
+										)
+									)
+								);
+
+								if(r != null) result = r;
+							}
+						} finally {
+							Interlocked.Increment(ref completed);
+
+							this.Dispatcher.BeginInvoke(new Action(() => {
+								status.SubText = String.Format("{0} / {1} series", completed, total);
+								status.UpdateProgress(completed, total);
+							}));
+						}
+					});
+				});
+
+				grid.Children.Remove(status);
+
+				if(result != null) {
+					using(var db = new EpisodeTrackerDBContext()) {
+						var episodeDB = db.Episodes.Single(ep => ep.ID == episode.ID);
+						episodeDB.FileName = result.FileName;
+						episode.FileName = result.FileName;
+						db.SaveChanges();
+					}
+				} else {
+					MessageBox.Show("Could not find file");
+					return;
+				}
 			}
 
 			try {
-				Process.Start(selected.WatchNext.FileName);
+				Process.Start(episode.FileName);
 			} catch(Exception ex) {
 				MessageBox.Show("Problem opening file: " + ex.Message);
-				Logger.Error("Error opening filename: " + selected.WatchNext.FileName + " - " + ex);
+				Logger.Error("Error opening filename: " + episode.FileName + " - " + ex);
 			}
 		}
 
