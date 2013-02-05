@@ -1,15 +1,17 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2012
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EpisodeTracker.Core", "Core\Core.csproj", "{CEDF11EA-B0BC-4F4E-AA05-2B89E5CC4E21}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Core", "Core\Core.csproj", "{CEDF11EA-B0BC-4F4E-AA05-2B89E5CC4E21}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaReign.Core", "MediaReign.Core\MediaReign.Core.csproj", "{8BE05C02-2183-4825-B68D-F37C4C8FBF43}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EpisodeTracker.Tests", "Tests\Tests.csproj", "{FA2D4846-93B3-42A8-A125-6D1147E8BA5F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tests", "Tests\Tests.csproj", "{FA2D4846-93B3-42A8-A125-6D1147E8BA5F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MediaReign.TVDB", "MediaReign.TVDB\MediaReign.TVDB.csproj", "{B825AA41-99D4-4856-8BC1-F72D8FFBEF15}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EpisodeTracker.WPF", "WPF\WPF.csproj", "{086FBDF2-73BF-4FDC-91EB-99A8C8D7A6E2}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WPF", "WPF\WPF.csproj", "{086FBDF2-73BF-4FDC-91EB-99A8C8D7A6E2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Torrents", "Torrents\Torrents.csproj", "{12CB3A7A-BABC-442F-B979-D154B18061B6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -37,6 +39,10 @@ Global
 		{086FBDF2-73BF-4FDC-91EB-99A8C8D7A6E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{086FBDF2-73BF-4FDC-91EB-99A8C8D7A6E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{086FBDF2-73BF-4FDC-91EB-99A8C8D7A6E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{12CB3A7A-BABC-442F-B979-D154B18061B6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{12CB3A7A-BABC-442F-B979-D154B18061B6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{12CB3A7A-BABC-442F-B979-D154B18061B6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{12CB3A7A-BABC-442F-B979-D154B18061B6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
