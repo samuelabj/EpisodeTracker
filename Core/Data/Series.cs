@@ -30,6 +30,13 @@ namespace EpisodeTracker.Core.Data {
 		public int? TVDBID { get; set; }
 		public double? Rating { get; set; }
 
+		public bool DownloadAutomatically { get; set; }
+		public bool DownloadUseAbsoluteEpisode { get; set; }
+		public int? DownloadMaxMB { get; set; }
+		public int? DownloadMinMB { get; set; }
+		public int? DownloadMinSeeds { get; set; }
+		public bool? DownloadHD { get; set; }
+
 		[ForeignKey("SeriesID")]
 		public virtual ICollection<Episode> Episodes { get; set; }
 		[ForeignKey("SeriesID")]

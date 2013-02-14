@@ -41,6 +41,7 @@
                     <MenuItem Header="Unwatched" Click="Unwatched_Click" />
                     <MenuItem Header="Delete" Click="Delete_Click" />
                     <MenuItem Header="Watch Now" Click="Watch_Click" />
+                    <MenuItem Header="Download" Click="Download_Click" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>

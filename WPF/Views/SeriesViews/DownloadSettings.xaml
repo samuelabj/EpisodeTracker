@@ -1,0 +1,22 @@
+﻿<Window x:Class="EpisodeTracker.WPF.Views.SeriesViews.DownloadSettings"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="DownloadSettings" Height="333.6" Width="305">
+    <Grid>
+        <TextBox x:Name="minSeedsTxt" HorizontalAlignment="Left" Height="23" Margin="10,38,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+        <Label Content="Min Seeds" HorizontalAlignment="Left" Margin="10,12,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="minMBTxt" HorizontalAlignment="Left" Height="23" Margin="10,92,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+        <Label Content="Min MB" HorizontalAlignment="Left" Margin="10,66,0,0" VerticalAlignment="Top"/>
+        <TextBox x:Name="maxMBTxt" HorizontalAlignment="Left" Height="23" Margin="10,146,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+        <Label Content="Max MB" HorizontalAlignment="Left" Margin="10,120,0,0" VerticalAlignment="Top"/>
+        <CheckBox x:Name="useAbsoluteEpisodeChk" Content="Use absolute episode number" HorizontalAlignment="Left" Margin="10,184,0,0" VerticalAlignment="Top"/>
+        <Label Content="Download in HD" HorizontalAlignment="Left" Margin="10,204,0,0" VerticalAlignment="Top"/>
+        <ComboBox x:Name="downloadHDCombo" HorizontalAlignment="Left" Margin="10,230,0,0" VerticalAlignment="Top" Width="120">
+            <ListBoxItem Content="Don't care" IsSelected="True" />
+            <ListBoxItem Content="Yes"/>
+            <ListBoxItem Content="No"/>
+        </ComboBox>
+        <CheckBox x:Name="enableAutoDownloadChk" Content="Enable automatic download" HorizontalAlignment="Left" Margin="10,263,0,0" VerticalAlignment="Top"/>
+        <Button x:Name="saveBtn" Content="Save" Click="Save_Click" HorizontalAlignment="Left" Margin="213,275,0,0" VerticalAlignment="Top" Width="75"/>
+    </Grid>
+</Window>

@@ -10,7 +10,7 @@ using System.Web;
 using System.Xml;
 
 namespace EpisodeTracker.Torrents.Searchers {
-	public class ISOHuntSearcher : ITorrentSeacher {
+	public class ISOHuntSearcher : ITorrentSearcher {
 		const string URLSearchFormat = "http://isohunt.com/js/rss/{0}?iht=";
 
 		public List<TorrentResult> Search(string text) {

@@ -86,7 +86,7 @@ namespace EpisodeTracker.WPF {
 				}
 			};
 
-			UpdateSeriesAsync(false);
+			//UpdateSeriesAsync(false);
 			LoadListsAsync();
 
 			this.WindowState = System.Windows.WindowState.Maximized;
@@ -178,59 +178,53 @@ namespace EpisodeTracker.WPF {
 		}
 
 		List<SeriesInfo> GetSeries() {
+			List<Series> series;
 			using(var db = new EpisodeTrackerDBContext()) {
-				var watching = db.Series
-					.Select(s =>
-						s.Episodes
-							.Where(e => e.Season != 0)
-							.OrderBy(e => e.Number)
-							.OrderBy(e => e.Season)
-							.OrderByDescending(e => e.Tracked.FirstOrDefault().Updated)
-							.FirstOrDefault()
-					)
-					.AsQueryable()
-					.Include(e => e.Series)
-					.Include(e => e.Series.Genres.Select(g => g.Genre))
-					.Include(e => e.Tracked)
-					.ToList()
-					.Where(e => e != null);
-
-				var seriesInfo = db.Series.Select(s => new {
-					s.ID,
-					Total = s.Episodes.Count(e => e.Season != 0 && e.Aired.HasValue && e.Aired <= DateTime.Now), // don't include specials
-					Watched = s.Episodes.Count(e => e.Tracked.Any(te => te.Watched)),
-					NextAirs = (DateTime?)s.Episodes.Where(e => e.Aired > DateTime.Now).Min(e => e.Aired) 
-				})
-				.ToDictionary(s => s.ID);
-
-				var display = new List<SeriesInfo>();
-				foreach(var e in watching) {
-					display.Add(new SeriesInfo {
-						Series = e.Series,
-						CurrentEpisode = e,
-						LastWatched = e.Tracked.Max(t => (DateTime?)t.Updated),
-						Total = seriesInfo[e.SeriesID].Total,
-						Watched = seriesInfo[e.SeriesID].Watched,
-						NextEpisode = !e.Tracked.Any(t => t.Watched) ? e : db.Episodes.Where(e2 => 
-							e2.SeriesID == e.SeriesID 
-							&& !e2.Tracked.Any(t => t.Watched) 
-							&& (
-								e2.Season > e.Season 
-								|| e2.Season == e.Season 
-								&& e2.Number > e.Number
-							)
-						)
-						.OrderBy(e2 => e2.Number)
-						.OrderBy(e2 => e2.Season)
-						.FirstOrDefault(),
-						NextAirs = seriesInfo[e.SeriesID].NextAirs,
-						BannerPath = GetBannerPath(e.Series),
-						Genres = String.Join(", ", e.Series.Genres.Select(g => g.Genre.Name)),
-					});
-				}
-
-				return display;
+				series = db.Series.ToList();
 			}
+
+			return series.AsParallel()
+				.Select(s => {
+					using(var db = new EpisodeTrackerDBContext()) {
+						var episodes = db.Episodes.Where(ep => ep.SeriesID == s.ID);
+
+						var latest = episodes
+							.Where(ep => ep.Season != 0)
+							.OrderBy(ep => ep.Number)
+							.OrderBy(ep => ep.Season)
+							.OrderBy(ep => ep.Tracked.FirstOrDefault().Updated)
+							.First();
+
+						var next = !latest.Tracked.Any(t => t.Watched) ? latest : episodes.Where(e2 =>
+								!e2.Tracked.Any(t => t.Watched)
+								&& (
+									e2.Season > latest.Season
+									|| e2.Season == latest.Season
+									&& e2.Number > latest.Number
+								)
+							)
+							.OrderBy(e2 => e2.Number)
+							.OrderBy(e2 => e2.Season)
+							.FirstOrDefault();
+
+						var total = episodes.Count(e => e.Season != 0 && e.Aired.HasValue && e.Aired <= DateTime.Now); // don't include specials
+						var watched = episodes.Count(e => e.Tracked.Any(te => te.Watched));
+						var nextAirs = episodes.Where(e => e.Aired > DateTime.Now).Min(e => e.Aired);
+
+						return new SeriesInfo {
+							Series = s,
+							CurrentEpisode = latest,
+							LastWatched = latest.Tracked.Max(t => (DateTime?)t.Updated),
+							Total = total,
+							Watched = watched,
+							NextEpisode = next,
+							NextAirs = nextAirs,
+							BannerPath = GetBannerPath(s),
+							Genres = String.Join(", ", db.SeriesGenres.Where(g => g.SeriesID == s.ID).Select(g => g.Genre.Name)),
+						};
+					}
+				})
+			.ToList();
 		}
 
 		string GetBannerPath(Series series) {
@@ -274,15 +268,16 @@ namespace EpisodeTracker.WPF {
 			loaded = new EventHandler((o, e) => {
 				seriesGrid.SelectedIndex = 0;
 				DataGridRow row = (DataGridRow)seriesGrid.ItemContainerGenerator.ContainerFromIndex(0);
-				row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+				if(row != null) {
+					row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+				}
 
 				seriesGrid.LayoutUpdated -= loaded;
 			});
 			seriesGrid.LayoutUpdated += loaded;
 
 			seriesGrid.ItemsSource = seriesList = new ObservableCollection<SeriesInfo>(
-				series.Result
-						.OrderByDescending(f => f.LastWatched)
+				series.Result.OrderByDescending(f => f.LastWatched)
 			);
 
 			otherGrid.ItemsSource = other.Result;
@@ -537,6 +532,13 @@ namespace EpisodeTracker.WPF {
 
 		private void Settings_Click(object sender, RoutedEventArgs e) {
 			var settings = new Views.Settings.Index();
+			settings.ShowDialog();
+		}
+
+		private void DownloadSettings_Click(object sender, RoutedEventArgs e) {
+			var selected = seriesGrid.SelectedItem as SeriesInfo;
+			var settings = new Views.SeriesViews.DownloadSettings();
+			settings.SeriesID = selected.Series.ID;
 			settings.ShowDialog();
 		}
 

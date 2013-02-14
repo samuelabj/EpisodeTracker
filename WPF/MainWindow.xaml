@@ -51,6 +51,7 @@
                     <MenuItem Header="Update" Click="UpdateSelected_Click" />
                     <MenuItem Header="Delete" Click="Delete_Click" />
                     <MenuItem Header="Watch Next" Click="WatchNext_Click" />
+                    <MenuItem Header="Download Settings" Click="DownloadSettings_Click" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>

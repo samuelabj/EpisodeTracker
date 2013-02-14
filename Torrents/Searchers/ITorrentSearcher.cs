@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 namespace EpisodeTracker.Torrents.Searchers {
-	public interface ITorrentSeacher {
+	public interface ITorrentSearcher {
 		List<TorrentResult> Search(string text);
 	}
 }

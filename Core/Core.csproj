@@ -81,6 +81,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\EpisodeDownloadLog.cs" />
     <Compile Include="Data\EpisodeTrackerDBContext.cs" />
     <Compile Include="Data\Episode.cs" />
     <Compile Include="Data\Genre.cs" />
@@ -104,9 +105,15 @@
     <Compile Include="Migrations\201301272321198_SeriesAliasIgnore.Designer.cs">
       <DependentUpon>201301272321198_SeriesAliasIgnore.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201302122316026_DownloadSeries.cs" />
+    <Compile Include="Migrations\201302122316026_DownloadSeries.Designer.cs">
+      <DependentUpon>201302122316026_DownloadSeries.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\EpisodeFileSearcher.cs" />
     <Compile Include="Models\EpisodeFileSearchResult.cs" />
+    <Compile Include="Models\EpisodeTorrentSearcher.cs" />
+    <Compile Include="Models\EpisodeTorrentSearcherResult.cs" />
     <Compile Include="Models\HandleHelper.cs" />
     <Compile Include="Models\Settings.designer.cs">
       <AutoGen>True</AutoGen>
@@ -174,6 +181,10 @@
       <Project>{b825aa41-99d4-4856-8bc1-f72d8ffbef15}</Project>
       <Name>MediaReign.TVDB</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Torrents\Torrents.csproj">
+      <Project>{12cb3a7a-babc-442f-b979-d154b18061b6}</Project>
+      <Name>Torrents</Name>
+    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="Shell32">
@@ -195,6 +206,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201301272321198_SeriesAliasIgnore.resx">
       <DependentUpon>201301272321198_SeriesAliasIgnore.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201302122316026_DownloadSeries.resx">
+      <DependentUpon>201302122316026_DownloadSeries.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

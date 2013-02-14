@@ -11,13 +11,21 @@ using System.Xml;
 using System.Xml.Linq;
 
 namespace EpisodeTracker.Torrents.Searchers {
-	public class KickAssTorrentsSeacher : ITorrentSeacher {
+	public class KickAssTorrentsSeacher : ITorrentSearcher {
 		const string URLSearchFormat = "http://kat.ph/usearch/{0}/?rss=1";
 		
 		public List<TorrentResult> Search(string text) {
 			var uri = new Uri(String.Format(URLSearchFormat, HttpUtility.UrlEncode(text)));
 			var request = WebRequest.Create(uri);
-			var response = request.GetResponse();
+
+			WebResponse response = null;
+			try {
+				response = request.GetResponse();
+			} catch(WebException e) {
+				if(e.Response != null && ((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.NotFound) {
+					return new List<TorrentResult>();
+				}
+			}
 
 			SyndicationFeed feed;
 			using(var stream = response.GetResponseStream())
@@ -30,8 +38,19 @@ namespace EpisodeTracker.Torrents.Searchers {
 				var torrent = i.Links.Where(e => e.MediaType == "application/x-bittorrent").FirstOrDefault();
 				if(torrent == null) return null;
 
-				var seeds = long.Parse(i.ElementExtensions.Single(e => e.OuterName.Equals("seeds", StringComparison.OrdinalIgnoreCase)).GetObject<XElement>().Value);
-				var leechs = long.Parse(i.ElementExtensions.Single(e => e.OuterName.Equals("leechs", StringComparison.OrdinalIgnoreCase)).GetObject<XElement>().Value);
+				var seeds = long.Parse(
+					i.ElementExtensions.Single(e => 
+						e.OuterName.Equals("seeds", StringComparison.OrdinalIgnoreCase)
+					)
+					.GetObject<XElement>().Value
+				);
+
+				var leechs = long.Parse(
+					i.ElementExtensions.Single(e => 
+						e.OuterName.Equals("leechs", StringComparison.OrdinalIgnoreCase)
+					)
+					.GetObject<XElement>().Value
+				);
 
 				return new TorrentResult {
 					Title = i.Title.Text,

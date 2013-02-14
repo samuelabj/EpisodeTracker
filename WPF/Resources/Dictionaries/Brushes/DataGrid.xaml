@@ -23,10 +23,10 @@
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="DataGrid.ColumnHeaderBrushDesc" StartPoint="0.5,0" EndPoint="0.5,1">
-        <GradientStop Color="#3A2D35" Offset="0"/>
+        <GradientStop Color="#705063" Offset="0"/>
         <GradientStop Color="#000" Offset="1.2"/>
-        <GradientStop Color="#3A2D35" Offset="0.509"/>
-        <GradientStop Color="#3A2D35" Offset="0.7"/>
+        <GradientStop Color="#705063" Offset="0.509"/>
+        <GradientStop Color="#705063" Offset="0.7"/>
     </LinearGradientBrush>
 
     <LinearGradientBrush x:Key="DataGrid.ColumnHeaderBorderBrush" StartPoint="0.5,0" EndPoint="0.5,1">

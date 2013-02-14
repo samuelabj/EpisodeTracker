@@ -5,6 +5,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -103,7 +104,9 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			loaded = new EventHandler((o, e) => {
 				dataGrid.SelectedIndex = 0;
 				DataGridRow row = (DataGridRow)dataGrid.ItemContainerGenerator.ContainerFromIndex(0);
-				row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+				if(row != null) {
+					row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+				}
 
 				dataGrid.LayoutUpdated -= loaded;
 			});
@@ -326,6 +329,60 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			} catch(Exception ex) {
 				MessageBox.Show("Problem opening file: " + ex.Message);
 				Logger.Error("Error opening filename: " + episode.FileName + " - " + ex);
+			}
+		}
+
+		async void Download_Click(object sender, RoutedEventArgs e) {
+			var epInfo = dataGrid.SelectedItem as EpisodeInfo;
+			var episode = epInfo.Episode;
+
+			Series series;
+			using(var db = new EpisodeTrackerDBContext()) {
+				series = db.Series.Single(s => s.ID == SeriesID);
+			}
+			episode.Series = series;
+
+			var searcher = new EpisodeTorrentSearcher();
+			searcher.HD = series.DownloadHD;
+			searcher.MinMB = series.DownloadMinMB;
+			searcher.MaxMB = series.DownloadMaxMB;
+			searcher.MinSeeds = series.DownloadMinSeeds;
+			searcher.UseAbsoluteEpisodeFormat = series.DownloadUseAbsoluteEpisode;
+
+			var results = await searcher.SearchAsync(episode);
+
+			using(var db = new EpisodeTrackerDBContext()) {
+				results = results.Where(r => !db.EpisodeDownloadLog.Any(edl => edl.URL == r.DownloadURL.AbsolutePath)).ToList(); 
+			}
+
+			MessageBox.Show(results.Any() ? String.Join("\n", results.Select(r => String.Format("{0} ({1}/{2}) {3}MB", r.Title, r.Seeds, r.Leechs, r.MB))) : "No results");
+
+			if(results.Any()) {
+				var first = results.First();
+				var webClient = new CustomWebClient();
+				if(!Directory.Exists("torrents")) Directory.CreateDirectory("torrents");
+				
+				var fileName = @"torrents\" + first.Title + ".torrent";
+				await webClient.DownloadFileTaskAsync(first.DownloadURL, fileName);
+				
+				Process.Start(fileName);
+
+				using(var db = new EpisodeTrackerDBContext()) {
+					db.EpisodeDownloadLog.Add(new EpisodeDownloadLog {
+						EpisodeID = episode.ID,
+						Date = DateTime.Now,
+						URL = first.DownloadURL.ToString()
+					});
+					db.SaveChanges();
+				}
+			}
+		}
+
+		class CustomWebClient : WebClient {
+			protected override WebRequest GetWebRequest(Uri address) {
+				HttpWebRequest request = base.GetWebRequest(address) as HttpWebRequest;
+				request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
+				return request;
 			}
 		}
 	}

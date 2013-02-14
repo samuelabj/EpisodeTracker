@@ -43,7 +43,7 @@
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Searchers\ISOHuntSearcher.cs" />
-    <Compile Include="Searchers\ITorrentSeacher.cs" />
+    <Compile Include="Searchers\ITorrentSearcher.cs" />
     <Compile Include="Searchers\KickAssTorrentsSearcher.cs" />
     <Compile Include="Searchers\TorrentResult.cs" />
   </ItemGroup>
