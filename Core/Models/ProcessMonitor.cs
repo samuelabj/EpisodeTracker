@@ -16,7 +16,7 @@ using System.Data.Entity;
 using System.Data.SqlTypes;
 using MediaReign.Core;
 
-namespace EpisodeTracker.Core.Monitors {
+namespace EpisodeTracker.Core.Models {
 	public delegate void MonitoredFileHandler(ProcessMonitor monitor, MonitoredFileEventArgs args);
 	public class MonitoredFileEventArgs {
 		public string Filename { get; set; }

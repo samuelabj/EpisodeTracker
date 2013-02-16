@@ -125,7 +125,7 @@
     <Compile Include="Models\Settings.cs">
       <DependentUpon>Settings.tt</DependentUpon>
     </Compile>
-    <Compile Include="Monitors\ProcessMonitor.cs" />
+    <Compile Include="Models\ProcessMonitor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

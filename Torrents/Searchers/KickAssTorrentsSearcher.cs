@@ -16,21 +16,23 @@ namespace EpisodeTracker.Torrents.Searchers {
 		
 		public List<TorrentResult> Search(string text) {
 			var uri = new Uri(String.Format(URLSearchFormat, HttpUtility.UrlEncode(text)));
-			var request = WebRequest.Create(uri);
+
+			var request = (HttpWebRequest)WebRequest.Create(uri);
+			request.AutomaticDecompression = DecompressionMethods.Deflate | DecompressionMethods.GZip;
 
 			WebResponse response = null;
 			try {
 				response = request.GetResponse();
 			} catch(WebException e) {
-				if(e.Response != null && ((HttpWebResponse)e.Response).StatusCode == HttpStatusCode.NotFound) {
+				var r = e.Response as HttpWebResponse;
+				if(r != null & r.StatusCode == HttpStatusCode.NotFound) {
 					return new List<TorrentResult>();
 				}
 			}
 
 			SyndicationFeed feed;
 			using(var stream = response.GetResponseStream())
-			using(var gzip = new GZipStream(stream, CompressionMode.Decompress))
-			using(var xr = XmlReader.Create(gzip)) {
+			using(var xr = XmlReader.Create(stream)) {
 				feed = SyndicationFeed.Load(xr);
 			}
 

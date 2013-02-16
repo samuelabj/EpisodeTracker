@@ -18,11 +18,10 @@ using System.Windows.Shapes;
 using EpisodeTracker.WPF.Views.Shared;
 using Hardcodet.Wpf.TaskbarNotification;
 using EpisodeTracker.Core.Data;
-using EpisodeTracker.Core.Monitors;
+using EpisodeTracker.Core.Models;
 using NLog;
 using System.Data.Entity;
 using System.IO;
-using EpisodeTracker.Core.Models;
 using System.Threading;
 using EpisodeTracker.WPF.Models;
 using MediaReign.Core;
@@ -49,7 +48,6 @@ namespace EpisodeTracker.WPF {
 			public string Genres { get; set; }
 		}
 
-		TaskbarIcon taskbar;
 		Logger Logger;
 		ProcessMonitor Monitor;
 		ObservableCollection<SeriesInfo> seriesList;
@@ -57,6 +55,8 @@ namespace EpisodeTracker.WPF {
 		public MainWindow() {
 			InitializeComponent();
 		}
+
+		public TaskbarIcon Taskbar { get; private set; }
 
 		protected override void OnInitialized(EventArgs e) {
 			base.OnInitialized(e);
@@ -67,12 +67,12 @@ namespace EpisodeTracker.WPF {
 
 			statusModal.Visibility = System.Windows.Visibility.Collapsed;
 
-			taskbar = new TaskbarIcon();
-			taskbar.Icon = new Icon(Application.GetResourceStream(new Uri("pack://application:,,,/EpisodeTracker;component/resources/images/app.ico")).Stream, 40, 40);
-			taskbar.ToolTipText = "Episode Tracker";
-			taskbar.Visibility = Visibility.Visible;
-			taskbar.LeftClickCommand = new ShowSampleWindowCommand { Window = this };
-			taskbar.LeftClickCommandParameter = taskbar;
+			Taskbar = new TaskbarIcon();
+			Taskbar.Icon = new Icon(Application.GetResourceStream(new Uri("pack://application:,,,/EpisodeTracker;component/resources/images/app.ico")).Stream, 40, 40);
+			Taskbar.ToolTipText = "Episode Tracker";
+			Taskbar.Visibility = Visibility.Visible;
+			Taskbar.LeftClickCommand = new ShowSampleWindowCommand { Window = this };
+			Taskbar.LeftClickCommandParameter = Taskbar;
 
 			//this.Hide();
 			this.StateChanged += (o, ea) => { 
@@ -332,7 +332,7 @@ namespace EpisodeTracker.WPF {
 					var bal = new NotificationBalloon();
 					bal.HeaderText = "Episode Tracker";
 					bal.BodyText = "Tracking file: " + e.FriendlyName;
-					taskbar.ShowCustomBalloon(bal, System.Windows.Controls.Primitives.PopupAnimation.Slide, 3000);
+					Taskbar.ShowCustomBalloon(bal, System.Windows.Controls.Primitives.PopupAnimation.Slide, 3000);
 				}));
 			};
 
@@ -343,7 +343,7 @@ namespace EpisodeTracker.WPF {
 					var bal = new NotificationBalloon();
 					bal.HeaderText = "Episode Tracker";
 					bal.BodyText = "Finished tracking: " + e.FriendlyName + (e.Watched ? " (probably watched)" : " (not watched)");
-					taskbar.ShowCustomBalloon(bal, System.Windows.Controls.Primitives.PopupAnimation.Slide, 3000);
+					Taskbar.ShowCustomBalloon(bal, System.Windows.Controls.Primitives.PopupAnimation.Slide, 3000);
 				}));
 			};
 

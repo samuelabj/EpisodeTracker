@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -245,14 +246,14 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 				}
 
 				var groups = tasks
-				.Where(t => !t.IsFaulted)
-				.SelectMany(t => t.Result)
-				.GroupBy(r => r.Match.Name, StringComparer.OrdinalIgnoreCase)
-				.Select(g => new {
-					SeriesName = g.Key,
-					Results = g.ToList()
-				})
-				.OrderBy(g => g.SeriesName);
+					.Where(t => !t.IsFaulted)
+					.SelectMany(t => t.Result)
+					.GroupBy(r => r.Match.Name, StringComparer.OrdinalIgnoreCase)
+					.Select(g => new {
+						SeriesName = g.Key,
+						Results = g.ToList()
+					})
+					.OrderBy(g => g.SeriesName);
 
 				var total = groups.Count();
 
@@ -335,6 +336,12 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 		async void Download_Click(object sender, RoutedEventArgs e) {
 			var epInfo = dataGrid.SelectedItem as EpisodeInfo;
 			var episode = epInfo.Episode;
+			var logger = LogManager.GetLogger("EpisodeDownload");
+
+			var downloadingModel = new StatusModal();
+			grid.Children.Add(downloadingModel);
+			downloadingModel.Text = "Searching...";
+			logger.Info("Starting search");
 
 			Series series;
 			using(var db = new EpisodeTrackerDBContext()) {
@@ -351,20 +358,30 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 
 			var results = await searcher.SearchAsync(episode);
 
-			using(var db = new EpisodeTrackerDBContext()) {
-				results = results.Where(r => !db.EpisodeDownloadLog.Any(edl => edl.URL == r.DownloadURL.AbsolutePath)).ToList(); 
-			}
+			var display = new Func<EpisodeTorrentSearcherResult, string>(r => String.Format("{0} ({1}/{2}) {3}MB", r.Title, r.Seeds, r.Leechs, r.MB));
+			var displayList = new Func<IEnumerable<EpisodeTorrentSearcherResult>, string>(list => String.Join("\n", list.Select(r => display(r))));
+			logger.Info(results.Any() ? String.Format("Found results: {0}\n{1}", results.Count, displayList(results)) : "No results");
 
-			MessageBox.Show(results.Any() ? String.Join("\n", results.Select(r => String.Format("{0} ({1}/{2}) {3}MB", r.Title, r.Seeds, r.Leechs, r.MB))) : "No results");
+			using(var db = new EpisodeTrackerDBContext()) {
+				var exclude = results.Where(r => db.EpisodeDownloadLog.Any(edl => edl.URL == r.DownloadURL.AbsolutePath)).ToArray();
+				logger.Info("Excluding: {0}\n{1}", exclude.Count(), displayList(exclude));
+			}
 
 			if(results.Any()) {
 				var first = results.First();
+				logger.Info("Downloading: " + display(first));
+
+				downloadingModel.Text = "Downloading...";
+				downloadingModel.SubText = display(first);
+
 				var webClient = new CustomWebClient();
 				if(!Directory.Exists("torrents")) Directory.CreateDirectory("torrents");
-				
+
 				var fileName = @"torrents\" + first.Title + ".torrent";
 				await webClient.DownloadFileTaskAsync(first.DownloadURL, fileName);
-				
+
+				Logger.Debug("Starting process: " + fileName);
+
 				Process.Start(fileName);
 
 				using(var db = new EpisodeTrackerDBContext()) {
@@ -375,7 +392,23 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 					});
 					db.SaveChanges();
 				}
+
+				var bal = new NotificationBalloon {
+					HeaderText = "Episode Tracker",
+					BodyText = "Found download: " + display(first)
+				};
+				((MainWindow)App.Current.MainWindow).Taskbar
+					.ShowCustomBalloon(bal, PopupAnimation.Slide, 5000);
+			} else {
+				var bal = new NotificationBalloon {
+					HeaderText = "Episode Tracker",
+					BodyText = "No results found"
+				};
+				((MainWindow)App.Current.MainWindow).Taskbar
+					.ShowCustomBalloon(bal, PopupAnimation.Slide, 5000);
 			}
+
+			grid.Children.Remove(downloadingModel);
 		}
 
 		class CustomWebClient : WebClient {

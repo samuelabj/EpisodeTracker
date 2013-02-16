@@ -30,5 +30,7 @@ namespace EpisodeTracker.Core.Data {
 		public virtual Series Series { get; set; }
 		[ForeignKey("EpisodeID")]
 		public virtual ICollection<TrackedEpisode> Tracked { get; set; }
+		[ForeignKey("EpisodeID")]
+		public virtual ICollection<EpisodeDownloadLog> DownloadLog { get; set; }
 	}
 }
