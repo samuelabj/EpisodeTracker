@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MediaReign.Core.TvMatchers;
 
 namespace EpisodeTracker.Core.Models {
 	public class EpisodeTorrentSearcherResult {
@@ -12,5 +13,6 @@ namespace EpisodeTracker.Core.Models {
 		public DateTime Published { get; set; }
 		public long Seeds { get; set; }
 		public long Leechs { get; set; }
+		public TvMatch Match { get; set; }
 	}
 }

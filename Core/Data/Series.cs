@@ -43,5 +43,9 @@ namespace EpisodeTracker.Core.Data {
 		public virtual ICollection<SeriesGenre> Genres { get; set; }
 		[ForeignKey("SeriesID")]
 		public virtual ICollection<SeriesAlias> Aliases { get; set; }
+
+		public override string ToString() {
+			return Name;
+		}
 	}
 }

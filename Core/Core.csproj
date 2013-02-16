@@ -110,6 +110,7 @@
       <DependentUpon>201302122316026_DownloadSeries.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
+    <Compile Include="Models\EpisodeDownloadService.cs" />
     <Compile Include="Models\EpisodeFileSearcher.cs" />
     <Compile Include="Models\EpisodeFileSearchResult.cs" />
     <Compile Include="Models\EpisodeTorrentSearcher.cs" />

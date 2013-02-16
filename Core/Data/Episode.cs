@@ -32,5 +32,13 @@ namespace EpisodeTracker.Core.Data {
 		public virtual ICollection<TrackedEpisode> Tracked { get; set; }
 		[ForeignKey("EpisodeID")]
 		public virtual ICollection<EpisodeDownloadLog> DownloadLog { get; set; }
+
+		public string ToString(bool includeSeries) {
+			return (includeSeries ? Series.Name + " " : null ) + String.Format("S{0:00}E{1:00} - {2} (ID:{3})", Season, Number, Name, ID);
+		}
+
+		public override string ToString() {
+			return ToString(false);
+		}
 	}
 }

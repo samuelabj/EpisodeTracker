@@ -72,7 +72,8 @@ namespace EpisodeTracker.Core.Models {
 					MB = r.Torrent.Length / 1024 / 1024,
 					Published = r.Torrent.Published,
 					Seeds = r.Torrent.Seeds,
-					Leechs = r.Torrent.Leechs
+					Leechs = r.Torrent.Leechs,
+					Match = r.Match
 				})
 				.ToList();
 
@@ -82,7 +83,8 @@ namespace EpisodeTracker.Core.Models {
 				MB = r.Torrent.Length / 1024 / 1024,
 				Published = r.Torrent.Published,
 				Seeds = r.Torrent.Seeds,
-				Leechs = r.Torrent.Leechs
+				Leechs = r.Torrent.Leechs,
+				Match = r.Match
 			})
 			.OrderByDescending(r => r.Leechs)
 			.OrderByDescending(r => r.Seeds)

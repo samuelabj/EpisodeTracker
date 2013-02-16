@@ -1,33 +1,24 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Interop;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
-using EpisodeTracker.WPF.Views.Shared;
-using Hardcodet.Wpf.TaskbarNotification;
 using EpisodeTracker.Core.Data;
 using EpisodeTracker.Core.Models;
-using NLog;
-using System.Data.Entity;
-using System.IO;
-using System.Threading;
 using EpisodeTracker.WPF.Models;
-using MediaReign.Core;
 using EpisodeTracker.WPF.Views.Episodes;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
+using EpisodeTracker.WPF.Views.Shared;
+using Hardcodet.Wpf.TaskbarNotification;
+using NLog;
 
 namespace EpisodeTracker.WPF {
 	/// <summary>
@@ -50,7 +41,8 @@ namespace EpisodeTracker.WPF {
 
 		Logger Logger;
 		ProcessMonitor Monitor;
-		ObservableCollection<SeriesInfo> seriesList;
+		ObservableCollection<SeriesInfo> SeriesList;
+		EpisodeDownloadService DownloadService;
 
 		public MainWindow() {
 			InitializeComponent();
@@ -62,8 +54,15 @@ namespace EpisodeTracker.WPF {
 			base.OnInitialized(e);
 
 			Logger = LogManager.GetLogger("EpisodeTracker");
+
 			Monitor = GetMonitor();
 			Monitor.Start();
+
+			DownloadService = GetDownloadService();
+			Task.Factory.StartNew(async () => {
+				await Task.Delay(TimeSpan.FromSeconds(10));
+				DownloadService.Start();
+			});
 
 			statusModal.Visibility = System.Windows.Visibility.Collapsed;
 
@@ -83,6 +82,9 @@ namespace EpisodeTracker.WPF {
 			this.Closing += (o, ev) => {
 				if(MessageBox.Show("Are you sure you want to exit?", "Confirm exit", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.No) {
 					ev.Cancel = true;
+
+					Monitor.Dispose();
+					DownloadService.Dispose();
 				}
 			};
 
@@ -276,7 +278,7 @@ namespace EpisodeTracker.WPF {
 			});
 			seriesGrid.LayoutUpdated += loaded;
 
-			seriesGrid.ItemsSource = seriesList = new ObservableCollection<SeriesInfo>(
+			seriesGrid.ItemsSource = SeriesList = new ObservableCollection<SeriesInfo>(
 				series.Result.OrderByDescending(f => f.LastWatched)
 			);
 
@@ -342,12 +344,27 @@ namespace EpisodeTracker.WPF {
 
 					var bal = new NotificationBalloon();
 					bal.HeaderText = "Episode Tracker";
-					bal.BodyText = "Finished tracking: " + e.FriendlyName + (e.Watched ? " (probably watched)" : " (not watched)");
+					bal.BodyText = "Finished tracking: " + e.FriendlyName + (e.Watched ? " (watched)" : " (not watched)");
 					Taskbar.ShowCustomBalloon(bal, System.Windows.Controls.Primitives.PopupAnimation.Slide, 3000);
 				}));
 			};
 
 			return mon;
+		}
+
+		EpisodeDownloadService GetDownloadService() {
+			var service = new EpisodeDownloadService();
+			service.DownloadFound += (o, e) => {
+				this.Dispatcher.BeginInvoke(new Action(() => {
+					var bal = new NotificationBalloon {
+						HeaderText = "Episode Tracker",
+						BodyText = "Found new download: " + e.Episodes.Select(ep => ep.Item2.Title).First()
+					};
+					Taskbar.ShowCustomBalloon(bal, System.Windows.Controls.Primitives.PopupAnimation.Slide, 3000);
+				}));
+			};
+
+			return service;
 		}
 
 		private void UpdateAll_Click(object sender, RoutedEventArgs e) {
@@ -370,7 +387,7 @@ namespace EpisodeTracker.WPF {
 		}
 
 		private void Delete_Click(object sender, RoutedEventArgs e) {
-			var selected = seriesGrid.SelectedItems.Cast<SeriesInfo>().Select(s => seriesList.Single(s2 => s2.Series.ID == s.Series.ID));
+			var selected = seriesGrid.SelectedItems.Cast<SeriesInfo>().Select(s => SeriesList.Single(s2 => s2.Series.ID == s.Series.ID));
 			PerformDelete(selected);
 		}
 
@@ -382,7 +399,7 @@ namespace EpisodeTracker.WPF {
 						var se = db.Series.Single(s => s.ID == series.Series.ID);
 
 						db.Series.Remove(se);
-						seriesList.Remove(series);
+						SeriesList.Remove(series);
 					}
 					db.SaveChanges();
 				}
