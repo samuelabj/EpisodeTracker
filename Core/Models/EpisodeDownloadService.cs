@@ -62,23 +62,7 @@ namespace EpisodeTracker.Core.Models {
 			if(Running) Stop();
 		}
 
-		void Check() {
-			Logger.Debug("Checking");
-
-			IEnumerable<Episode> episodes;
-			using(var db = new EpisodeTrackerDBContext()) {
-				episodes = db.Episodes.Where(ep =>
-					ep.Series.DownloadAutomatically
-					&& ep.Season != 0
-					&& ep.FileName == null
-					&& ep.Aired <= DateTime.Now
-					&& !ep.DownloadLog.Any()
-				)
-				.Include(ep => ep.Series)
-				.ToList();
-			}
-
-			Logger.Debug("Found episodes which need to be downloaded: " + episodes.Count());
+		public void Search(IEnumerable<Episode> episodes) {
 			var found = new List<Tuple<Episode, EpisodeTorrentSearcherResult>>();
 
 			Parallel.ForEach(episodes, episode => {
@@ -131,12 +115,12 @@ namespace EpisodeTracker.Core.Models {
 								first.Match.Season.HasValue
 								&& ep.Season == first.Match.Season
 								&& (
-									ep.Number == first.Match.Episode 
-									|| first.Match.ToEpisode.HasValue 
-									&& ep.Number > first.Match.Episode 
+									ep.Number == first.Match.Episode
+									|| first.Match.ToEpisode.HasValue
+									&& ep.Number > first.Match.Episode
 									&& ep.Number <= first.Match.ToEpisode.Value
-								) 
-								|| !first.Match.Season.HasValue 
+								)
+								|| !first.Match.Season.HasValue
 								&& ep.AbsoluteNumber == first.Match.Episode
 							)
 						)
@@ -190,9 +174,30 @@ namespace EpisodeTracker.Core.Models {
 
 			if(DownloadsFound != null && found.Any()) {
 				DownloadsFound(this, new EpisodeDownloadServiceEventArgs {
-					Episodes = new ReadOnlyCollection<Tuple<Episode,EpisodeTorrentSearcherResult>>(found)
+					Episodes = new ReadOnlyCollection<Tuple<Episode, EpisodeTorrentSearcherResult>>(found)
 				});
 			}
+		}
+
+		void Check() {
+			Logger.Debug("Checking");
+
+			IEnumerable<Episode> episodes;
+			using(var db = new EpisodeTrackerDBContext()) {
+				episodes = db.Episodes.Where(ep =>
+					ep.Series.DownloadAutomatically
+					&& ep.Season != 0
+					&& ep.FileName == null
+					&& ep.Aired <= DateTime.Now
+					&& !ep.DownloadLog.Any()
+				)
+				.Include(ep => ep.Series)
+				.ToList();
+			}
+
+			Logger.Debug("Found episodes which need to be downloaded: " + episodes.Count());
+
+			Search(episodes);
 
 			Logger.Debug("Finished checking");
 		}

@@ -22,6 +22,7 @@ using EpisodeTracker.Core.Data;
 using EpisodeTracker.Core.Models;
 using EpisodeTracker.WPF.Views.Shared;
 using EpisodeTracker.Core.Logging;
+using System.Data.Entity;
 
 namespace EpisodeTracker.WPF.Views.Episodes {
 	/// <summary>
@@ -333,81 +334,50 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 		}
 
 		async void Download_Click(object sender, RoutedEventArgs e) {
-			var epInfo = dataGrid.SelectedItem as EpisodeInfo;
-			var episode = epInfo.Episode;
-			var logger = Logger.Get("General");
+			var selected = dataGrid.SelectedItems.Cast<EpisodeInfo>().Select(i => i.Episode.ID);
+			IEnumerable<Episode> episodes;
+			using(var db = new EpisodeTrackerDBContext()) {
+				episodes = db.Episodes
+					.Where(ep => selected.Contains(ep.ID))
+					.Include(ep => ep.Series)
+					.ToList();
+			}
 
 			var downloadingModel = new StatusModal();
 			grid.Children.Add(downloadingModel);
 			downloadingModel.Text = "Searching...";
-			logger.Info("Starting search");
+			downloadingModel.SubText = "0/" + episodes.Count();
+			downloadingModel.ShowProgress = true;
+			downloadingModel.ShowSubText = true;
+			var complete = 0;
 
-			Series series;
-			using(var db = new EpisodeTrackerDBContext()) {
-				series = db.Series.Single(s => s.ID == SeriesID);
-			}
-			episode.Series = series;
+			var service = new EpisodeDownloadService();
+			service.DownloadFound += (o, ea) => {
+				Interlocked.Increment(ref complete);
+				this.Dispatcher.BeginInvoke(new Action(() => {
+					downloadingModel.UpdateProgress(complete, episodes.Count());
+					downloadingModel.SubText = String.Format("{0}/{1}", complete, episodes.Count());
+				}));
+			};
 
-			var searcher = new EpisodeTorrentSearcher();
-			searcher.HD = series.DownloadHD;
-			searcher.MinMB = series.DownloadMinMB;
-			searcher.MaxMB = series.DownloadMaxMB;
-			searcher.MinSeeds = series.DownloadMinSeeds;
-			searcher.UseAbsoluteEpisodeFormat = series.DownloadUseAbsoluteEpisode;
-
-			var results = await searcher.SearchAsync(episode);
-
-			var display = new Func<EpisodeTorrentSearcherResult, string>(r => String.Format("{0} ({1}/{2}) {3}MB", r.Title, r.Seeds, r.Leechs, r.MB));
-			var displayList = new Func<IEnumerable<EpisodeTorrentSearcherResult>, string>(list => String.Join("\n", list.Select(r => display(r))));
-			logger.Info(results.Any() ? String.Format("Found results: {0}\n{1}", results.Count, displayList(results)) : "No results");
-
-			using(var db = new EpisodeTrackerDBContext()) {
-				var exclude = results.Where(r => db.EpisodeDownloadLog.Any(edl => edl.URL == r.DownloadURL.AbsolutePath)).ToArray();
-				logger.Info("Excluding: {0}\n{1}", exclude.Count(), displayList(exclude));
-			}
-
-			if(results.Any()) {
-				var first = results.First();
-				logger.Info("Downloading: " + display(first));
-
-				downloadingModel.Text = "Downloading...";
-				downloadingModel.SubText = display(first);
-
-				var webClient = new CustomWebClient();
-				if(!Directory.Exists("torrents")) Directory.CreateDirectory("torrents");
-
-				var fileName = @"torrents\" + first.Title + ".torrent";
-				await webClient.DownloadFileTaskAsync(first.DownloadURL, fileName);
-
-				Logger.Debug("Starting process: " + fileName);
-
-				Process.Start(fileName);
-
-				using(var db = new EpisodeTrackerDBContext()) {
-					db.EpisodeDownloadLog.Add(new EpisodeDownloadLog {
-						EpisodeID = episode.ID,
-						Date = DateTime.Now,
-						URL = first.DownloadURL.ToString()
-					});
-					db.SaveChanges();
-				}
-
-				var bal = new NotificationBalloon {
-					HeaderText = "Episode Tracker",
-					BodyText = "Found download: " + display(first)
-				};
-				((MainWindow)App.Current.MainWindow).Taskbar
-					.ShowCustomBalloon(bal, PopupAnimation.Slide, 5000);
-			} else {
-				var bal = new NotificationBalloon {
-					HeaderText = "Episode Tracker",
-					BodyText = "No results found"
-				};
-				((MainWindow)App.Current.MainWindow).Taskbar
-					.ShowCustomBalloon(bal, PopupAnimation.Slide, 5000);
-			}
+			await Task.Factory.StartNew(() => {
+				service.Search(episodes);
+			});
 
 			grid.Children.Remove(downloadingModel);
+
+			var win = App.Current.MainWindow as MainWindow;
+			if(complete > 0) {
+				win.Taskbar.ShowCustomBalloon(new NotificationBalloon {
+					HeaderText = "Episode Tracker",
+					BodyText = "Downloaded " + complete + " episodes"
+				}, PopupAnimation.Slide, 5000);
+			} else {
+				win.Taskbar.ShowCustomBalloon(new NotificationBalloon {
+					HeaderText = "Episode Tracker",
+					BodyText = "No downloads found"
+				}, PopupAnimation.Slide, 5000);
+			}
 		}
 
 		private void Log_Click(object sender, RoutedEventArgs e) {
