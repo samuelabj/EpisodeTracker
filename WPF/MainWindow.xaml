@@ -26,6 +26,7 @@
                 <MenuItem Header="Refresh" Click="Refresh_Click" />
                 <MenuItem Header="Locate Episode Files" Click="LocateEpisodeFiles_Click" />
                 <MenuItem Header="Settings" Click="Settings_Click" />
+                <MenuItem Header="Log" Click="Log_Click" />
             </MenuItem>
         </Menu>
 

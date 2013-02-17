@@ -559,6 +559,12 @@ namespace EpisodeTracker.WPF {
 			settings.ShowDialog();
 		}
 
+		private void Log_Click(object sender, RoutedEventArgs e) {
+			var log = new Views.Logs.Index();
+			log.WindowState = System.Windows.WindowState.Maximized;
+			log.ShowDialog();
+		}
+
 		public class ShowSampleWindowCommand : CommandBase<ShowSampleWindowCommand> {
 			public Window Window { get; set; }
 

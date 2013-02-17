@@ -96,6 +96,9 @@
     <Compile Include="Views\Episodes\FindFiles.xaml.cs">
       <DependentUpon>FindFiles.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\Logs\Index.xaml.cs">
+      <DependentUpon>Index.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\SeriesViews\DownloadSettings.xaml.cs">
       <DependentUpon>DownloadSettings.xaml</DependentUpon>
     </Compile>
@@ -159,6 +162,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\Episodes\Index.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\Logs\Index.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

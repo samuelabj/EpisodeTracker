@@ -411,6 +411,15 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			grid.Children.Remove(downloadingModel);
 		}
 
+		private void Log_Click(object sender, RoutedEventArgs e) {
+			var selected = dataGrid.SelectedItem as EpisodeInfo;
+
+			var log = new Views.Logs.Index();
+			log.EpisodeID = selected.Episode.ID;
+			log.WindowState = System.Windows.WindowState.Maximized;
+			log.ShowDialog();
+		}
+
 		class CustomWebClient : WebClient {
 			protected override WebRequest GetWebRequest(Uri address) {
 				HttpWebRequest request = base.GetWebRequest(address) as HttpWebRequest;
