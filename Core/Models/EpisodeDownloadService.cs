@@ -5,12 +5,12 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using EpisodeTracker.Core.Data;
-using NLog;
 using System.Data.Entity;
 using System.Net;
 using System.Diagnostics;
 using System.IO;
 using System.Collections.ObjectModel;
+using EpisodeTracker.Core.Logging;
 
 namespace EpisodeTracker.Core.Models {
 	public delegate void EpisodeDownloadServiceHandler(EpisodeDownloadService service, EpisodeDownloadServiceEventArgs args);
@@ -24,7 +24,7 @@ namespace EpisodeTracker.Core.Models {
 		object downloadedLock = new object();
 
 		public EpisodeDownloadService() {
-			Logger = LogManager.GetLogger("EpisodeDownloadService");
+			Logger = Logger.Get("EpisodeDownloadService");
 		}
 
 		public event EpisodeDownloadServiceHandler DownloadsFound;
@@ -82,7 +82,7 @@ namespace EpisodeTracker.Core.Models {
 			var found = new List<Tuple<Episode, EpisodeTorrentSearcherResult>>();
 
 			Parallel.ForEach(episodes, episode => {
-				Logger.Debug("Searching for episode: " + episode.ToString(true));
+				Logger.Debug().Message("Searching for episode").Episode(episode.ID).Log();
 
 				var searcher = new EpisodeTorrentSearcher {
 					MinSeeds = episode.Series.DownloadMinSeeds,
@@ -97,33 +97,33 @@ namespace EpisodeTracker.Core.Models {
 				try {
 					results = searcher.Search(episode, out misses);
 				} catch(Exception e) {
-					Logger.Error("Error searching for episode download: " + episode.ToString(true) + " - " + e);
+					Logger.Error().Message("Error searching for episode download: " + e).Episode(episode.ID).Log();
 					return;
 				}
 
 				if(!results.Any()) {
-					Logger.Debug("No results found: " + episode.ToString(true));
-					Logger.Debug("Results which did not match criteria for episode: " + episode.ToString(true) + " - \n" + String.Join(", \n", misses.Select(r => DisplayResult(r))));
+					Logger.Debug().Message("No results found").Episode(episode.ID).Log();
+					Logger.Debug().Episode(episode.ID).Message("Results which did not match criteria - \n" + String.Join(", \n", misses.Select(r => DisplayResult(r)))).Log();
 					return;
 				}
 
-				Logger.Debug("Found results: " + String.Join(", \n", results.Select(r => DisplayResult(r))));
+				Logger.Debug().Message("Found results: " + String.Join(", \n", results.Select(r => DisplayResult(r)))).Episode(episode.ID).Log();
 
 				EpisodeTorrentSearcherResult first;
 				lock(downloadedLock) {
 					using(var db = new EpisodeTrackerDBContext()) {
 						var exclude = results.Where(r => db.EpisodeDownloadLog.Any(edl => edl.URL == r.DownloadURL.AbsolutePath)).ToArray();
-						if(exclude.Any()) Logger.Debug("Excluding: {0}\n{1}", exclude.Count(), String.Join(", \n", exclude.Select(e => DisplayResult(e))));
+						if(exclude.Any()) Logger.Debug().Message("Excluding: {0}\n{1}", exclude.Count(), String.Join(", \n", exclude.Select(e => DisplayResult(e)))).Episode(episode.ID).Log();
 						results = results.Except(exclude);
 
 
 						if(!results.Any()) {
-							Logger.Debug("All results excluded");
+							Logger.Debug().Episode(episode.ID).Message("All results excluded").Log();
 							return;
 						}
 
 						first = results.First();
-						Logger.Debug("Downloading: " + DisplayResult(first));
+						Logger.Debug().Episode(episode.ID).Message("Downloading: " + DisplayResult(first)).Log();
 
 						var ids = db.Episodes.Where(ep =>
 							ep.SeriesID == episode.SeriesID
@@ -143,7 +143,7 @@ namespace EpisodeTracker.Core.Models {
 						.Select(ep => ep.ID)
 						.ToArray();
 
-						Logger.Debug("Recording download log for episodes: " + episode.ToString(true) + " - " + String.Join(", ", ids));
+						Logger.Debug().Episode(episode.ID).Message("Logging download for episode IDs: " + String.Join(", ", ids)).Log();
 
 						foreach(var id in ids) {
 							db.EpisodeDownloadLog.Add(new EpisodeDownloadLog {
@@ -165,16 +165,16 @@ namespace EpisodeTracker.Core.Models {
 				try {
 					webClient.DownloadFile(first.DownloadURL, fileName);
 				} catch(Exception e) {
-					Logger.Error("Error downloading torrent: " + first.DownloadURL + " - " + e);
+					Logger.Error().Episode(episode.ID).Message("Error downloading torrent: " + first.DownloadURL + " - " + e).Log();
 					return;
 				}
 
-				Logger.Debug("Starting process: " + fileName);
+				Logger.Debug().Episode(episode.ID).Message("Starting process: " + fileName).Log();
 
 				try {
 					Process.Start(fileName);
 				} catch(Exception e) {
-					Logger.Error("Error starting process for file: " + fileName + " - " + e);
+					Logger.Error().Episode(episode.ID).Message("Error starting process for file: " + fileName + " - " + e).Log();
 					return;
 				}
 

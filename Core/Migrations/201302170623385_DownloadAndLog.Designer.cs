@@ -5,13 +5,13 @@ namespace EpisodeTracker.Core.Migrations
     using System.Data.Entity.Migrations.Infrastructure;
     using System.Resources;
     
-    public sealed partial class DownloadSeries : IMigrationMetadata
+    public sealed partial class DownloadAndLog : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(DownloadSeries));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(DownloadAndLog));
         
         string IMigrationMetadata.Id
         {
-            get { return "201302122316026_DownloadSeries"; }
+            get { return "201302170623385_DownloadAndLog"; }
         }
         
         string IMigrationMetadata.Source

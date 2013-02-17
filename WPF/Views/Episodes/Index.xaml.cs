@@ -21,7 +21,7 @@ using System.Windows.Shapes;
 using EpisodeTracker.Core.Data;
 using EpisodeTracker.Core.Models;
 using EpisodeTracker.WPF.Views.Shared;
-using NLog;
+using EpisodeTracker.Core.Logging;
 
 namespace EpisodeTracker.WPF.Views.Episodes {
 	/// <summary>
@@ -50,7 +50,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 		protected override void OnInitialized(EventArgs e) {
 			base.OnInitialized(e);
 
-			Logger = LogManager.GetLogger("EpisodeTracker");
+			Logger = Logger.Get("General");
 			statusModal.Visibility = System.Windows.Visibility.Hidden;
 		}
 
@@ -336,7 +336,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 		async void Download_Click(object sender, RoutedEventArgs e) {
 			var epInfo = dataGrid.SelectedItem as EpisodeInfo;
 			var episode = epInfo.Episode;
-			var logger = LogManager.GetLogger("EpisodeDownload");
+			var logger = Logger.Get("General");
 
 			var downloadingModel = new StatusModal();
 			grid.Children.Add(downloadingModel);

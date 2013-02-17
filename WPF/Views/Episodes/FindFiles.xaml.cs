@@ -16,10 +16,10 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
 using EpisodeTracker.Core.Data;
+using EpisodeTracker.Core.Logging;
 using EpisodeTracker.Core.Models;
 using EpisodeTracker.WPF.Views.Shared;
 using MediaReign.TVDB;
-using NLog;
 
 namespace EpisodeTracker.WPF.Views.Episodes {
 	/// <summary>
@@ -57,7 +57,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 		protected override void OnInitialized(EventArgs e) {
 			base.OnInitialized(e);
 
-			Logger = LogManager.GetLogger("EpisodeTracker");
+			Logger = Logger.Get("General");
 			FindFilesAsync();
 		}
 

@@ -18,6 +18,7 @@ namespace EpisodeTracker.Core.Data {
 		public DbSet<SeriesAlias> SeriesAliases { get; set; }
 		public DbSet<SeriesIgnore> SeriesIgnore { get; set; }
 		public DbSet<EpisodeDownloadLog> EpisodeDownloadLog { get; set; }
+		public DbSet<LogEntry> Log { get; set; }
 
 		protected override void OnModelCreating(DbModelBuilder modelBuilder) {
 			base.OnModelCreating(modelBuilder);

@@ -82,6 +82,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Data\EpisodeDownloadLog.cs" />
+    <Compile Include="Data\LogEntry.cs" />
     <Compile Include="Data\EpisodeTrackerDBContext.cs" />
     <Compile Include="Data\Episode.cs" />
     <Compile Include="Data\Genre.cs" />
@@ -93,6 +94,10 @@
     <Compile Include="Data\TrackedFile.cs" />
     <Compile Include="Data\User.cs" />
     <Compile Include="Data\TrackedEpisode.cs" />
+    <Compile Include="Logging\LogEntryBuilder.cs" />
+    <Compile Include="Logging\Logger.cs" />
+    <Compile Include="Logging\LogLevel.cs" />
+    <Compile Include="Logging\Targets\DBContextTarget.cs" />
     <Compile Include="Migrations\201301270600095_InitialCreate.cs" />
     <Compile Include="Migrations\201301270600095_InitialCreate.Designer.cs">
       <DependentUpon>201301270600095_InitialCreate.cs</DependentUpon>
@@ -105,9 +110,9 @@
     <Compile Include="Migrations\201301272321198_SeriesAliasIgnore.Designer.cs">
       <DependentUpon>201301272321198_SeriesAliasIgnore.cs</DependentUpon>
     </Compile>
-    <Compile Include="Migrations\201302122316026_DownloadSeries.cs" />
-    <Compile Include="Migrations\201302122316026_DownloadSeries.Designer.cs">
-      <DependentUpon>201302122316026_DownloadSeries.cs</DependentUpon>
+    <Compile Include="Migrations\201302170623385_DownloadAndLog.cs" />
+    <Compile Include="Migrations\201302170623385_DownloadAndLog.Designer.cs">
+      <DependentUpon>201302170623385_DownloadAndLog.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\EpisodeDownloadService.cs" />
@@ -208,8 +213,8 @@
     <EmbeddedResource Include="Migrations\201301272321198_SeriesAliasIgnore.resx">
       <DependentUpon>201301272321198_SeriesAliasIgnore.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Migrations\201302122316026_DownloadSeries.resx">
-      <DependentUpon>201302122316026_DownloadSeries.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201302170623385_DownloadAndLog.resx">
+      <DependentUpon>201302170623385_DownloadAndLog.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

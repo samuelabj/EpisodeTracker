@@ -18,7 +18,7 @@ using EpisodeTracker.WPF.Models;
 using EpisodeTracker.WPF.Views.Episodes;
 using EpisodeTracker.WPF.Views.Shared;
 using Hardcodet.Wpf.TaskbarNotification;
-using NLog;
+using EpisodeTracker.Core.Logging;
 
 namespace EpisodeTracker.WPF {
 	/// <summary>
@@ -53,7 +53,7 @@ namespace EpisodeTracker.WPF {
 		protected override void OnInitialized(EventArgs e) {
 			base.OnInitialized(e);
 
-			Logger = LogManager.GetLogger("EpisodeTracker");
+			Logger = Logger.Get("General");
 
 			Monitor = GetMonitor();
 			Monitor.Start();
@@ -413,7 +413,7 @@ namespace EpisodeTracker.WPF {
 				findWindow.ShowDialog();
 			} catch(Exception ex) {
 				MessageBox.Show(ex.ToString());
-				Logger.Error(ex);
+				Logger.Error("Unhandled exception locating episode files: " + ex);
 			}
 		}
 

@@ -9,7 +9,7 @@ using EpisodeTracker.Core.Data;
 using MediaReign.TVDB;
 using System.Data.Entity;
 using System.Threading;
-using NLog;
+using EpisodeTracker.Core.Logging;
 
 namespace EpisodeTracker.Core.Models {
 	public class TVDBSeriesSyncer {
@@ -31,7 +31,7 @@ namespace EpisodeTracker.Core.Models {
 		Logger Logger;
 
 		public TVDBSeriesSyncer() {
-			Logger = LogManager.GetLogger("EpisodeTracker");
+			Logger = Logger.Get("General");
 		}
 
 		public event BannerDownloadProgressEventHandler BannerDownloaded;

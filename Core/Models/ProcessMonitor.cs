@@ -11,10 +11,10 @@ using MediaReign.Core.TvMatchers;
 using EpisodeTracker.Core.Data;
 using EpisodeTracker.Core.Models;
 using MediaReign.TVDB;
-using NLog;
 using System.Data.Entity;
 using System.Data.SqlTypes;
 using MediaReign.Core;
+using EpisodeTracker.Core.Logging;
 
 namespace EpisodeTracker.Core.Models {
 	public delegate void MonitoredFileHandler(ProcessMonitor monitor, MonitoredFileEventArgs args);
@@ -75,7 +75,7 @@ namespace EpisodeTracker.Core.Models {
 		public ProcessMonitor() {
 			ApplicationNames = new List<string>();
 			ApplicationNames.Add("PotPlayerMini64");
-			Logger = LogManager.GetLogger("ProcessMonitor");
+			Logger = Logger.Get("ProcessMonitor");
 		}
 
 		public event MonitoredFileHandler FileAdded;
