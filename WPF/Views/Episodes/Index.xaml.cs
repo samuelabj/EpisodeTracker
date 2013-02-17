@@ -193,8 +193,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 		}
 
 		void Watch_Click(object sender, RoutedEventArgs e) {
-			var row = sender as DataGridRow;
-			var info = row.Item as EpisodeInfo;
+			var info = dataGrid.SelectedItem as EpisodeInfo;
 
 			PerformWatch(info.Episode);
 		}
@@ -203,7 +202,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			var row = sender as DataGridRow;
 			var info = row.Item as EpisodeInfo;
 
-			if(e.Key == Key.Enter) {
+			if(e.Key == Key.Enter || e.Key == Key.W) {
 				PerformWatch(info.Episode);
 			}
 		}
@@ -246,14 +245,14 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 				}
 
 				var groups = tasks
-					.Where(t => !t.IsFaulted)
-					.SelectMany(t => t.Result)
-					.GroupBy(r => r.Match.Name, StringComparer.OrdinalIgnoreCase)
-					.Select(g => new {
-						SeriesName = g.Key,
-						Results = g.ToList()
-					})
-					.OrderBy(g => g.SeriesName);
+				.Where(t => !t.IsFaulted)
+				.SelectMany(t => t.Result)
+				.GroupBy(r => r.Match.Name, StringComparer.OrdinalIgnoreCase)
+				.Select(g => new {
+					SeriesName = g.Key,
+					Results = g.ToList()
+				})
+				.OrderBy(g => g.SeriesName);
 
 				var total = groups.Count();
 

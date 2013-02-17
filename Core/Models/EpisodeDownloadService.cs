@@ -158,7 +158,7 @@ namespace EpisodeTracker.Core.Models {
 				}
 
 				var webClient = new CustomWebClient();
-				if(!Directory.Exists("torrents")) Directory.CreateDirectory("torrents");
+				if(!Directory.Exists("Torrents")) Directory.CreateDirectory("Torrents");
 
 				var fileName = @"torrents\" + first.Title + ".torrent";
 

@@ -37,6 +37,7 @@ namespace EpisodeTracker.WPF {
 			public DateTime? NextAirs { get; set; }
 			public string BannerPath { get; set; }
 			public string Genres { get; set; }
+			public bool Hide { get; set; }
 		}
 
 		Logger Logger;
@@ -65,6 +66,8 @@ namespace EpisodeTracker.WPF {
 			});
 
 			statusModal.Visibility = System.Windows.Visibility.Collapsed;
+			searchBox.Visibility = System.Windows.Visibility.Collapsed;
+			searchBox.Text = null;
 
 			Taskbar = new TaskbarIcon();
 			Taskbar.Icon = new Icon(Application.GetResourceStream(new Uri("pack://application:,,,/EpisodeTracker;component/resources/images/app.ico")).Stream, 40, 40);
@@ -194,7 +197,7 @@ namespace EpisodeTracker.WPF {
 							.Where(ep => ep.Season != 0)
 							.OrderBy(ep => ep.Number)
 							.OrderBy(ep => ep.Season)
-							.OrderBy(ep => ep.Tracked.FirstOrDefault().Updated)
+							.OrderByDescending(ep => ep.Tracked.FirstOrDefault().Updated)
 							.First();
 
 						var next = !latest.Tracked.Any(t => t.Watched) ? latest : episodes.Where(e2 =>
@@ -306,6 +309,8 @@ namespace EpisodeTracker.WPF {
 			var row = sender as DataGridRow;
 			var info = row.Item as SeriesInfo;
 
+			if(searching) return;
+
 			if(e.Key == Key.Delete) {
 				PerformDelete(new[] { info });
 			} else if(e.Key == Key.W) {
@@ -383,6 +388,33 @@ namespace EpisodeTracker.WPF {
 		private void Window_KeyUp(object sender, KeyEventArgs e) {
 			if(e.Key == Key.F5) {
 				LoadListsAsync();
+			}
+		}
+
+		bool searching = false;
+		void Window_KeyDown(object sender, KeyEventArgs e) {
+			if(Keyboard.IsKeyDown(Key.LeftCtrl) && e.Key == Key.F) {
+				searchBox.Visibility = System.Windows.Visibility.Visible;
+				searching = true;
+				searchBox.Focus();
+			} else if(searching && e.Key == Key.Escape) {
+				SeriesList.ToList().ForEach(s => s.Hide = false);
+				searching = false;
+				searchBox.Visibility = System.Windows.Visibility.Collapsed;
+				searchBox.Text = "";
+				seriesGrid.Focus();
+			}
+		}
+
+		void SearchBox_TextChanged(object sender, RoutedEventArgs e) {
+			if(!searching) return;
+
+			foreach(var s in SeriesList) {
+				if(s.Series.Name.IndexOf(searchBox.Text, StringComparison.OrdinalIgnoreCase) > -1) {
+					s.Hide = false;
+				} else {
+					s.Hide = true;
+				}
 			}
 		}
 

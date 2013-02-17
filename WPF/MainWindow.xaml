@@ -6,7 +6,8 @@
         xmlns:markext="clr-namespace:EpisodeTracker.WPF.Models.MarkupExtensions"
         Title="Episode Tracker" Height="392.2" Width="860.2"
         Icon="/EpisodeTracker;component/resources/images/app.ico"
-        KeyUp="Window_KeyUp">
+        KeyUp="Window_KeyUp"
+        KeyDown="Window_KeyDown">
 
     <Grid x:Name="grid">
         <Grid.RowDefinitions>
@@ -45,6 +46,12 @@
                     <EventSetter Event="MouseDoubleClick" Handler="SeriesRow_DoubleClick"/>
                     <EventSetter Event="KeyUp" Handler="SeriesRow_KeyUp" />
                     <EventSetter Event="KeyDown" Handler="SeriesRow_KeyDown" />
+                    <Setter Property="Visibility" Value="Visible" />
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding Hide}" Value="True">
+                            <Setter Property="Visibility" Value="Collapsed" />
+                        </DataTrigger>
+                    </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
             <DataGrid.ContextMenu>
@@ -135,5 +142,6 @@
         </DataGrid>
         
         <shared:StatusModal Grid.Row="1" x:Name="statusModal" />
+        <TextBox Grid.Row="1" x:Name="searchBox" Margin="0,0,0,0.2" Visibility="Visible" Text="Test" Background="#FF959595" HorizontalAlignment="Left" VerticalAlignment="Bottom" Width="410" Height="29" TextChanged="SearchBox_TextChanged" FontSize="20" />
     </Grid>
 </Window>

@@ -1,7 +1,8 @@
 ﻿<Window x:Class="EpisodeTracker.WPF.Views.Logs.Index"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Index" Height="1116" Width="779">
+        Title="Index" Height="1116" Width="779"
+        KeyUp="Window_KeyUp">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />

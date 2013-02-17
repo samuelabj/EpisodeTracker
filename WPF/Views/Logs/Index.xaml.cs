@@ -90,5 +90,11 @@ namespace EpisodeTracker.WPF.Views.Logs {
 			if(!init) return;
 			LoadAsync();
 		}
+
+		private void Window_KeyUp(object sender, KeyEventArgs e) {
+			if(e.Key == Key.F5) {
+				LoadAsync();
+			}
+		}
 	}
 }

@@ -12,9 +12,9 @@
         <CheckBox x:Name="useAbsoluteEpisodeChk" Content="Use absolute episode number" HorizontalAlignment="Left" Margin="10,184,0,0" VerticalAlignment="Top"/>
         <Label Content="Download in HD" HorizontalAlignment="Left" Margin="10,204,0,0" VerticalAlignment="Top"/>
         <ComboBox x:Name="downloadHDCombo" HorizontalAlignment="Left" Margin="10,230,0,0" VerticalAlignment="Top" Width="120">
-            <ListBoxItem Content="Don't care" IsSelected="True" />
+            <ListBoxItem Content="Don't care" />
             <ListBoxItem Content="Yes"/>
-            <ListBoxItem Content="No"/>
+            <ListBoxItem Content="No" IsSelected="True" />
         </ComboBox>
         <CheckBox x:Name="enableAutoDownloadChk" Content="Enable automatic download" HorizontalAlignment="Left" Margin="10,263,0,0" VerticalAlignment="Top"/>
         <Button x:Name="saveBtn" Content="Save" Click="Save_Click" HorizontalAlignment="Left" Margin="213,275,0,0" VerticalAlignment="Top" Width="75"/>
