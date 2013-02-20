@@ -9,9 +9,8 @@ namespace EpisodeTracker.Core.Logging {
 	public class LogEntryBuilder {
 		Logger _logger;
 
-		public LogEntryBuilder(Logger logger, LogLevel level) {
+		public LogEntryBuilder(Logger logger) {
 			_logger = logger;
-			Level = level;
 		}
 
 		public LogLevel Level { get; set; }
@@ -30,7 +29,32 @@ namespace EpisodeTracker.Core.Logging {
 			return this;
 		}
 
-		public void Log() {
+		public void Trace() {
+			Log(LogLevel.Trace);
+		}
+
+		public void Debug() {
+			Log(LogLevel.Debug);
+		}
+
+		public void Info() {
+			Log(LogLevel.Info);
+		}
+
+		public void Warn() {
+			Log(LogLevel.Warn);
+		}
+
+		public void Error() {
+			Log(LogLevel.Error);
+		}
+
+		public void Fatal() {
+			Log(LogLevel.Fatal);
+		}
+
+		public void Log(LogLevel level) {
+			Level = level;
 			_logger.Log(this);
 		}
 	}

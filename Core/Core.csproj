@@ -115,6 +115,7 @@
       <DependentUpon>201302170623385_DownloadAndLog.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
+    <Compile Include="Models\EpisodeDownloader.cs" />
     <Compile Include="Models\EpisodeDownloadService.cs" />
     <Compile Include="Models\EpisodeFileSearcher.cs" />
     <Compile Include="Models\EpisodeFileSearchResult.cs" />

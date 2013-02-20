@@ -43,13 +43,13 @@ namespace EpisodeTracker.WPF {
 		Logger Logger;
 		ProcessMonitor Monitor;
 		ObservableCollection<SeriesInfo> SeriesList;
-		EpisodeDownloadService DownloadService;
 
 		public MainWindow() {
 			InitializeComponent();
 		}
 
 		public TaskbarIcon Taskbar { get; private set; }
+		public EpisodeDownloadService DownloadService { get; private set; }
 
 		protected override void OnInitialized(EventArgs e) {
 			base.OnInitialized(e);
@@ -60,10 +60,12 @@ namespace EpisodeTracker.WPF {
 			Monitor.Start();
 
 			DownloadService = GetDownloadService();
-			Task.Factory.StartNew(async () => {
-				await Task.Delay(TimeSpan.FromSeconds(10));
-				DownloadService.Start();
-			});
+			if(Settings.Default.Download.Service.IsEnabled) {
+				Task.Factory.StartNew(async () => {
+					await Task.Delay(TimeSpan.FromSeconds(10));
+					DownloadService.Start();
+				});
+			}
 
 			statusModal.Visibility = System.Windows.Visibility.Collapsed;
 			searchBox.Visibility = System.Windows.Visibility.Collapsed;
@@ -363,7 +365,7 @@ namespace EpisodeTracker.WPF {
 				this.Dispatcher.BeginInvoke(new Action(() => {
 					var bal = new NotificationBalloon {
 						HeaderText = "Episode Tracker",
-						BodyText = "Found new download: " + e.Episodes.Select(ep => ep.Item2.Title).First()
+						BodyText = "Found new download: " + e.Result.Item2.Title
 					};
 					Taskbar.ShowCustomBalloon(bal, System.Windows.Controls.Primitives.PopupAnimation.Slide, 3000);
 				}));
@@ -595,6 +597,11 @@ namespace EpisodeTracker.WPF {
 			var log = new Views.Logs.Index();
 			log.WindowState = System.Windows.WindowState.Maximized;
 			log.ShowDialog();
+		}
+
+		void ForceDownloadStart_Click(object sender, RoutedEventArgs e) {
+			var selected = seriesGrid.SelectedItems.Cast<SeriesInfo>().ToList();
+
 		}
 
 		public class ShowSampleWindowCommand : CommandBase<ShowSampleWindowCommand> {

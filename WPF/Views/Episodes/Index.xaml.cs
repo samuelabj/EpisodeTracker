@@ -349,35 +349,37 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			downloadingModel.SubText = "0/" + episodes.Count();
 			downloadingModel.ShowProgress = true;
 			downloadingModel.ShowSubText = true;
+			
 			var complete = 0;
-
-			var service = new EpisodeDownloadService();
-			service.DownloadFound += (o, ea) => {
-				Interlocked.Increment(ref complete);
-				this.Dispatcher.BeginInvoke(new Action(() => {
-					downloadingModel.UpdateProgress(complete, episodes.Count());
-					downloadingModel.SubText = String.Format("{0}/{1}", complete, episodes.Count());
-				}));
-			};
+			var results = new List<Tuple<Episode, EpisodeTorrentSearcherResult>>();
 
 			await Task.Factory.StartNew(() => {
-				service.Search(episodes);
+				episodes.AsParallel()
+					.ForAll(ep => {
+						var downloader = new EpisodeDownloader(ep);
+						var result = downloader.Download();
+
+						lock(results) results.Add(Tuple.Create<Episode, EpisodeTorrentSearcherResult>(ep, result));
+
+						Interlocked.Increment(ref complete);
+						this.Dispatcher.BeginInvoke(new Action(() => {
+							downloadingModel.UpdateProgress(complete, episodes.Count());
+							downloadingModel.SubText = String.Format("{0}/{1}", complete, episodes.Count());
+
+							if(result != null) {
+								var win = App.Current.MainWindow as MainWindow;
+								win.Taskbar.ShowCustomBalloon(new NotificationBalloon {
+									HeaderText = "Episode Tracker",
+									BodyText = "Found new download: " + result.Title
+								}, PopupAnimation.Slide, 5000);
+							}
+						}));
+					});
 			});
 
 			grid.Children.Remove(downloadingModel);
 
-			var win = App.Current.MainWindow as MainWindow;
-			if(complete > 0) {
-				win.Taskbar.ShowCustomBalloon(new NotificationBalloon {
-					HeaderText = "Episode Tracker",
-					BodyText = "Downloaded " + complete + " episodes"
-				}, PopupAnimation.Slide, 5000);
-			} else {
-				win.Taskbar.ShowCustomBalloon(new NotificationBalloon {
-					HeaderText = "Episode Tracker",
-					BodyText = "No downloads found"
-				}, PopupAnimation.Slide, 5000);
-			}
+			MessageBox.Show(String.Format("Found {0} new download(s) out of {1}", results.Count(r => r.Item2 != null), results.Count()));
 		}
 
 		private void Log_Click(object sender, RoutedEventArgs e) {

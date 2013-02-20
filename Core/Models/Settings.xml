@@ -1,4 +1,9 @@
 ﻿<?xml version="1.0" encoding="utf-8" ?>
 <settings>
 	<setting name="Libraries" type="string[]" />
+	<group name="Download">
+		<group name="Service">
+			<setting name="IsEnabled" type="bool" />
+		</group>
+	</group>
 </settings>

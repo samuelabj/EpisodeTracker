@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using EpisodeTracker.Core.Data;
+using EpisodeTracker.Core.Logging;
 using EpisodeTracker.Torrents.Searchers;
 using MediaReign.Core.TvMatchers;
 
@@ -34,12 +35,21 @@ namespace EpisodeTracker.Core.Models {
 
 			var results = searchers
 				.AsParallel()
-				.SelectMany(s => s.Search(text))
+				.SelectMany(s => {
+					try {
+						return s.Search(text);
+					} catch(Exception e) {
+						Logger.Get("EpisodeTorrentSearcher").Error("Error searching " + s.GetType().Name + ": " + e);
+						return new List<TorrentResult>();
+					}
+				})
 				.Select(r => new {
 					Match = matcher.Match(r.Title),
 					Torrent = r
 				})
-				.ToList();
+				.ToList()
+				.OrderByDescending(r => r.Torrent.Leechs)
+				.OrderByDescending(r => r.Torrent.Seeds);
 			
 			var minBytes = MinMB.HasValue ? MinMB * 1024 * 1024 : (default(int?));
 			var maxBytes = MaxMB.HasValue ? MaxMB * 1024 * 1024 : (default(int?));
@@ -86,18 +96,7 @@ namespace EpisodeTracker.Core.Models {
 				Leechs = r.Torrent.Leechs,
 				Match = r.Match
 			})
-			.OrderByDescending(r => r.Leechs)
-			.OrderByDescending(r => r.Seeds)
 			.ToList();
-		}
-
-		public List<EpisodeTorrentSearcherResult> Search(Episode episode) {
-			List<EpisodeTorrentSearcherResult> misses;
-			return Search(episode, out misses);
-		}
-
-		public Task<List<EpisodeTorrentSearcherResult>> SearchAsync(Episode episode) {
-			return Task.Factory.StartNew(() => Search(episode));
 		}
 	}
 }

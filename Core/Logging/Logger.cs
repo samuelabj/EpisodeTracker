@@ -58,28 +58,8 @@ namespace EpisodeTracker.Core.Logging {
 			LogManager.GetLogger(Key).Log(info);
 		}
 
-		public LogEntryBuilder Trace() {
-			return new LogEntryBuilder(this, LogLevel.Trace);
-		}
-
-		public LogEntryBuilder Debug() {
-			return new LogEntryBuilder(this, LogLevel.Debug);
-		}
-
-		public LogEntryBuilder Info() {
-			return new LogEntryBuilder(this, LogLevel.Info);
-		}
-
-		public LogEntryBuilder Warn() {
-			return new LogEntryBuilder(this, LogLevel.Warn);
-		}
-
-		public LogEntryBuilder Error() {
-			return new LogEntryBuilder(this, LogLevel.Error);
-		}
-
-		public LogEntryBuilder Fatal() {
-			return new LogEntryBuilder(this, LogLevel.Fatal);
+		public LogEntryBuilder Build() {
+			return new LogEntryBuilder(this);
 		}
 
 		private NLog.LogLevel GetLevel(LogLevel level) {
