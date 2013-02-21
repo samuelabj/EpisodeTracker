@@ -23,9 +23,10 @@
               Height="20" 
               VerticalAlignment="Top">
             <MenuItem Header="File">
-                <MenuItem Header="Update All" Click="UpdateAll_Click" />
+                <MenuItem Header="Update all" Click="UpdateAll_Click" />
                 <MenuItem Header="Refresh" Click="Refresh_Click" />
-                <MenuItem Header="Locate Episode Files" Click="LocateEpisodeFiles_Click" />
+                <MenuItem Header="Locate episode files" Click="LocateEpisodeFiles_Click" />
+                <MenuItem Header="Force check downloads" Click="ForceCheckDownloads_Click" />                
                 <MenuItem Header="Settings" Click="Settings_Click" />
                 <MenuItem Header="Log" Click="Log_Click" />
             </MenuItem>

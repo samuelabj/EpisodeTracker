@@ -68,10 +68,16 @@ namespace EpisodeTracker.Core.Models {
 			using(var db = new EpisodeTrackerDBContext()) {
 				episodes = db.Episodes.Where(ep =>
 					ep.Series.DownloadAutomatically
+					&& !ep.IgnoreDownload
 					&& ep.Season != 0
 					&& ep.FileName == null
 					&& ep.Aired <= DateTime.Now
 					&& !ep.DownloadLog.Any()
+					&& (
+						!ep.Series.DownloadFromSeason.HasValue
+						|| ep.Season >= ep.Series.DownloadFromSeason
+						&& ep.Number >= ep.Series.DownloadFromEpisode
+					)
 				)
 				.Include(ep => ep.Series)
 				.ToList();
@@ -91,6 +97,11 @@ namespace EpisodeTracker.Core.Models {
 				var downloader = new EpisodeDownloader(episode);
 				var result = downloader.Download();
 				if(result == null) return;
+
+				Logger.Build()
+					.Message("Found new download: {0}", result)
+					.Episode(episode)
+					.Info();
 
 				if(DownloadFound != null) {
 					var f = Tuple.Create<Episode, EpisodeTorrentSearcherResult>(episode, result);

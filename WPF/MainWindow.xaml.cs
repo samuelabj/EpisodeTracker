@@ -599,9 +599,32 @@ namespace EpisodeTracker.WPF {
 			log.ShowDialog();
 		}
 
-		void ForceDownloadStart_Click(object sender, RoutedEventArgs e) {
-			var selected = seriesGrid.SelectedItems.Cast<SeriesInfo>().ToList();
+		async void ForceCheckDownloads_Click(object sender, RoutedEventArgs e) {
+			var checkModal = new StatusModal {
+				Text = "Starting up service..."
+			};
+			checkModal.SetValue(Grid.RowProperty, 1);
+			grid.Children.Add(checkModal);
 
+			if(!Settings.Default.Download.Service.IsEnabled) {
+				checkModal.Text = "Download service is not enabled";
+				checkModal.ShowActivityIndicator = false;
+				await Task.Delay(TimeSpan.FromSeconds(3));
+				grid.Children.Remove(checkModal);
+				return;
+			}
+			
+			var service = ((MainWindow)App.Current.MainWindow).DownloadService;
+
+			await Task.Factory.StartNew(() => {
+				if(service.IsRunning) service.Stop();
+				service.Start();
+			});
+
+			checkModal.Text = "Service will notify you of any new downloads found";
+			checkModal.ShowActivityIndicator = false;
+			await Task.Delay(TimeSpan.FromSeconds(3));
+			grid.Children.Remove(checkModal);
 		}
 
 		public class ShowSampleWindowCommand : CommandBase<ShowSampleWindowCommand> {

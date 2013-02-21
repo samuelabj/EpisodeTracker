@@ -14,5 +14,9 @@ namespace EpisodeTracker.Core.Models {
 		public long Seeds { get; set; }
 		public long Leechs { get; set; }
 		public TvMatch Match { get; set; }
+
+		public override string ToString() {
+			return String.Format("{0} ({1}/{2}) {3}MB - ", Title, Seeds, Leechs, MB, DownloadURL);
+		}
 	}
 }

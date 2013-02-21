@@ -36,6 +36,8 @@ namespace EpisodeTracker.Core.Data {
 		public int? DownloadMinMB { get; set; }
 		public int? DownloadMinSeeds { get; set; }
 		public bool? DownloadHD { get; set; }
+		public int? DownloadFromSeason { get; set; }
+		public int? DownloadFromEpisode { get; set; }
 
 		[ForeignKey("SeriesID")]
 		public virtual ICollection<Episode> Episodes { get; set; }

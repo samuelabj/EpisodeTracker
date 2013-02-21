@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EpisodeTracker.Core.Data;
 using EpisodeTracker.Core.Logging.Targets;
 
 namespace EpisodeTracker.Core.Logging {
@@ -21,6 +22,10 @@ namespace EpisodeTracker.Core.Logging {
 		public LogEntryBuilder Episode(int id) {
 			EpisodeID = id;
 			return this;
+		}
+
+		public LogEntryBuilder Episode(Episode episode) {
+			return Episode(episode.ID);
 		}
 
 		public LogEntryBuilder Message(string message, params object[] arguments) {

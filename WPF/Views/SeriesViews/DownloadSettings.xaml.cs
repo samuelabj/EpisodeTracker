@@ -43,6 +43,8 @@ namespace EpisodeTracker.WPF.Views.SeriesViews {
 			useAbsoluteEpisodeChk.IsChecked = series.DownloadUseAbsoluteEpisode;
 			downloadHDCombo.SelectedIndex = series.DownloadHD.HasValue ? series.DownloadHD.Value ? 1 : 2 : 0;
 			enableAutoDownloadChk.IsChecked = series.DownloadAutomatically;
+			downloadFromSeason.Text = series.DownloadFromSeason.HasValue ? series.DownloadFromSeason.Value.ToString() : default(string);
+			downloadFromEpisode.Text = series.DownloadFromEpisode.HasValue ? series.DownloadFromEpisode.Value.ToString() : default(string);
 		}
 
 		void Save_Click(object sender, RoutedEventArgs e) {
@@ -55,6 +57,8 @@ namespace EpisodeTracker.WPF.Views.SeriesViews {
 				series.DownloadUseAbsoluteEpisode = useAbsoluteEpisodeChk.IsChecked.GetValueOrDefault();
 				series.DownloadHD = downloadHDCombo.SelectedIndex == 0 ? default(bool?) : downloadHDCombo.SelectedIndex == 1 ? true : false;
 				series.DownloadAutomatically = enableAutoDownloadChk.IsChecked.GetValueOrDefault();
+				series.DownloadFromSeason = String.IsNullOrEmpty(downloadFromSeason.Text) ? default(int?) : int.Parse(downloadFromSeason.Text);
+				series.DownloadFromEpisode = String.IsNullOrEmpty(downloadFromEpisode.Text) ? default(int?) : int.Parse(downloadFromEpisode.Text);
 
 				db.SaveChanges();
 			}

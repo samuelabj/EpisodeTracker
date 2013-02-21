@@ -391,6 +391,38 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			log.ShowDialog();
 		}
 
+		void IgnoreDownload_Click(object sender, RoutedEventArgs e) {
+			var selected = dataGrid.SelectedItems.Cast<EpisodeInfo>().ToList();
+			SetIgnoreDownload(selected, true);
+		}
+
+		void AllowDownload_Click(object sender, RoutedEventArgs e) {
+			var selected = dataGrid.SelectedItems.Cast<EpisodeInfo>().ToList();
+			SetIgnoreDownload(selected, false);
+		}
+
+		async void SetIgnoreDownload(IEnumerable<EpisodeInfo> selected, bool ignore) {
+			var saveDialog = new StatusModal {
+				Text = "Saving..."
+			};
+			grid.Children.Add(saveDialog);
+
+			await Task.Factory.StartNew(() => {
+				using(var db = new EpisodeTrackerDBContext()) {
+					var ids = selected.Select(s => s.Episode.ID);
+					var episodes = db.Episodes.Where(ep => ids.Contains(ep.ID));
+
+					foreach(var ep in episodes) {
+						ep.IgnoreDownload = true;
+					}
+
+					db.SaveChanges();
+				}
+			});
+
+			grid.Children.Remove(saveDialog);
+		}
+
 		class CustomWebClient : WebClient {
 			protected override WebRequest GetWebRequest(Uri address) {
 				HttpWebRequest request = base.GetWebRequest(address) as HttpWebRequest;

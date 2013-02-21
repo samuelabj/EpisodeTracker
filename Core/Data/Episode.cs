@@ -25,6 +25,7 @@ namespace EpisodeTracker.Core.Data {
 		public double? Rating { get; set; }
 		[MaxLength(2000)]
 		public string FileName { get; set; }
+		public bool IgnoreDownload { get; set; }
 
 		[ForeignKey("ID")]
 		public virtual Series Series { get; set; }

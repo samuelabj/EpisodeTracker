@@ -40,9 +40,11 @@
                     <MenuItem Header="Watched" Click="Watched_Click" />
                     <MenuItem Header="Unwatched" Click="Unwatched_Click" />
                     <MenuItem Header="Delete" Click="Delete_Click" />
-                    <MenuItem Header="Watch Now" Click="Watch_Click" />
+                    <MenuItem Header="Watch now" Click="Watch_Click" />
                     <MenuItem Header="Download" Click="Download_Click" />
                     <MenuItem Header="Log" Click="Log_Click" />
+                    <MenuItem Header="Don't download" Click="IgnoreDownload_Click" />
+                    <MenuItem Header="Allow download" Click="AllowDownload_Click" />
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>

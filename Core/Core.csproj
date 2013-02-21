@@ -114,6 +114,10 @@
     <Compile Include="Migrations\201302170623385_DownloadAndLog.Designer.cs">
       <DependentUpon>201302170623385_DownloadAndLog.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201302211102150_DownloadSeasonEpisodeRestrictions.cs" />
+    <Compile Include="Migrations\201302211102150_DownloadSeasonEpisodeRestrictions.Designer.cs">
+      <DependentUpon>201302211102150_DownloadSeasonEpisodeRestrictions.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\EpisodeDownloader.cs" />
     <Compile Include="Models\EpisodeDownloadService.cs" />
@@ -139,7 +143,9 @@
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
-    <Content Include="Models\Settings.xml" />
+    <Content Include="Models\Settings.xml">
+      <SubType>Designer</SubType>
+    </Content>
     <Content Include="NLog.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       <SubType>Designer</SubType>
@@ -216,6 +222,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201302170623385_DownloadAndLog.resx">
       <DependentUpon>201302170623385_DownloadAndLog.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201302211102150_DownloadSeasonEpisodeRestrictions.resx">
+      <DependentUpon>201302211102150_DownloadSeasonEpisodeRestrictions.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

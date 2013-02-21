@@ -27,6 +27,11 @@ namespace EpisodeTracker.WPF.Views.Shared {
 			set { statusText.Text = value; }
 		}
 
+		public bool ShowActivityIndicator {
+			get { return statusProcessing.Visibility == System.Windows.Visibility.Visible; }
+			set { statusProcessing.Visibility = value ? Visibility.Visible : System.Windows.Visibility.Collapsed; }
+		}
+
 		public string SubText {
 			get { return statusSubText.Text; }
 			set { statusSubText.Text = value; }
