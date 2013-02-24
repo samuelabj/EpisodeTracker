@@ -19,6 +19,7 @@ using EpisodeTracker.WPF.Views.Episodes;
 using EpisodeTracker.WPF.Views.Shared;
 using Hardcodet.Wpf.TaskbarNotification;
 using EpisodeTracker.Core.Logging;
+using System.Text.RegularExpressions;
 
 namespace EpisodeTracker.WPF {
 	/// <summary>
@@ -408,8 +409,14 @@ namespace EpisodeTracker.WPF {
 			}
 		}
 
-		void SearchBox_TextChanged(object sender, RoutedEventArgs e) {
+		Task searchDelayTask;
+		async void SearchBox_TextChanged(object sender, RoutedEventArgs e) {
 			if(!searching) return;
+
+			if(searchDelayTask != null) return;
+
+			searchDelayTask = Task.Delay(200);
+			await searchDelayTask;
 
 			foreach(var s in SeriesList) {
 				if(s.Series.Name.IndexOf(searchBox.Text, StringComparison.OrdinalIgnoreCase) > -1) {
@@ -418,6 +425,8 @@ namespace EpisodeTracker.WPF {
 					s.Hide = true;
 				}
 			}
+
+			searchDelayTask = null;
 		}
 
 		private void Delete_Click(object sender, RoutedEventArgs e) {

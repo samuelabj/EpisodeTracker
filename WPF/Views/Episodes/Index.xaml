@@ -57,6 +57,7 @@
                 </DataGridTemplateColumn>
                 <DataGridTextColumn Header="Season" Width="50" Binding="{Binding Episode.Season}" />
                 <DataGridTextColumn Header="Episode" Width="52" Binding="{Binding Episode.Number}" />
+                <DataGridTextColumn Header="Absolute #" Width="52" Binding="{Binding Episode.AbsoluteNumber}" />
                 <DataGridTextColumn Header="Name" Width="150" Binding="{Binding Episode.Name}" />
                 <DataGridTextColumn Header="Overview" Width="200" Binding="{Binding Episode.Overview, Converter={markext:SummariseConverter}, ConverterParameter=200}">
                     <DataGridTextColumn.ElementStyle>
