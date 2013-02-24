@@ -81,6 +81,7 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Data\DataExtensions.cs" />
     <Compile Include="Data\EpisodeDownloadLog.cs" />
     <Compile Include="Data\LogEntry.cs" />
     <Compile Include="Data\EpisodeTrackerDBContext.cs" />
@@ -136,7 +137,7 @@
     <Compile Include="Models\Settings.cs">
       <DependentUpon>Settings.tt</DependentUpon>
     </Compile>
-    <Compile Include="Models\ProcessMonitor.cs" />
+    <Compile Include="Models\EpisodeProcessMonitor.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -16,7 +16,7 @@ namespace EpisodeTracker.Core.Models {
 		public TvMatch Match { get; set; }
 
 		public override string ToString() {
-			return String.Format("{0} ({1}/{2}) {3}MB - ", Title, Seeds, Leechs, MB, DownloadURL);
+			return String.Format("{0} ({1}/{2}) {3}MB - {4}", Title, Seeds, Leechs, MB, DownloadURL);
 		}
 	}
 }

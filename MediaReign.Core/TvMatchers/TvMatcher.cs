@@ -16,9 +16,12 @@ namespace MediaReign.Core.TvMatchers {
 			//@"[\W_]+?(?<Episode>\d{2})([-\s:]{1,2}(?<ToEpisode>\d+))?[\W_]" // Show 01
 			@"(?<Episode>\d{1,3})([\s_]?[\-_:][\s_]?(?<ToEpisode>\d+))?[^\da-z]", // Show 001
 		};
+
 		Regex Separator = new Regex(@"[\s.\-_]");
 		Regex Cleanup = new Regex(@"[']|(^\(.*?\))|\[.*?\]");
 		Regex Exclude = new Regex(@".*sample.*");
+		Regex Multipart = new Regex("^[-_EeXx]+([0-9]+)");
+
 		LinkedList<Regex> Matches;
 		string SeriesGroup = "Series";
 		string SeasonGroup = "Season";

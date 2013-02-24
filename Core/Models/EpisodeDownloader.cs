@@ -47,7 +47,7 @@ namespace EpisodeTracker.Core.Models {
 		private EpisodeTorrentSearcherResult GetResult(Episode episode, IEnumerable<EpisodeTorrentSearcherResult> results) {
 			lock(DownloadedLock) {
 				using(var db = new EpisodeTrackerDBContext()) {
-					var exclude = results.Where(r => db.EpisodeDownloadLog.Any(edl => edl.URL == r.DownloadURL.AbsolutePath)).ToArray();
+					var exclude = results.Where(r => db.EpisodeDownloadLog.Any(edl => edl.URL == r.DownloadURL.OriginalString)).ToArray();
 
 					if(exclude.Any()) {
 						Logger.Build()
@@ -100,15 +100,17 @@ namespace EpisodeTracker.Core.Models {
 				return false;
 			}
 
+			if(misses.Any()) {
+				Logger.Build()
+					.Episode(episode.ID)
+					.Message("Results which did not match criteria - \n" + String.Join(", \n", misses.Select(r => DisplayResult(r))))
+					.Debug();
+			}
+
 			if(!results.Any()) {
 				Logger.Build()
 					.Message("No results found")
 					.Episode(episode.ID)
-					.Debug();
-
-				Logger.Build()
-					.Episode(episode.ID)
-					.Message("Results which did not match criteria - \n" + String.Join(", \n", misses.Select(r => DisplayResult(r))))
 					.Debug();
 				return false;
 			}
@@ -117,23 +119,10 @@ namespace EpisodeTracker.Core.Models {
 		}
 
 		void LogDownload(EpisodeTrackerDBContext db, Episode episode, EpisodeTorrentSearcherResult result) {
-			var ids = db.Episodes.Where(ep =>
-							ep.SeriesID == episode.SeriesID
-							&& (
-								result.Match.Season.HasValue
-								&& ep.Season == result.Match.Season
-								&& (
-									ep.Number == result.Match.Episode
-									|| result.Match.ToEpisode.HasValue
-									&& ep.Number > result.Match.Episode
-									&& ep.Number <= result.Match.ToEpisode.Value
-								)
-								|| !result.Match.Season.HasValue
-								&& ep.AbsoluteNumber == result.Match.Episode
-							)
-						)
-						.Select(ep => ep.ID)
-						.ToArray();
+			var ids = db.Episodes.Where(ep => ep.SeriesID == episode.SeriesID)
+				.WhereTVMatch(result.Match)
+				.Select(ep => ep.ID)
+				.ToArray();
 
 			Logger.Build()
 				.Episode(episode.ID)
@@ -144,7 +133,7 @@ namespace EpisodeTracker.Core.Models {
 				db.EpisodeDownloadLog.Add(new EpisodeDownloadLog {
 					EpisodeID = id,
 					Date = DateTime.Now,
-					URL = result.DownloadURL.ToString()
+					URL = result.DownloadURL.OriginalString
 				});
 			}
 

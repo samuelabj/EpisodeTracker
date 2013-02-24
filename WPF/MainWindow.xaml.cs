@@ -41,7 +41,7 @@ namespace EpisodeTracker.WPF {
 		}
 
 		Logger Logger;
-		ProcessMonitor Monitor;
+		EpisodeProcessMonitor Monitor;
 		ObservableCollection<SeriesInfo> SeriesList;
 
 		public MainWindow() {
@@ -331,8 +331,8 @@ namespace EpisodeTracker.WPF {
 			}
 		}
 
-		ProcessMonitor GetMonitor() {
-			var mon = new ProcessMonitor();
+		EpisodeProcessMonitor GetMonitor() {
+			var mon = new EpisodeProcessMonitor();
 
 			mon.FileAdded += (o, e) => {
 				this.Dispatcher.BeginInvoke(new Action(() => {

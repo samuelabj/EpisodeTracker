@@ -33,7 +33,7 @@ namespace EpisodeTracker.Core.Models {
 		public bool IsRunning { get { return checkTask != null; } }
 
 		public void Start() {
-			Logger.Info("Starting EpisodeDownloadService");
+			Logger.Debug("Starting EpisodeDownloadService");
 
 			checkTask = Task.Factory.StartNew(() => {
 				var wait = TimeSpan.FromMinutes(30);
@@ -47,6 +47,8 @@ namespace EpisodeTracker.Core.Models {
 
 				} while(!checkEvent.WaitOne(wait));
 			});
+
+			Logger.Info("Episode download service started");
 		}
 
 		public void Stop() {
@@ -54,7 +56,7 @@ namespace EpisodeTracker.Core.Models {
 			checkTask.Wait();
 			checkTask = null;
 
-			Logger.Info("EpisodeDownloadService stopped");
+			Logger.Info("Episode download service stopped");
 		}
 
 		public void Dispose() {

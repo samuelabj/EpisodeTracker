@@ -3,11 +3,13 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
+using MediaReign.Core.TvMatchers;
 
 namespace EpisodeTracker.Core.Data {
-	public class Episode {
+	public class Episode : IEquatable<TvMatch> {
 		[Key, Required, DatabaseGenerated(DatabaseGeneratedOption.Identity)]
 		public int ID { get; set; }
 		
@@ -40,6 +42,40 @@ namespace EpisodeTracker.Core.Data {
 
 		public override string ToString() {
 			return ToString(false);
+		}
+
+		public bool Equals(TvMatch other) {
+			return Equals(other, false);
+		}
+
+		public bool Equals(TvMatch other, bool absolute) {
+			if(absolute) {
+				if(!other.Season.HasValue && other.Episode == AbsoluteNumber) return true;
+			} else {
+				if(other.Season == Season) {
+					if(other.Episode == Number) return true;
+					if(other.ToEpisode.HasValue) {
+						if(Number > other.Episode && Number <= other.ToEpisode) return true;
+					}
+				}
+			}
+
+			return false;
+		}
+
+		public static Expression<Func<Episode, bool>> EqualsMatchExpression(TvMatch match) {
+			return (Expression<Func<Episode, bool>>)(ep =>
+				match.Season.HasValue
+				&& ep.Season == match.Season
+				&& (
+					ep.Number == match.Episode
+					|| match.ToEpisode.HasValue
+					&& ep.Number > match.Episode
+					&& ep.Number <= match.ToEpisode.Value
+				)
+				|| !match.Season.HasValue
+				&& ep.AbsoluteNumber == match.Episode
+			);
 		}
 	}
 }

@@ -12,5 +12,9 @@ namespace EpisodeTracker.Torrents.Searchers {
 		public DateTime Published { get; set; }
 		public long Seeds { get; set; }
 		public long Leechs { get; set; }
+
+		public override string ToString() {
+			return String.Format("{0} ({1}/{2}) {3}MB - {4}", Title, Seeds, Leechs, Length, DownloadURL);
+		}
 	}
 }

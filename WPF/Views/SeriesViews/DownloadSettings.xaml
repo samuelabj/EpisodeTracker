@@ -5,21 +5,21 @@
     <Grid>
         <StackPanel>
             <Label Content="Min Seeds" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top"/>
-            <TextBox x:Name="minSeedsTxt" HorizontalAlignment="Left" Height="23" Margin="10,0,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+            <TextBox x:Name="minSeedsTxt" Text="50" HorizontalAlignment="Left" Height="23" Margin="10,0,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
 
             <Label Content="Min MB" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top"/>
-            <TextBox x:Name="minMBTxt" HorizontalAlignment="Left" Height="23" Margin="10,0,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+            <TextBox x:Name="minMBTxt" Text="100" HorizontalAlignment="Left" Height="23" Margin="10,0,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
 
             <Label Content="Max MB" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top"/>
-            <TextBox x:Name="maxMBTxt" HorizontalAlignment="Left" Height="23" Margin="10,0,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
+            <TextBox x:Name="maxMBTxt" Text="400" HorizontalAlignment="Left" Height="23" Margin="10,0,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="120"/>
             
             <CheckBox x:Name="useAbsoluteEpisodeChk" Content="Use absolute episode number" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
             
             <Label Content="Download in HD" HorizontalAlignment="Left" Margin="10,5,0,0" VerticalAlignment="Top"/>
-            <ComboBox x:Name="downloadHDCombo" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" Width="120">
+            <ComboBox x:Name="downloadHDCombo" SelectedIndex="2" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Top" Width="120">
                 <ListBoxItem Content="Don't care" />
                 <ListBoxItem Content="Yes"/>
-                <ListBoxItem Content="No" IsSelected="True" />
+                <ListBoxItem Content="No" />
             </ComboBox>
             
             <CheckBox x:Name="enableAutoDownloadChk" Content="Enable automatic download" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>

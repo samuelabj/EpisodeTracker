@@ -37,14 +37,14 @@ namespace EpisodeTracker.WPF.Views.SeriesViews {
 				series = db.Series.Single(s => s.ID == SeriesID);
 			}
 
-			minSeedsTxt.Text = series.DownloadMinSeeds.GetValueOrDefault(50).ToString();
-			minMBTxt.Text = series.DownloadMinMB.GetValueOrDefault(50).ToString();
-			maxMBTxt.Text = series.DownloadMaxMB.GetValueOrDefault(2000).ToString();
+			if(series.DownloadMinSeeds.HasValue) minSeedsTxt.Text = series.DownloadMinSeeds.ToString();
+			if(series.DownloadMinMB.HasValue) minMBTxt.Text = series.DownloadMinMB.ToString();
+			if(series.DownloadMaxMB.HasValue) maxMBTxt.Text = series.DownloadMaxMB.ToString();
 			useAbsoluteEpisodeChk.IsChecked = series.DownloadUseAbsoluteEpisode;
-			downloadHDCombo.SelectedIndex = series.DownloadHD.HasValue ? series.DownloadHD.Value ? 1 : 2 : 0;
+			if(series.DownloadHD.HasValue) downloadHDCombo.SelectedIndex = series.DownloadHD.Value ? 1 : 2;
 			enableAutoDownloadChk.IsChecked = series.DownloadAutomatically;
-			downloadFromSeason.Text = series.DownloadFromSeason.HasValue ? series.DownloadFromSeason.Value.ToString() : default(string);
-			downloadFromEpisode.Text = series.DownloadFromEpisode.HasValue ? series.DownloadFromEpisode.Value.ToString() : default(string);
+			if(series.DownloadFromSeason.HasValue) downloadFromSeason.Text = series.DownloadFromSeason.Value.ToString();
+			if(series.DownloadFromEpisode.HasValue) downloadFromEpisode.Text = series.DownloadFromEpisode.Value.ToString();
 		}
 
 		void Save_Click(object sender, RoutedEventArgs e) {

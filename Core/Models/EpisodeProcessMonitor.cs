@@ -17,14 +17,14 @@ using MediaReign.Core;
 using EpisodeTracker.Core.Logging;
 
 namespace EpisodeTracker.Core.Models {
-	public delegate void MonitoredFileHandler(ProcessMonitor monitor, MonitoredFileEventArgs args);
+	public delegate void MonitoredFileHandler(EpisodeProcessMonitor monitor, MonitoredFileEventArgs args);
 	public class MonitoredFileEventArgs {
 		public string Filename { get; set; }
 		public string FriendlyName { get; set; }
 		public bool Watched { get; set; }
 	}
 
-	public class ProcessMonitor : IDisposable {
+	public class EpisodeProcessMonitor : IDisposable {
 
 		class MonitoredFile {
 			public DateTime Start { get; set; }
@@ -45,7 +45,7 @@ namespace EpisodeTracker.Core.Models {
 							Series.Name,
 							Episodes.First().Season,
 							Episodes.First().Number,
-							Episodes.Count() > 1 ? String.Format("-E{0:00}", Episodes.Last().Number) : null,
+							Episodes.Count() > 1 ? String.Format("-{0:00}", Episodes.Last().Number) : null,
 							String.Join(" + ", Episodes.Select(ep => ep.Name))
 						);
 					}
@@ -72,10 +72,10 @@ namespace EpisodeTracker.Core.Models {
 		Task checkTask;
 		AutoResetEvent checkEvent = new AutoResetEvent(false);
 
-		public ProcessMonitor() {
+		public EpisodeProcessMonitor() {
 			ApplicationNames = new List<string>();
 			ApplicationNames.Add("PotPlayerMini64");
-			Logger = Logger.Get("ProcessMonitor");
+			Logger = Logger.Get("EpisodeProcessMonitor");
 		}
 
 		public event MonitoredFileHandler FileAdded;
@@ -143,7 +143,7 @@ namespace EpisodeTracker.Core.Models {
 
 			var match = new TvMatcher().Match(fileName);
 			if(match != null) {
-				Logger.Debug("Found episode info - name: " + match.Name + ", season: " + match.Season + ", episode: " + match.Episode);
+				Logger.Debug("Found episode info: " + match.ToString());
 				
 				mon.TvMatch = match;
 				
@@ -194,7 +194,9 @@ namespace EpisodeTracker.Core.Models {
 							mon.Episodes = series.Episodes.Where(ep => ep.AbsoluteNumber == match.Episode);
 						}
 
-						if(mon.Episodes != null) Logger.Debug("Found TVDB episodes: " + String.Join(" + ", mon.Episodes.Select(e => e.Name)));
+						if(mon.Episodes != null) {
+							Logger.Debug("Found TVDB episodes: " + String.Join(" + ", mon.Episodes.Select(e => e.Name)));
+						}
 					}
 				}
 			}
@@ -223,6 +225,8 @@ namespace EpisodeTracker.Core.Models {
 								mon.PreviousTrackedSeconds = tracked.TrackedSeconds;
 							}
 							mon.Tracking = true;
+							Logger.Info("Tracking file: " + mon.FileName);
+
 							if(FileAdded != null) {
 								FileAdded(this, new MonitoredFileEventArgs {
 									Filename = mon.FileName,
@@ -273,6 +277,8 @@ namespace EpisodeTracker.Core.Models {
 								db.SaveChanges();
 							}
 						}
+
+						Logger.Info("Finished tracking: " + mon.FileName);
 
 						if(FileRemoved != null) {
 							FileRemoved(this, new MonitoredFileEventArgs {
