@@ -90,6 +90,26 @@ namespace EpisodeTracker.Core.Models {
 									Service = new ServiceSettings(Settings, loadFrom);
 			}	
 		}
+	
+			// LastTVDBUpdateCheck
+			private DateTime? _LastTVDBUpdateCheck = null;
+			private object _lockLastTVDBUpdateCheck = new object();
+					
+			public DateTime? LastTVDBUpdateCheck {
+				get {
+					lock(_lockLastTVDBUpdateCheck) {
+						
+						return _LastTVDBUpdateCheck;
+					}
+				}
+				set {
+					lock(_lockLastTVDBUpdateCheck) {
+						_LastTVDBUpdateCheck = value;
+					
+						SaveSetting("LastTVDBUpdateCheck", value != null ? value.Value.ToString("yyyyMMddHHmmss") : null, null);
+					}
+				}
+			}
 
 		private void InitChildren(Settings parent, Dictionary<string, string> loadFrom) {
 			string val = null;
@@ -101,6 +121,13 @@ namespace EpisodeTracker.Core.Models {
 					} catch { } // ignore invalid values
 				}
 			Download = new DownloadSettings(parent, loadFrom);
+
+				if(loadFrom.TryGetValue("LastTVDBUpdateCheck", out val)) {
+					try {
+						DateTime date;
+						if(DateTime.TryParseExact(val, "yyyyMMddHHmmss", CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeLocal, out date)) _LastTVDBUpdateCheck = date; 
+					} catch { } // ignore invalid values
+				}
 		}
 	}
 }

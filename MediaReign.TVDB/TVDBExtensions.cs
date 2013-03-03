@@ -6,7 +6,7 @@ using System.Xml.Linq;
 using System.ComponentModel;
 
 namespace MediaReign.TVDB {
-	internal static class TVDBExtensions {
+	public static class TVDBExtensions {
 
 		public static string Get(this XElement parent, string name) {
 			return Get<string>(parent, name, v => v);
@@ -25,7 +25,7 @@ namespace MediaReign.TVDB {
 		}
 
 		public static DateTime GetUnixDateTime(this XElement parent, string name) {
-			var start = DateTime.Parse("1/1/1970");
+			var start = new DateTime(1970, 1, 1);
 			return Get<DateTime>(parent, name, v => start.AddSeconds(int.Parse(v)));
 		}
 

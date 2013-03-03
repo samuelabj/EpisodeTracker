@@ -52,6 +52,9 @@
                         <DataTrigger Binding="{Binding Hide}" Value="True">
                             <Setter Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
+                        <DataTrigger Binding="{Binding HasNew}" Value="True">
+                            <Setter Property="Background" Value="#e89200" />
+                        </DataTrigger>
                     </Style.Triggers>
                 </Style>
             </DataGrid.RowStyle>
@@ -59,6 +62,7 @@
                 <ContextMenu>
                     <MenuItem Header="Update" Click="UpdateSelected_Click" />
                     <MenuItem Header="Delete" Click="Delete_Click" />
+                    <MenuItem Header="Watch Last" Click="WatchLast_Click" />
                     <MenuItem Header="Watch Next" Click="WatchNext_Click" />
                     <MenuItem Header="Download Settings" Click="DownloadSettings_Click" />
                 </ContextMenu>
@@ -89,7 +93,7 @@
                         </Style>
                     </DataGridTextColumn.ElementStyle> 
                 </DataGridTextColumn>
-                <DataGridTemplateColumn Header="Next Episode" Width="100">
+                <DataGridTemplateColumn Header="Watch Next" Width="100">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
                             <TextBlock>
@@ -103,20 +107,11 @@
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Last Watched" Width="100" Binding="{Binding LastWatched, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
-                <DataGridTemplateColumn Header="Progress" Width="100">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{Binding Watched}" />
-                                <TextBlock Text="/" />
-                                <TextBlock Text="{Binding Total}" />
-                            </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
-                <DataGridTextColumn Header="Series Status" Width="200" Binding="{Binding Series.Status}" />
                 <DataGridTextColumn Header="New Episode" Width="100" Binding="{Binding NextAirs, StringFormat=\{0:dd MMM yyyy\}}" />
+                <DataGridTextColumn Header="Found New" Width="50" Binding="{Binding HasNew}" />
+                <DataGridTextColumn Header="Unwatched" Width="50" Binding="{Binding Unwatched}" />
+                <DataGridTextColumn Header="Last Watched" Width="100" Binding="{Binding LastWatched, StringFormat=\{0:dd MMM yyyy HH:mm:ss\}}" />
+                <DataGridTextColumn Header="Series Status" Width="200" Binding="{Binding Series.Status}" />
                 <DataGridTextColumn Header="Rating" Width="50" Binding="{Binding Series.Rating}" />
                 <DataGridTextColumn Header="Genres" Width="100" Binding="{Binding Genres}" />
             </DataGrid.Columns>

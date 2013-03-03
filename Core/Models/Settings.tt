@@ -148,12 +148,18 @@ private void OutputDefault(XElement el) {
 			case "string[]":
 				Write("public static readonly string[] " + name + "Default = ToStringArray(\"" + defaultAttr.Value + "\");");
 				break;
+			case "datetime":
+			case "datetime?":
+				Write("public const DateTime " + name + "Default = DateTime.Parse(\"" + defaultAttr.Value + "\");");
+				break;
 			default:
 				Error("Defaults not implemented for type '" + type + "' on property '" + GetFullName(el) + "'.");
 				break;
 		}
 	} else if(type == "bool") {
-		Write("public const bool " + name + "Default = false;");	
+		Write("public const bool " + name + "Default = false;");
+	} else if(type == "datetime") {
+		Write("public const DateTime " + name + "Default = DateTime.MinValue;");
  	} else if(defaultFileAttr != null) {
 		if(type != "string") {
 			Error("defaultFile attribute can only be used for string settings (" + GetFullName(el) + ").");
@@ -185,6 +191,8 @@ private void OutputGetDefault(XElement el) {
 			case "int":
 			case "bool":
 			case "int?":
+			case "DateTime":
+			case "DateTime?":
 				Write("if(!_" + name + ".HasValue) return " + name + "Default;");
 				break;
 			case "TimeSpan":

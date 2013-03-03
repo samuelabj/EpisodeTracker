@@ -182,16 +182,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 					List<EpisodeFileSearchResult> newFiles = new List<EpisodeFileSearchResult>();
 
 					foreach(var f in info.Results) {
-						var eps = episodes.Where(ep =>
-							f.Match.Season.HasValue
-							&& ep.Season == f.Match.Season
-							&& (
-								ep.Number == f.Match.Episode
-								|| f.Match.ToEpisode.HasValue
-								&& ep.Number >= f.Match.Episode
-								&& ep.Number <= f.Match.ToEpisode
-							)
-						);
+						var eps = episodes.WhereTVMatch(f.Match);
 
 						if(eps.Any(ep => ep.FileName != f.FileName)) {
 							newFiles.Add(f);

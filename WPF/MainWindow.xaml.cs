@@ -20,6 +20,7 @@ using EpisodeTracker.WPF.Views.Shared;
 using Hardcodet.Wpf.TaskbarNotification;
 using EpisodeTracker.Core.Logging;
 using System.Text.RegularExpressions;
+using MediaReign.TVDB;
 
 namespace EpisodeTracker.WPF {
 	/// <summary>
@@ -30,15 +31,17 @@ namespace EpisodeTracker.WPF {
 			public event PropertyChangedEventHandler PropertyChanged;
 
 			public Series Series { get; set; }
-			public Episode CurrentEpisode { get; set; }
+			public Episode LastEpisode { get; set; }
 			public DateTime? LastWatched { get; set; }
 			public int Total { get; set; }
 			public int Watched { get; set; }
+			public int Unwatched { get; set; }
 			public Episode NextEpisode { get; set; }
 			public DateTime? NextAirs { get; set; }
 			public string BannerPath { get; set; }
 			public string Genres { get; set; }
 			public bool Hide { get; set; }
+			public bool HasNew { get; set; }
 		}
 
 		Logger Logger;
@@ -83,6 +86,7 @@ namespace EpisodeTracker.WPF {
 			this.StateChanged += (o, ea) => { 
 				if(WindowState == System.Windows.WindowState.Minimized) this.Hide();
 				LoadListsAsync();
+				CheckUpdatesAsync();
 			};
 
 			this.Closing += (o, ev) => {
@@ -94,8 +98,8 @@ namespace EpisodeTracker.WPF {
 				}
 			};
 
-			//UpdateSeriesAsync(false);
 			LoadListsAsync();
+			CheckUpdatesAsync();
 
 			this.WindowState = System.Windows.WindowState.Maximized;
 		}
@@ -115,6 +119,32 @@ namespace EpisodeTracker.WPF {
 				)
 				.ToList();
 			}
+		}
+
+		async void CheckUpdatesAsync() {
+			await Task.Factory.StartNew(() => {
+				var updates = new TVDBRequest().Updates(Settings.Default.LastTVDBUpdateCheck.GetValueOrDefault());
+
+				var episodeIDs = updates.Episodes.Select(ep => ep.ID);
+				var seriesIDs = updates.Series.Select(s => s.ID);
+
+				using(var db = new EpisodeTrackerDBContext()) {
+					seriesIDs = db.Series.Where(s => seriesIDs.Contains(s.TVDBID.Value) && s.Episodes.Any(ep => episodeIDs.Contains(ep.TVDBID.Value)))
+						.Select(s => s.TVDBID.Value)
+						.ToList();
+				}
+
+				Parallel.ForEach(seriesIDs, id => {
+					var syncer = new TVDBSeriesSyncer {
+						TVDBID = id,
+						DownloadBanners = true
+					};
+
+					syncer.Sync();
+				});
+
+				Settings.Default.LastTVDBUpdateCheck = DateTime.Now;
+			});
 		}
 
 		async void UpdateSeriesAsync(bool force, IEnumerable<int> seriesIDs = null) {
@@ -201,7 +231,9 @@ namespace EpisodeTracker.WPF {
 							.OrderBy(ep => ep.Number)
 							.OrderBy(ep => ep.Season)
 							.OrderByDescending(ep => ep.Tracked.FirstOrDefault().Updated)
-							.First();
+							.FirstOrDefault();
+
+						if(latest == null) return null;
 
 						var next = !latest.Tracked.Any(t => t.Watched) ? latest : episodes.Where(e2 =>
 								!e2.Tracked.Any(t => t.Watched)
@@ -216,23 +248,29 @@ namespace EpisodeTracker.WPF {
 							.FirstOrDefault();
 
 						var total = episodes.Count(e => e.Season != 0 && e.Aired.HasValue && e.Aired <= DateTime.Now); // don't include specials
-						var watched = episodes.Count(e => e.Tracked.Any(te => te.Watched));
+						var watched = episodes.Count(e => e.Season != 0 && e.Tracked.Any(te => te.Watched));
 						var nextAirs = episodes.Where(e => e.Aired > DateTime.Now).Min(e => e.Aired);
+						var hasNew = episodes.Any(e => e.Tracked.Any(t => !t.Watched) && e.DownloadLog.Any());
+						var unwatched = total - watched;
+						if(unwatched < 0) unwatched = 0;
 
 						return new SeriesInfo {
 							Series = s,
-							CurrentEpisode = latest,
+							LastEpisode = latest,
 							LastWatched = latest.Tracked.Max(t => (DateTime?)t.Updated),
 							Total = total,
 							Watched = watched,
+							Unwatched = unwatched,
 							NextEpisode = next,
 							NextAirs = nextAirs,
 							BannerPath = GetBannerPath(s),
 							Genres = String.Join(", ", db.SeriesGenres.Where(g => g.SeriesID == s.ID).Select(g => g.Genre.Name)),
+							HasNew = hasNew
 						};
 					}
 				})
-			.ToList();
+				.Where(s => s != null)
+				.ToList();
 		}
 
 		string GetBannerPath(Series series) {
@@ -319,7 +357,7 @@ namespace EpisodeTracker.WPF {
 			} else if(e.Key == Key.W) {
 				PerformWatch(info.NextEpisode);
 			} else if(e.Key == Key.L) {
-				PerformWatch(info.CurrentEpisode);
+				PerformWatch(info.LastEpisode);
 			}
 		}
 
@@ -364,6 +402,8 @@ namespace EpisodeTracker.WPF {
 			var service = new EpisodeDownloadService();
 			service.DownloadFound += (o, e) => {
 				this.Dispatcher.BeginInvoke(new Action(() => {
+					RecheckHasNew(e.Result.Item1.SeriesID);
+
 					var bal = new NotificationBalloon {
 						HeaderText = "Episode Tracker",
 						BodyText = "Found new download: " + e.Result.Item2.Title
@@ -373,6 +413,13 @@ namespace EpisodeTracker.WPF {
 			};
 
 			return service;
+		}
+
+		void RecheckHasNew(int seriesID) {
+			var seriesInfo = SeriesList.Single(s => s.Series.ID == seriesID);
+			using(var db = new EpisodeTrackerDBContext()) {
+				seriesInfo.HasNew = db.Episodes.Any(ep => ep.SeriesID == seriesID && !ep.Tracked.Any(t => t.Watched) && ep.DownloadLog.Any());
+			}
 		}
 
 		private void UpdateAll_Click(object sender, RoutedEventArgs e) {
@@ -463,6 +510,11 @@ namespace EpisodeTracker.WPF {
 		private void WatchNext_Click(object sender, RoutedEventArgs e) {
 			var selected = seriesGrid.SelectedItem as SeriesInfo;
 			PerformWatch(selected.NextEpisode);
+		}
+
+		private void WatchLast_Click(object sender, RoutedEventArgs e) {
+			var selected = seriesGrid.SelectedItem as SeriesInfo;
+			PerformWatch(selected.LastEpisode);
 		}
 
 		async void PerformWatch(Episode episode) {

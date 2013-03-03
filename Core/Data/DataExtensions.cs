@@ -10,5 +10,9 @@ namespace EpisodeTracker.Core.Data {
 		public static IQueryable<Episode> WhereTVMatch(this IQueryable<Episode> source, TvMatch match) {
 			return source.Where(Episode.EqualsMatchExpression(match)); 
 		}
+
+		public static IEnumerable<Episode> WhereTVMatch(this IEnumerable<Episode> source, TvMatch match) {
+			return source.Where(Episode.EqualsMatchExpression(match).Compile());
+		}
 	}
 }

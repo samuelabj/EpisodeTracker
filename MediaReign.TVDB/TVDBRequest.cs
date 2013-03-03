@@ -48,11 +48,23 @@ namespace MediaReign.TVDB {
 			return new LinkedList<TVDBSearchResult>(results);
 		}
 
-		public TVDBSeries Series(int id, bool zip = false) {
+		public TVDBSeries Series(int id, bool zip = true) {
 			var xml = DownloadXml(zip, "{0}/series/{1}/all/{2}", API, id, language);
 			return new TVDBSeries(xml);			
 		}
 
+		public TVDBUpdates Updates(DateTime from, bool zip = true) {
+			string timeframe;
+			var diff = DateTime.Now - from;
+			if(diff.TotalDays == 1) timeframe = "day";
+			if(diff.TotalDays == 7) timeframe = "week";
+			if(diff.TotalDays == 30) timeframe = "month";
+			else timeframe = "all";
+
+			var xml = DownloadXml(zip, "{0}/updates/updates_{1}", API, timeframe);
+			return new TVDBUpdates(xml);
+		}
+		
 		public void DownloadBanner(string path, string fileName) {
 			new WebClient().DownloadFile(Mirror + "banners/" + path.TrimStart('/'), fileName);
 		}
@@ -62,7 +74,8 @@ namespace MediaReign.TVDB {
 				var data = DownloadZip(request + ".zip", args);
 				return XDocument.Parse(Encoding.UTF8.GetString(data));
 			} else {
-				var data = new WebClient().DownloadString(BuildRequestPath(request, args));
+				var url = BuildRequestPath(request, args);
+				var data = new WebClient().DownloadString(url);
 				return XDocument.Parse(data);
 			}
 		}
@@ -72,7 +85,8 @@ namespace MediaReign.TVDB {
 		}
 
 		private byte[] DownloadZip(string request, params object[] args) {
-			var data = new WebClient().DownloadData(BuildRequestPath(request, args));
+			var url = BuildRequestPath(request, args);
+			var data = new WebClient().DownloadData(url);
 
 			using(var zip = new ZipInputStream(new MemoryStream(data))) {
 				zip.GetNextEntry();
