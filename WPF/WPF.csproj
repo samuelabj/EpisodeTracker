@@ -93,6 +93,7 @@
     <Compile Include="Models\MarkupExtensions\IsNullConverter.cs" />
     <Compile Include="Models\MarkupExtensions\SummariseConverter.cs" />
     <Compile Include="Models\MarkupExtensions\MultiStyles.cs" />
+    <Compile Include="Models\MarkupExtensions\URIToBitmapConverter.cs" />
     <Compile Include="Views\Episodes\FindFiles.xaml.cs">
       <DependentUpon>FindFiles.xaml</DependentUpon>
     </Compile>

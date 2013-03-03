@@ -229,7 +229,7 @@ namespace EpisodeTracker.WPF {
 			return series.AsParallel()
 				.Select(s => {
 					using(var db = new EpisodeTrackerDBContext()) {
-						var episodes = db.Episodes.Where(ep => ep.SeriesID == s.ID);
+						var episodes = db.Episodes.Where(ep => ep.SeriesID == s.ID && ep.Season != 0);
 
 						var latest = episodes
 							.Where(ep => ep.Season != 0)
@@ -252,10 +252,10 @@ namespace EpisodeTracker.WPF {
 							.OrderBy(e2 => e2.Season)
 							.FirstOrDefault();
 
-						var total = episodes.Count(e => e.Season != 0 && e.Aired.HasValue && e.Aired <= DateTime.Now); // don't include specials
-						var watched = episodes.Count(e => e.Season != 0 && e.Tracked.Any(te => te.Watched));
+						var total = episodes.Count(e => e.Aired.HasValue && e.Aired <= DateTime.Now); // don't include specials
+						var watched = episodes.Count(e => e.Tracked.Any(te => te.Watched));
 						var nextAirs = episodes.Where(e => e.Aired > DateTime.Now).Min(e => e.Aired);
-						var hasNew = episodes.Any(e => e.Tracked.Any(t => !t.Watched) && e.DownloadLog.Any());
+						var hasNew = episodes.Any(e => e.FileName != null && e.Tracked.Any(t => !t.Watched));
 						var unwatched = total - watched;
 						if(unwatched < 0) unwatched = 0;
 
@@ -423,7 +423,7 @@ namespace EpisodeTracker.WPF {
 		void RecheckHasNew(int seriesID) {
 			var seriesInfo = SeriesList.Single(s => s.Series.ID == seriesID);
 			using(var db = new EpisodeTrackerDBContext()) {
-				seriesInfo.HasNew = db.Episodes.Any(ep => ep.SeriesID == seriesID && !ep.Tracked.Any(t => t.Watched) && ep.DownloadLog.Any());
+				seriesInfo.HasNew = db.Episodes.Any(ep => ep.SeriesID == seriesID && !ep.Tracked.Any(t => t.Watched) && ep.FileName != null);
 			}
 		}
 
@@ -482,7 +482,11 @@ namespace EpisodeTracker.WPF {
 		}
 
 		private void Delete_Click(object sender, RoutedEventArgs e) {
-			var selected = seriesGrid.SelectedItems.Cast<SeriesInfo>().Select(s => SeriesList.Single(s2 => s2.Series.ID == s.Series.ID));
+			var selected = seriesGrid.SelectedItems
+				.Cast<SeriesInfo>()
+				.Select(s => SeriesList.Single(s2 => s2.Series.ID == s.Series.ID))
+				.ToList();
+
 			PerformDelete(selected);
 		}
 
@@ -495,8 +499,14 @@ namespace EpisodeTracker.WPF {
 
 						db.Series.Remove(se);
 						SeriesList.Remove(series);
+
+						db.SaveChanges();
+
+						var resources = @"resources\series\" + se.ID;
+						if(Directory.Exists(resources)) {
+							Directory.Delete(resources, true);
+						}					
 					}
-					db.SaveChanges();
 				}
 			}
 		}

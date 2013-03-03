@@ -71,7 +71,7 @@
                 <DataGridTemplateColumn Header="Banner" Width="400">
                     <DataGridTemplateColumn.CellTemplate>
                         <DataTemplate>
-                            <Image Source="{Binding BannerPath, IsAsync=True}" />
+                            <Image Source="{Binding BannerPath, IsAsync=True, Converter={markext:URIToBitmapConverter}}" />
                         </DataTemplate>
                     </DataGridTemplateColumn.CellTemplate>
                 </DataGridTemplateColumn>
