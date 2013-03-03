@@ -54,6 +54,7 @@ namespace EpisodeTracker.WPF {
 
 		public TaskbarIcon Taskbar { get; private set; }
 		public EpisodeDownloadService DownloadService { get; private set; }
+		public EpisodeFileService FileService { get; private set; }
 
 		protected override void OnInitialized(EventArgs e) {
 			base.OnInitialized(e);
@@ -70,6 +71,9 @@ namespace EpisodeTracker.WPF {
 					DownloadService.Start();
 				});
 			}
+
+			FileService = new EpisodeFileService();
+			FileService.Start();
 
 			statusModal.Visibility = System.Windows.Visibility.Collapsed;
 			searchBox.Visibility = System.Windows.Visibility.Collapsed;
@@ -95,6 +99,7 @@ namespace EpisodeTracker.WPF {
 
 					Monitor.Dispose();
 					DownloadService.Dispose();
+					FileService.Dispose();
 				}
 			};
 
@@ -555,14 +560,14 @@ namespace EpisodeTracker.WPF {
 				}
 
 				var groups = tasks
-				.Where(t => !t.IsFaulted)
-				.SelectMany(t => t.Result)
-				.GroupBy(r => r.Match.Name, StringComparer.OrdinalIgnoreCase)
-				.Select(g => new {
-					SeriesName = g.Key,
-					Results = g.ToList()
-				})
-				.OrderBy(g => g.SeriesName);
+					.Where(t => !t.IsFaulted)
+					.SelectMany(t => t.Result)
+					.GroupBy(r => r.Match.Name, StringComparer.OrdinalIgnoreCase)
+					.Select(g => new {
+						SeriesName = g.Key,
+						Results = g.ToList()
+					})
+					.OrderBy(g => g.SeriesName);
 
 				var total = groups.Count();
 
@@ -591,20 +596,7 @@ namespace EpisodeTracker.WPF {
 								if(series == null || series.ID != episode.SeriesID) return;
 
 								var ep = episode;
-								var r = info.Results.FirstOrDefault(f =>
-									!f.Match.Season.HasValue
-									&& f.Match.Episode == ep.AbsoluteNumber
-									|| (
-										f.Match.Season.HasValue
-										&& f.Match.Season == ep.Season
-										&& (
-											f.Match.Episode == ep.Number
-											|| f.Match.ToEpisode.HasValue
-											&& f.Match.Episode <= ep.Number
-											&& f.Match.ToEpisode >= ep.Number
-										)
-									)
-								);
+								var r = info.Results.FirstOrDefault(f => Episode.EqualsMatchExpression(f.Match).Compile()(ep));
 
 								if(r != null) result = r;
 							}

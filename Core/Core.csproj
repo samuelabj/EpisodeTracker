@@ -124,9 +124,11 @@
     <Compile Include="Models\EpisodeDownloadService.cs" />
     <Compile Include="Models\EpisodeFileSearcher.cs" />
     <Compile Include="Models\EpisodeFileSearchResult.cs" />
+    <Compile Include="Models\EpisodeFileService.cs" />
     <Compile Include="Models\EpisodeTorrentSearcher.cs" />
     <Compile Include="Models\EpisodeTorrentSearcherResult.cs" />
     <Compile Include="Models\HandleHelper.cs" />
+    <Compile Include="Models\Service.cs" />
     <Compile Include="Models\Settings.designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
