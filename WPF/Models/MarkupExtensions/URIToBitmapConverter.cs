@@ -20,7 +20,11 @@ namespace EpisodeTracker.WPF.Models.MarkupExtensions {
 				bi.BeginInit();
 				bi.UriSource = new Uri(value.ToString());
 				bi.CacheOption = BitmapCacheOption.OnLoad;
-				bi.EndInit();
+				try {
+					bi.EndInit();
+				} catch(Exception e) {
+					throw new ApplicationException("Problem loading bitmap: " + value.ToString(), e);
+				}
 				return bi;
 			}
 

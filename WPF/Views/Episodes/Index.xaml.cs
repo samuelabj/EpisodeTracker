@@ -178,6 +178,11 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 					foreach(var ep in eps) {
 						db.Episodes.Remove(ep);
 						episodeInfo.Remove(selected.Single(s => s.Episode.ID == ep.ID));
+
+						var image = @"resources\series\" + ep.SeriesID + @"\" + ep.ID + ".jpg";
+						if(File.Exists(image)) {
+							File.Delete(image);
+						}
 					}
 
 					db.SaveChanges();
