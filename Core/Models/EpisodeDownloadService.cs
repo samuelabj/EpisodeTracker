@@ -96,9 +96,21 @@ namespace EpisodeTracker.Core.Models {
 			var found = new List<Tuple<Episode, EpisodeTorrentSearcherResult>>();
 
 			Parallel.ForEach(episodes, episode => {
+				Logger.Build()
+					.Message("Searching for new download: {0}", episode)
+					.Episode(episode)
+					.Info();
+
 				var downloader = new EpisodeDownloader(episode);
 				var result = downloader.Download();
-				if(result == null) return;
+
+				if(result == null) {
+					Logger.Build()
+						.Message("Found no download results: {0}", episode)
+						.Episode(episode)
+						.Info();
+					return;
+				}
 
 				Logger.Build()
 					.Message("Found new download: {0}", result)

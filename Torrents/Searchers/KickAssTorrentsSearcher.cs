@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
 using System.ServiceModel.Syndication;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 using System.Xml;
@@ -12,7 +14,7 @@ using System.Xml.Linq;
 
 namespace EpisodeTracker.Torrents.Searchers {
 	public class KickAssTorrentsSeacher : ITorrentSearcher {
-		const string URLSearchFormat = "http://kat.ph/usearch/{0}/?rss=1";
+		const string URLSearchFormat = "http://kat.ph/usearch/{0}/?rss=1&field=seeders&sorder=desc";
 		
 		public List<TorrentResult> Search(string text) {
 			var uri = new Uri(String.Format(URLSearchFormat, HttpUtility.UrlEncode(text)));
@@ -32,8 +34,13 @@ namespace EpisodeTracker.Torrents.Searchers {
 
 			SyndicationFeed feed;
 			using(var stream = response.GetResponseStream())
-			using(var xr = XmlReader.Create(stream)) {
-				feed = SyndicationFeed.Load(xr);
+			using(var sr = new StreamReader(stream)) {
+				var content = sr.ReadToEnd();
+				content = Regex.Replace(content, "&(?!amp;)", "&amp;");
+				using(var str = new StringReader(content))
+				using(var xr = XmlReader.Create(str)) {
+					feed = SyndicationFeed.Load(xr);
+				}
 			}
 
 			var results = feed.Items.Select(i => {

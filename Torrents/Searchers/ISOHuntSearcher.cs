@@ -11,7 +11,7 @@ using System.Xml;
 
 namespace EpisodeTracker.Torrents.Searchers {
 	public class ISOHuntSearcher : ITorrentSearcher {
-		const string URLSearchFormat = "http://isohunt.com/js/rss/{0}?iht=";
+		const string URLSearchFormat = "http://isohunt.com/js/rss/{0}?sort=seeds";
 
 		public List<TorrentResult> Search(string text) {
 			var uri = new Uri(String.Format(URLSearchFormat, HttpUtility.UrlEncode(text)));

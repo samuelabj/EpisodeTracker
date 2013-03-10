@@ -53,7 +53,7 @@
                             <Setter Property="Visibility" Value="Collapsed" />
                         </DataTrigger>
                         <DataTrigger Binding="{Binding HasNew}" Value="True">
-                            <Setter Property="Background" Value="#FF936B02" />
+                            <Setter Property="Background" Value="#FFB27D07" />
                         </DataTrigger>
                     </Style.Triggers>
                 </Style>

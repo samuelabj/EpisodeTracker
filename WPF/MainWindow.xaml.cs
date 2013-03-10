@@ -21,6 +21,8 @@ using Hardcodet.Wpf.TaskbarNotification;
 using EpisodeTracker.Core.Logging;
 using System.Text.RegularExpressions;
 using MediaReign.TVDB;
+using System.Linq.Expressions;
+using System.Data.Objects;
 
 namespace EpisodeTracker.WPF {
 	/// <summary>
@@ -47,6 +49,8 @@ namespace EpisodeTracker.WPF {
 		Logger Logger;
 		EpisodeProcessMonitor Monitor;
 		ObservableCollection<SeriesInfo> SeriesList;
+
+		Expression<Func<Episode, bool>> HasNewExpression = ep => ep.FileName != null && ep.Aired >= EntityFunctions.AddMonths(DateTime.Now, -1) && !ep.Tracked.Any(t => t.Watched);
 
 		public MainWindow() {
 			InitializeComponent();
@@ -255,7 +259,7 @@ namespace EpisodeTracker.WPF {
 						var total = episodes.Count(e => e.Aired.HasValue && e.Aired <= DateTime.Now); // don't include specials
 						var watched = episodes.Count(e => e.Tracked.Any(te => te.Watched));
 						var nextAirs = episodes.Where(e => e.Aired > DateTime.Now).Min(e => e.Aired);
-						var hasNew = episodes.Any(e => e.FileName != null && e.Tracked.Any(t => !t.Watched));
+						var hasNew = episodes.Any(HasNewExpression);
 						var unwatched = total - watched;
 						if(unwatched < 0) unwatched = 0;
 
@@ -355,8 +359,6 @@ namespace EpisodeTracker.WPF {
 			var row = sender as DataGridRow;
 			var info = row.Item as SeriesInfo;
 
-			if(searching) return;
-
 			if(e.Key == Key.Delete) {
 				PerformDelete(new[] { info });
 			} else if(e.Key == Key.W) {
@@ -423,7 +425,7 @@ namespace EpisodeTracker.WPF {
 		void RecheckHasNew(int seriesID) {
 			var seriesInfo = SeriesList.Single(s => s.Series.ID == seriesID);
 			using(var db = new EpisodeTrackerDBContext()) {
-				seriesInfo.HasNew = db.Episodes.Any(ep => ep.SeriesID == seriesID && !ep.Tracked.Any(t => t.Watched) && ep.FileName != null);
+				seriesInfo.HasNew = db.Episodes.Where(ep => ep.SeriesID == seriesID).Any(HasNewExpression);
 			}
 		}
 
@@ -535,6 +537,7 @@ namespace EpisodeTracker.WPF {
 		async void PerformWatch(Episode episode) {
 			if(episode == null) {
 				MessageBox.Show("Nothing to watch");
+				return;
 			}
 
 			if(episode.FileName == null || !File.Exists(episode.FileName)) {
@@ -547,7 +550,6 @@ namespace EpisodeTracker.WPF {
 				status.SetValue(Grid.RowProperty, 1);
 				grid.Children.Add(status);
 
-				var tasks = new List<Task<List<EpisodeFileSearchResult>>>();
 				var searcher = new EpisodeFileSearcher();
 				var totalFound = 0;
 
@@ -558,20 +560,20 @@ namespace EpisodeTracker.WPF {
 					}));
 				};
 
-				foreach(var path in Core.Models.Settings.Default.Libraries) {
-					tasks.Add(searcher.SearchAsync(path));
-				}
+				var results = await Task.Factory.StartNew(() => {
+					return Core.Models.Settings.Default.Libraries.AsParallel()
+						.Select(path => {
+							try {
+								return searcher.Search(path);
+							} catch(Exception e) {
+								Logger.Error("Problem searching for episode file: " + episode + "-->" + e);
+								return new List<EpisodeFileSearchResult>();
+							}
+						});
+				});
 
-				try {
-					await Task.WhenAll(tasks);
-				} catch(ApplicationException ex) {
-					Logger.Error("Error searching for file: " + ex);
-					MessageBox.Show(ex.Message);
-				}
-
-				var groups = tasks
-					.Where(t => !t.IsFaulted)
-					.SelectMany(t => t.Result)
+				var groups = results
+					.SelectMany(r => r)
 					.GroupBy(r => r.Match.Name, StringComparer.OrdinalIgnoreCase)
 					.Select(g => new {
 						SeriesName = g.Key,

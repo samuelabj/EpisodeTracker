@@ -6,16 +6,18 @@ using System.Threading.Tasks;
 using System.Windows.Data;
 using System.Windows.Markup;
 using System.Windows.Media.Imaging;
+using EpisodeTracker.Core.Logging;
 
 namespace EpisodeTracker.WPF.Models.MarkupExtensions {
 	public class URIToBitmapConverter : MarkupExtension, IValueConverter {
 		public URIToBitmapConverter() { }
 
 		public object Convert(object value, Type targetType, object parameter, System.Globalization.CultureInfo culture) {
-			if(value == null)
+			if(value == null) {
 				return null;
+			}
 
-			if(!string.IsNullOrEmpty(value.ToString())) {
+			if(!String.IsNullOrEmpty(value.ToString())) {
 				BitmapImage bi = new BitmapImage();
 				bi.BeginInit();
 				bi.UriSource = new Uri(value.ToString());
@@ -23,7 +25,9 @@ namespace EpisodeTracker.WPF.Models.MarkupExtensions {
 				try {
 					bi.EndInit();
 				} catch(Exception e) {
-					throw new ApplicationException("Problem loading bitmap: " + value.ToString(), e);
+					Logger.Get("General").Error("Problem loading bitmap: " + value.ToString() + "-->" + e);
+					return null;
+					//throw new ApplicationException("Problem loading bitmap: " + value.ToString(), e);
 				}
 				return bi;
 			}

@@ -228,7 +228,6 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 				status.SetValue(Grid.RowProperty, 1);
 				grid.Children.Add(status);
 
-				var tasks = new List<Task<List<EpisodeFileSearchResult>>>();
 				var searcher = new EpisodeFileSearcher();
 				var totalFound = 0;
 
@@ -239,26 +238,26 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 					}));
 				};
 
-				foreach(var path in Core.Models.Settings.Default.Libraries) {
-					tasks.Add(searcher.SearchAsync(path));
-				}
+				var results = await Task.Factory.StartNew(() => {
+					return Core.Models.Settings.Default.Libraries.AsParallel()
+						.Select(path => {
+							try {
+								return searcher.Search(path);
+							} catch(Exception e) {
+								Logger.Error("Problem searching for episode file: " + episode + "-->" + e);
+								return new List<EpisodeFileSearchResult>();
+							}
+						});
+				});
 
-				try {
-					await Task.WhenAll(tasks);
-				} catch(ApplicationException ex) {
-					Logger.Error("Error searching for file: " + ex);
-					MessageBox.Show(ex.Message);
-				}
-
-				var groups = tasks
-				.Where(t => !t.IsFaulted)
-				.SelectMany(t => t.Result)
-				.GroupBy(r => r.Match.Name, StringComparer.OrdinalIgnoreCase)
-				.Select(g => new {
-					SeriesName = g.Key,
-					Results = g.ToList()
-				})
-				.OrderBy(g => g.SeriesName);
+				var groups = results
+					.SelectMany(r => r)
+					.GroupBy(r => r.Match.Name, StringComparer.OrdinalIgnoreCase)
+					.Select(g => new {
+						SeriesName = g.Key,
+						Results = g.ToList()
+					})
+					.OrderBy(g => g.SeriesName);
 
 				var total = groups.Count();
 

@@ -9,7 +9,7 @@ using EpisodeTracker.Core.Logging;
 namespace EpisodeTracker.Core.Models {
 	public class EpisodeFileService : Service {
 		public EpisodeFileService()
-			: base(TimeSpan.FromMinutes(60)) {
+			: base(TimeSpan.FromMinutes(20)) {
 				Logger = Logger.Get("EpisodeFileService");
 		}
 
