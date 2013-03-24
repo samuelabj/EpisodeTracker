@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using EpisodeTracker.Core.Data;
 using EpisodeTracker.Core.Logging;
+using EpisodeTracker.Torrents.Parsers;
 
 namespace EpisodeTracker.Core.Models {
 	public class EpisodeDownloader {
@@ -39,8 +40,6 @@ namespace EpisodeTracker.Core.Models {
 			var result = GetResult(Episode, results);
 			if(result == null) return null;
 
-			if(!StartDownload(Episode, result)) return null;
-
 			return result;
 		}
 
@@ -58,23 +57,26 @@ namespace EpisodeTracker.Core.Models {
 
 					results = results.Except(exclude);
 
-					if(!results.Any()) {
-						Logger.Build()
-							.Episode(episode.ID)
-							.Message("All results excluded")
-							.Debug();
-						return null;
-					}
+					foreach(var r in results) {
+						var torrent = Download(episode, r);
+						LogDownload(db, episode, r);
 
-					var result = results.First();
+						if(!torrent.Files.Any(f => f.Path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))) {
+							Logger.Build()
+								.Episode(episode.ID)
+								.Message("Using result: " + DisplayResult(r))
+								.Debug();
+
+							return r;
+						}
+					}
 
 					Logger.Build()
 						.Episode(episode.ID)
-						.Message("Using result: " + DisplayResult(result))
+						.Message("All results excluded")
 						.Debug();
 
-					LogDownload(db, episode, result);
-					return result;
+					return null;
 				}
 			}
 		}
@@ -140,7 +142,7 @@ namespace EpisodeTracker.Core.Models {
 			db.SaveChanges();
 		}
 
-		bool StartDownload(Episode episode, EpisodeTorrentSearcherResult result) {
+		Torrent Download(Episode episode, EpisodeTorrentSearcherResult result) {
 			var webClient = new CustomWebClient();
 			if(!Directory.Exists("Torrents")) Directory.CreateDirectory("Torrents");
 
@@ -150,19 +152,18 @@ namespace EpisodeTracker.Core.Models {
 				webClient.DownloadFile(result.DownloadURL, fileName);
 			} catch(Exception e) {
 				Logger.Build().Episode(episode.ID).Message("Error downloading torrent: " + result.DownloadURL + " - " + e).Error();
-				return false;
+				return null;
 			}
 
-			Logger.Build().Episode(episode.ID).Message("Starting process: " + fileName).Debug();
-
+			Torrent torrent;
 			try {
-				Process.Start(fileName);
+				torrent = TorrentFileParser.Parse(fileName);
 			} catch(Exception e) {
-				Logger.Build().Episode(episode.ID).Message("Error starting process for file: " + fileName + " - " + e).Error();
-				return false;
+				Logger.Build().Episode(Episode.ID).Message("Error parsing torrent file: " + fileName + "-->" + e).Error();
+				return null;
 			}
 
-			return true;
+			return torrent;
 		}
 
 		string DisplayResult(EpisodeTorrentSearcherResult result) {

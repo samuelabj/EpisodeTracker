@@ -210,6 +210,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 
 			if(e.Key == Key.Enter || e.Key == Key.W) {
 				PerformWatch(info.Episode);
+				e.Handled = true;
 			}
 		}
 
@@ -260,6 +261,13 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 					.OrderBy(g => g.SeriesName);
 
 				var total = groups.Count();
+				HashSet<string> aliases;
+				Series series;
+				using(var db = new EpisodeTrackerDBContext()) {
+					series = db.Series.Single(s => s.ID == episode.SeriesID);
+					aliases = new HashSet<string>(series.Aliases.Select(a => a.Name), StringComparer.OrdinalIgnoreCase);
+					if(!aliases.Contains(series.Name)) aliases.Add(series.Name);
+				}
 
 				status.Text = "Checking results...";
 				status.SubText = String.Format("{0} / {1} series", 0, total);
@@ -282,24 +290,10 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 									return;
 								}
 
-								var series = db.Series.SingleOrDefault(s => s.Name == seriesName || s.Aliases.Any(a => a.Name == seriesName));
-								if(series == null || series.ID != episode.SeriesID) return;
+								if(!aliases.Contains(seriesName)) return;
 
 								var ep = episode;
-								var r = info.Results.FirstOrDefault(f =>
-									!f.Match.Season.HasValue
-									&& f.Match.Episode == ep.AbsoluteNumber
-									|| (
-										f.Match.Season.HasValue
-										&& f.Match.Season == ep.Season
-										&& (
-											f.Match.Episode == ep.Number
-											|| f.Match.ToEpisode.HasValue
-											&& f.Match.Episode <= ep.Number
-											&& f.Match.ToEpisode >= ep.Number
-										)
-									)
-								);
+								var r = info.Results.FirstOrDefault(f => Episode.EqualsMatchExpression(f.Match).Compile()(ep));
 
 								if(r != null) result = r;
 							}
@@ -362,6 +356,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 					.ForAll(ep => {
 						var downloader = new EpisodeDownloader(ep);
 						var result = downloader.Download();
+						RunTorrentHelper.Run(result);
 
 						lock(results) results.Add(Tuple.Create<Episode, EpisodeTorrentSearcherResult>(ep, result));
 

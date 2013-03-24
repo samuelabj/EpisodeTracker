@@ -30,6 +30,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="BencodeLibrary">
+      <HintPath>..\packages\BencodeLibrary.0.4.0\lib\BencodeLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.ServiceModel" />
@@ -41,11 +44,17 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Parsers\Torrent.cs" />
+    <Compile Include="Parsers\TorrentFileParser.cs" />
+    <Compile Include="Parsers\TorrentInfoFile.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Searchers\ISOHuntSearcher.cs" />
     <Compile Include="Searchers\ITorrentSearcher.cs" />
     <Compile Include="Searchers\KickAssTorrentsSearcher.cs" />
     <Compile Include="Searchers\TorrentResult.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

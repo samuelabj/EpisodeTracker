@@ -128,6 +128,7 @@
     <Compile Include="Models\EpisodeTorrentSearcher.cs" />
     <Compile Include="Models\EpisodeTorrentSearcherResult.cs" />
     <Compile Include="Models\HandleHelper.cs" />
+    <Compile Include="Models\RunTorrentHelper.cs" />
     <Compile Include="Models\Service.cs" />
     <Compile Include="Models\Settings.designer.cs">
       <AutoGen>True</AutoGen>

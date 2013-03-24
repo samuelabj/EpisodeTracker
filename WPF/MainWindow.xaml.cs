@@ -374,6 +374,7 @@ namespace EpisodeTracker.WPF {
 
 			if(e.Key == Key.Enter) {
 				ShowEpisodes(info);
+				e.Handled = true;
 			}
 		}
 
@@ -454,12 +455,14 @@ namespace EpisodeTracker.WPF {
 				searchBox.Visibility = System.Windows.Visibility.Visible;
 				searching = true;
 				searchBox.Focus();
-			} else if(searching && e.Key == Key.Escape) {
-				SeriesList.ToList().ForEach(s => s.Hide = false);
-				searching = false;
-				searchBox.Visibility = System.Windows.Visibility.Collapsed;
-				searchBox.Text = "";
-				seriesGrid.Focus();
+			} else if(searching) {
+				if(e.Key == Key.Escape) {
+					SeriesList.ToList().ForEach(s => s.Hide = false);
+					searching = false;
+					searchBox.Visibility = System.Windows.Visibility.Collapsed;
+					searchBox.Text = "";
+					seriesGrid.Focus();
+				}
 			}
 		}
 
@@ -481,6 +484,19 @@ namespace EpisodeTracker.WPF {
 			}
 
 			searchDelayTask = null;
+		}
+
+		void SearchBox_PreviewKeyDown(object sender, KeyEventArgs e) {
+			//if(e.Key == Key.Up || e.Key == Key.Down) {
+			//	if(seriesGrid.SelectedIndex == -1) seriesGrid.SelectedIndex = 0;
+
+			//	DataGridRow row = (DataGridRow)seriesGrid.ItemContainerGenerator.ContainerFromIndex(seriesGrid.SelectedIndex);
+			//	if(row != null) {
+			//		row.Focus();
+			//		//row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+			//		e.Handled = true;
+			//	}
+			//}
 		}
 
 		private void Delete_Click(object sender, RoutedEventArgs e) {
@@ -582,6 +598,13 @@ namespace EpisodeTracker.WPF {
 					.OrderBy(g => g.SeriesName);
 
 				var total = groups.Count();
+				HashSet<string> aliases;
+				Series series;
+				using(var db = new EpisodeTrackerDBContext()) {
+					series = db.Series.Single(s => s.ID == episode.SeriesID);
+					aliases = new HashSet<string>(series.Aliases.Select(a => a.Name), StringComparer.OrdinalIgnoreCase);
+					if(!aliases.Contains(series.Name)) aliases.Add(series.Name);
+				}
 
 				status.Text = "Checking results...";
 				status.SubText = String.Format("{0} / {1} series", 0, total);
@@ -604,8 +627,7 @@ namespace EpisodeTracker.WPF {
 									return;
 								}
 
-								var series = db.Series.SingleOrDefault(s => s.Name == seriesName || s.Aliases.Any(a => a.Name == seriesName));
-								if(series == null || series.ID != episode.SeriesID) return;
+								if(!aliases.Contains(seriesName)) return;
 
 								var ep = episode;
 								var r = info.Results.FirstOrDefault(f => Episode.EqualsMatchExpression(f.Match).Compile()(ep));

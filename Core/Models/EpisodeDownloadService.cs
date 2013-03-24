@@ -117,6 +117,8 @@ namespace EpisodeTracker.Core.Models {
 					.Episode(episode)
 					.Info();
 
+				RunTorrentHelper.Run(result);
+
 				if(DownloadFound != null) {
 					var f = Tuple.Create<Episode, EpisodeTorrentSearcherResult>(episode, result);
 					DownloadFound(this, new EpisodeDownloadServiceEventArgs {
