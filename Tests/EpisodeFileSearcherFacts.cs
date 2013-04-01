@@ -7,7 +7,7 @@ using EpisodeTracker.Core.Models;
 using Xunit;
 
 namespace EpisodeTracker.Tests {
-	public class EpisodeFileSearcherTests {
+	public class EpisodeFileSearcherFacts {
 
 		[Fact]
 		public void FindsFiles() {

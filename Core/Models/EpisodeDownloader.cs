@@ -157,7 +157,7 @@ namespace EpisodeTracker.Core.Models {
 
 			Torrent torrent;
 			try {
-				torrent = TorrentFileParser.Parse(fileName);
+				torrent = TorrentParser.ParseFile(fileName);
 			} catch(Exception e) {
 				Logger.Build().Episode(Episode.ID).Message("Error parsing torrent file: " + fileName + "-->" + e).Error();
 				return null;

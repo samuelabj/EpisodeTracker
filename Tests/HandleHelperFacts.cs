@@ -7,7 +7,7 @@ using EpisodeTracker.Core.Models;
 using Xunit;
 
 namespace EpisodeTracker.Tests {
-	public class HandleHelperTests {
+	public class HandleHelperFacts {
 
 		[Fact]
 		public void ParseReturnsPotPlayer() {

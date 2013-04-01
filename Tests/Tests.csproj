@@ -51,9 +51,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="EpisodeFileSearcherTests.cs" />
-    <Compile Include="HandleHelperTests.cs" />
+    <Compile Include="EpisodeFileSearcherFacts.cs" />
+    <Compile Include="HandleHelperFacts.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="TorrentParserFacts.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
@@ -62,6 +63,10 @@
     <ProjectReference Include="..\Core\Core.csproj">
       <Project>{cedf11ea-b0bc-4f4e-aa05-2b89e5cc4e21}</Project>
       <Name>EpisodeTracker.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Torrents\Torrents.csproj">
+      <Project>{12cb3a7a-babc-442f-b979-d154b18061b6}</Project>
+      <Name>Torrents</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
