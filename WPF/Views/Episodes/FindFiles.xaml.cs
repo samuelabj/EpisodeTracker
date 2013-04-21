@@ -117,7 +117,12 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 					.WithDegreeOfParallelism(5);
 
 				para.ForAll(info => {
-					FindSeries(info);
+					try {
+						FindSeries(info);
+					} catch(Exception e) {
+						throw new ApplicationException("Problem finding series: " + info.SeriesName, e);
+					}
+
 					Interlocked.Increment(ref completed);
 
 					this.Dispatcher.BeginInvoke(new Action(() => {
@@ -229,7 +234,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 					info.Status = "Synced";
 				} else if(!series.Name.Equals(info.SeriesName, StringComparison.OrdinalIgnoreCase)) {
 					// Save alias
-					if(!db.SeriesAliases.Any(a => a.Name == info.SeriesName)) {
+					if(!db.Series.Any(s => s.Name == info.SeriesName) && !db.SeriesAliases.Any(a => a.Name == info.SeriesName)) {
 						db.SeriesAliases.Add(new SeriesAlias {
 							SeriesID = series.ID,
 							Name = info.SeriesName

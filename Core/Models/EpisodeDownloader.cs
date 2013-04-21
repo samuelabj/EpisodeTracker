@@ -15,6 +15,10 @@ namespace EpisodeTracker.Core.Models {
 
 		Logger Logger;
 		static object DownloadedLock = new object();
+		static string[] IgnoreExtensions = new string[] {
+			".zip",
+			".wmv"
+		};
 
 		public EpisodeDownloader(Episode episode) {
 			Logger = Logger.Get("EpisodeDownloader");
@@ -61,7 +65,7 @@ namespace EpisodeTracker.Core.Models {
 						var torrent = Download(episode, r);
 						LogDownload(db, episode, r);
 
-						if(!torrent.Files.Any(f => f.Path.EndsWith(".zip", StringComparison.OrdinalIgnoreCase))) {
+						if(!torrent.Files.Any(f => IgnoreExtensions.Any(ext => f.Path.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))) {
 							Logger.Build()
 								.Episode(episode.ID)
 								.Message("Using result: " + DisplayResult(r))

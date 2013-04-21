@@ -24,6 +24,7 @@ namespace EpisodeTracker.Core.Models {
 			proc.StartInfo.Arguments = "/accepteula";
 			proc.StartInfo.UseShellExecute = false;
 			proc.StartInfo.RedirectStandardOutput = true;
+			proc.StartInfo.RedirectStandardError = true;
 			proc.StartInfo.CreateNoWindow = true;
 			proc.Start();
 

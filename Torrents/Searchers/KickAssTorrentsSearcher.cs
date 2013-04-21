@@ -56,7 +56,7 @@ namespace EpisodeTracker.Torrents.Searchers {
 
 				var leechs = long.Parse(
 					i.ElementExtensions.Single(e => 
-						e.OuterName.Equals("leechs", StringComparison.OrdinalIgnoreCase)
+						e.OuterName.Equals("peers", StringComparison.OrdinalIgnoreCase)
 					)
 					.GetObject<XElement>().Value
 				);

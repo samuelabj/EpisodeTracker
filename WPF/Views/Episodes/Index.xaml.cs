@@ -356,9 +356,11 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 					.ForAll(ep => {
 						var downloader = new EpisodeDownloader(ep);
 						var result = downloader.Download();
-						RunTorrentHelper.Run(result);
-
-						lock(results) results.Add(Tuple.Create<Episode, EpisodeTorrentSearcherResult>(ep, result));
+						
+						if(result != null) {
+							RunTorrentHelper.Run(result);
+							lock(results) results.Add(Tuple.Create<Episode, EpisodeTorrentSearcherResult>(ep, result));
+						}
 
 						Interlocked.Increment(ref complete);
 						this.Dispatcher.BeginInvoke(new Action(() => {

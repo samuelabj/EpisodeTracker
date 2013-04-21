@@ -27,6 +27,7 @@ namespace EpisodeTracker.Core.Models {
 		void Check() {
 			var searcher = new EpisodeFileSearcher();
 
+			// Only checks the first library (downloads) for now
 			var results = Core.Models.Settings.Default.Libraries.Take(1).AsParallel()
 				.Select(p => {
 					try {

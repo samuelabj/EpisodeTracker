@@ -27,8 +27,8 @@ namespace EpisodeTracker.Core.Models {
 
 		public List<EpisodeTorrentSearcherResult> Search(Episode episode, out List<EpisodeTorrentSearcherResult> misses) {
 			var searchers = new ITorrentSearcher[] {
-				new KickAssTorrentsSeacher(),
-				new ISOHuntSearcher()
+				new KickAssTorrentsSeacher()
+				//,new ISOHuntSearcher()
 			};
 
 			Logger.Build().Episode(episode).Message("Beginning search").Debug();
