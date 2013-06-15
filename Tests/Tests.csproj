@@ -11,6 +11,8 @@
     <AssemblyName>EpisodeTracker.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -62,7 +64,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Core\Core.csproj">
       <Project>{cedf11ea-b0bc-4f4e-aa05-2b89e5cc4e21}</Project>
-      <Name>EpisodeTracker.Core</Name>
+      <Name>Core</Name>
     </ProjectReference>
     <ProjectReference Include="..\Torrents\Torrents.csproj">
       <Project>{12cb3a7a-babc-442f-b979-d154b18061b6}</Project>
@@ -70,6 +72,7 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

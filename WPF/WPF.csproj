@@ -28,6 +28,9 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>
+    <RestorePackages>true</RestorePackages>
+    <FodyPath>..\packages\Fody.1.13.8.0</FodyPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -87,6 +90,7 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <None Include="Fody.targets" />
     <None Include="FodyWeavers.xml" />
   </ItemGroup>
   <ItemGroup>
@@ -269,5 +273,6 @@
     <Copy SourceFiles="..\Dependencies\handle.exe" DestinationFiles="$(OutDir)\handle.exe" />
     <Copy SourceFiles="..\Dependencies\MediaInfo.dll" DestinationFiles="$(OutDir)\MediaInfo.dll" />
   </Target>
-  <Import Project="$(ProjectDir)\..\Tools\Fody\Fody.targets" />
+  <Import Project="$(SolutionDir)\.nuget\nuget.targets" />
+  <Import Project="Fody.targets" />
 </Project>
