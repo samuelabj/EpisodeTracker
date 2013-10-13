@@ -15,6 +15,7 @@ using System.Data.Entity;
 using System.Data.SqlTypes;
 using MediaReign.Core;
 using EpisodeTracker.Core.Logging;
+using System.Text.RegularExpressions;
 
 namespace EpisodeTracker.Core.Models {
 	public delegate void MonitoredFileHandler(EpisodeProcessMonitor monitor, MonitoredFileEventArgs args);
@@ -428,12 +429,18 @@ namespace EpisodeTracker.Core.Models {
 					var ext = Path.GetExtension(f);
 					if(ext.Length > 1) ext = ext.Substring(1);
 					if(VideoExtensions.Contains(ext.ToLower()) && !videoFiles.Contains(f, StringComparer.OrdinalIgnoreCase)) {
-						// Remove weird mup prefix if it exists
-						var mupPrefix = @"\Device\Mup\";
 						var fileName = f;
-						if(f.StartsWith(mupPrefix, StringComparison.OrdinalIgnoreCase)) {
-							fileName = @"\\" + fileName.Remove(0, mupPrefix.Length);
-							Logger.Debug("Removed mup prefix: " + fileName);
+						var deviceMatch = Regex.Match(f, @"\\Device\\Mup\\;\w:[^\\]+\\(.*)");
+						if(deviceMatch.Success) {
+							Logger.Debug("Found weird device filename: " + f);
+							fileName = @"\\" + deviceMatch.Groups[1].Value;
+						} else {
+							// Remove weird mup prefix if it exists
+							var mupPrefix = @"\Device\Mup\";
+							if(f.StartsWith(mupPrefix, StringComparison.OrdinalIgnoreCase)) {
+								fileName = @"\\" + fileName.Remove(0, mupPrefix.Length);
+								Logger.Debug("Removed mup prefix: " + fileName);
+							}
 						}
 
 						videoFiles.Add(fileName);
