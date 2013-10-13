@@ -207,7 +207,12 @@ namespace EpisodeTracker.Core.Models {
 			TotalBanners++;
 
 			return Task.Factory.StartNew(() => {
-				new TVDBRequest().DownloadBanner(banner, path);
+				try {
+					new TVDBRequest().DownloadBanner(banner, path);
+				} catch(Exception e) {
+					Logger.Error("Could not download banner (Series, ID, Banner): " + Name + ", " + TVDBID + ", " + banner);
+				}
+
 				Interlocked.Increment(ref CompleteBanners);
 				if(BannerDownloaded != null) {
 					BannerDownloaded(this, new BannerDownloadProgressEventArgs {
