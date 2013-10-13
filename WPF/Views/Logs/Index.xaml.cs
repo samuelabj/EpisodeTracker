@@ -40,7 +40,7 @@ namespace EpisodeTracker.WPF.Views.Logs {
 			}
 
 			levelCombo.ItemsSource = Levels;
-			levelCombo.SelectedItem = LogLevel.Info;
+			levelCombo.SelectedItem = LogLevel.Debug;
 
 			fromDatePicker.SelectedDate = DateTime.Now.AddDays(-7);
 			fromDatePicker.DisplayDateEnd = DateTime.Now;

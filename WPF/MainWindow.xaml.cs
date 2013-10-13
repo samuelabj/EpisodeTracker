@@ -132,13 +132,12 @@ namespace EpisodeTracker.WPF {
 
 		async void CheckUpdatesAsync() {
 			await Task.Factory.StartNew(() => {
-				var updates = new TVDBRequest().Updates(Settings.Default.LastTVDBUpdateCheck.GetValueOrDefault());
-
-				var episodeIDs = updates.Episodes.Select(ep => ep.ID);
-				var seriesIDs = updates.Series.Select(s => s.ID);
+				var lastUpdate = Settings.Default.LastTVDBUpdateCheck;
+				var shouldUpdate = lastUpdate.HasValue ? lastUpdate.Value.AddDays(-7) : DateTime.MinValue;
+				IEnumerable<int> seriesIDs;
 
 				using(var db = new EpisodeTrackerDBContext()) {
-					seriesIDs = db.Series.Where(s => seriesIDs.Contains(s.TVDBID.Value) && s.Episodes.Any(ep => episodeIDs.Contains(ep.TVDBID.Value)))
+					seriesIDs = db.Series.Where(s => s.Updated <= shouldUpdate && s.TVDBID.HasValue)
 						.Select(s => s.TVDBID.Value)
 						.ToList();
 				}
