@@ -30,6 +30,7 @@ namespace EpisodeTracker.Torrents.Searchers {
 				if(r != null & r.StatusCode == HttpStatusCode.NotFound) {
 					return new List<TorrentResult>();
 				}
+				throw;
 			}
 
 			SyndicationFeed feed;

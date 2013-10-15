@@ -24,7 +24,7 @@ namespace EpisodeTracker.Core.Logging.Targets {
 
 					var entry = new LogEntry {
 						Key = info.LoggerName,
-						Date = DateTime.Now,
+						Date = info.TimeStamp,
 						Level = level,
 						Message = message,
 						EpisodeID = episodeID as int?

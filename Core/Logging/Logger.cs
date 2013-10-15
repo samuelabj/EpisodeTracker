@@ -49,6 +49,7 @@ namespace EpisodeTracker.Core.Logging {
 		public void Log(LogEntryBuilder entry) {
 			var info = new LogEventInfo {
 				LoggerName = Key,
+				TimeStamp = DateTime.Now,
 				Level = GetLevel(entry.Level),
 				Message = entry.MessageFormat,
 				Parameters = entry.Arguments

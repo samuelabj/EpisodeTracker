@@ -122,6 +122,10 @@
     <Compile Include="Migrations\201302211102150_DownloadSeasonEpisodeRestrictions.Designer.cs">
       <DependentUpon>201302211102150_DownloadSeasonEpisodeRestrictions.cs</DependentUpon>
     </Compile>
+    <Compile Include="Migrations\201310150857149_LogIndexes.cs" />
+    <Compile Include="Migrations\201310150857149_LogIndexes.Designer.cs">
+      <DependentUpon>201310150857149_LogIndexes.cs</DependentUpon>
+    </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Models\EpisodeDownloader.cs" />
     <Compile Include="Models\EpisodeDownloadService.cs" />
@@ -232,6 +236,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Migrations\201302211102150_DownloadSeasonEpisodeRestrictions.resx">
       <DependentUpon>201302211102150_DownloadSeasonEpisodeRestrictions.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\201310150857149_LogIndexes.resx">
+      <DependentUpon>201310150857149_LogIndexes.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
