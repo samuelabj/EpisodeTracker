@@ -29,7 +29,8 @@ namespace MediaReign.Core.TvMatchers {
 		string ToEpisodeGroup = "ToEpisode";
 
 		public TvMatcher() {
-			Matches = new LinkedList<Regex>(SeasonEpisode.Select(s => new Regex(Show + s, RegexOptions.IgnoreCase)));
+			Matches = new LinkedList<Regex>(
+				SeasonEpisode.Select(s => new Regex(Show + s, RegexOptions.IgnoreCase)));
 		}
 
 		public TvMatch Match(string value) {

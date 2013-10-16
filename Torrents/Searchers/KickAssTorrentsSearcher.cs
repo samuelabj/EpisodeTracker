@@ -14,7 +14,7 @@ using System.Xml.Linq;
 
 namespace EpisodeTracker.Torrents.Searchers {
 	public class KickAssTorrentsSeacher : ITorrentSearcher {
-		const string URLSearchFormat = "http://kat.ph/usearch/{0}/?rss=1&field=seeders&sorder=desc";
+		const string URLSearchFormat = "http://kickass.to/usearch/{0}/?rss=1&field=seeders&sorder=desc";
 		
 		public List<TorrentResult> Search(string text) {
 			var uri = new Uri(String.Format(URLSearchFormat, HttpUtility.UrlEncode(text)));

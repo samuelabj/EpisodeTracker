@@ -63,6 +63,8 @@ namespace EpisodeTracker.Core.Models {
 
 					foreach(var r in results) {
 						var torrent = Download(episode, r);
+						if(torrent == null) continue;
+
 						LogDownload(db, episode, r);
 
 						if(!torrent.Files.Any(f => IgnoreExtensions.Any(ext => f.Path.EndsWith(ext, StringComparison.OrdinalIgnoreCase)))) {

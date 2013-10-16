@@ -65,6 +65,8 @@ namespace EpisodeTracker.Core.Models {
 			
 			var minBytes = MinMB.HasValue ? MinMB * 1024 * 1024 : (default(int?));
 			var maxBytes = MaxMB.HasValue ? MaxMB * 1024 * 1024 : (default(int?));
+			var seriesMatch = new TvMatcher().Match(series);
+			var cleanSeries = seriesMatch != null ? seriesMatch.Name : series;
 
 			var matches = results
 				.Where(r => {
@@ -76,7 +78,7 @@ namespace EpisodeTracker.Core.Models {
 						return false;
 					}
 
-					if(r.Match.Name.IndexOf(series, StringComparison.OrdinalIgnoreCase) == -1
+					if(r.Match.Name.IndexOf(cleanSeries, StringComparison.OrdinalIgnoreCase) == -1
 						&& r.Match.Name.IndexOf(episode.Series.Name, StringComparison.OrdinalIgnoreCase) == -1) {
 							entry.Message(msg, "does not contain series name", r.Match).Debug();
 							return false;
