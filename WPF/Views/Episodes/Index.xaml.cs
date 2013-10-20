@@ -102,12 +102,23 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 				dataGrid.Columns.First().Visibility = System.Windows.Visibility.Collapsed;
 			}
 
+			var lastWatched = episodes.Where(ep => ep.Tracked != null && ep.Tracked.Watched)
+				.OrderByDescending(ep => ep.Tracked.Updated)
+				.FirstOrDefault();
+
+			if(lastWatched == null) {
+				lastWatched = episodes.OrderBy(ep => ep.Episode.Number)
+				.OrderBy(ep => ep.Episode.Season)
+				.First();
+			}
+
 			EventHandler loaded = null;
-			loaded = new EventHandler((o, e) => {
+			loaded = new EventHandler((o, e) => {		
 				dataGrid.SelectedIndex = 0;
-				DataGridRow row = (DataGridRow)dataGrid.ItemContainerGenerator.ContainerFromIndex(0);
+				DataGridRow row = (DataGridRow)dataGrid.ItemContainerGenerator.ContainerFromItem(lastWatched);
 				if(row != null) {
 					row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+					dataGrid.SelectedIndex = row.GetIndex();
 				}
 
 				dataGrid.LayoutUpdated -= loaded;
