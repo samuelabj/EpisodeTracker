@@ -108,28 +108,34 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 
 			if(lastWatched == null) {
 				lastWatched = episodes.OrderBy(ep => ep.Episode.Number)
-				.OrderBy(ep => ep.Episode.Season)
-				.First();
+					.OrderBy(ep => ep.Episode.Season)
+					.FirstOrDefault();
 			}
 
 			EventHandler loaded = null;
-			loaded = new EventHandler((o, e) => {		
-				dataGrid.SelectedIndex = 0;
-				DataGridRow row = (DataGridRow)dataGrid.ItemContainerGenerator.ContainerFromItem(lastWatched);
-				if(row != null) {
-					row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
-					dataGrid.SelectedIndex = row.GetIndex();
-				}
+			loaded = new EventHandler((o, e) => {
+				if(dataGrid.ItemContainerGenerator.Status != GeneratorStatus.ContainersGenerated) return;
+				dataGrid.ItemContainerGenerator.StatusChanged -= loaded;
 
-				dataGrid.LayoutUpdated -= loaded;
+				if(lastWatched != null) {
+					var row = (DataGridRow)dataGrid.ItemContainerGenerator.ContainerFromItem(lastWatched);
+					if(row != null) {
+						row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
+						dataGrid.SelectedIndex = row.GetIndex();
+					}
+				}
 			});
-			dataGrid.LayoutUpdated += loaded;
+			dataGrid.ItemContainerGenerator.StatusChanged += loaded;
 
 			dataGrid.ItemsSource = episodeInfo = new ObservableCollection<EpisodeInfo>(
 				episodes
 				.OrderByDescending(ep => ep.Episode.Number)
 				.OrderByDescending(ep => ep.Episode.Season)
 			);
+
+			if(lastWatched != null) {
+				dataGrid.ScrollIntoView(lastWatched);
+			}
 
 			statusModal.Visibility = System.Windows.Visibility.Collapsed;
 		}
