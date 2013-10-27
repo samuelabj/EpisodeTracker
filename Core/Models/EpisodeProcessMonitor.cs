@@ -142,7 +142,8 @@ namespace EpisodeTracker.Core.Models {
 				mon.Length = info.Length;
 			}
 
-			var match = new TvMatcher().Match(fileName);
+			var name = Path.GetFileName(fileName);
+			var match = new TvMatcher().Match(name);
 			if(match != null) {
 				Logger.Debug("Found episode info: " + match.ToString());
 				

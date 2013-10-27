@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MediaReign.Core.TvMatchers {
 	public class TvMatcher {
-		const string Show = @"(?<Series>((\w+?|\(\d+\))[\s_]?[\s._\-][\s_]?)+?)";
+		const string Show = @"(?<Series>((.+?|\(\d+\))[\s_]?[\s._\-][\s_]?)+?)";
 		static string[] SeasonEpisode = new[] {
 			@"S(?<Season>\d+)E(?<Episode>\d+)(([\s_]?[\-_:][\s_]?)?([\s_]?E)?(?<ToEpisode>\d+))?[^\da-z]", // Show S01E01
 			@"(?<Season>\d+)x(?<Episode>\d+)([\s_]?[\-_:][\s_]?(?<ToEpisode>\d+))?[^\da-z]", // Show 1x1
@@ -34,16 +34,17 @@ namespace MediaReign.Core.TvMatchers {
 		}
 
 		public TvMatch Match(string value) {
-			var clean = Cleanup.Replace(value, String.Empty);
 			if(Exclude.IsMatch(value)) return null;
+			var clean = Cleanup.Replace(value, String.Empty);
 
 			foreach(var matchreg in Matches) {
-				var matches = matchreg.Match(clean);
+				var match = matchreg.Match(clean);
+				if(!match.Success) continue;
 
-				var show = matches.Groups[SeriesGroup].Value.Trim();
-				var season = matches.Groups[SeasonGroup].Value;
-				var episode = matches.Groups[EpisodeGroup].Value;
-				var toEpisode = matches.Groups[ToEpisodeGroup].Value;
+				var show = match.Groups[SeriesGroup].Value.Trim();
+				var season = match.Groups[SeasonGroup].Value;
+				var episode = match.Groups[EpisodeGroup].Value;
+				var toEpisode = match.Groups[ToEpisodeGroup].Value;
 
 				if(String.IsNullOrWhiteSpace(show)) continue;
 

@@ -115,13 +115,12 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 			EventHandler loaded = null;
 			loaded = new EventHandler((o, e) => {
 				if(dataGrid.ItemContainerGenerator.Status != GeneratorStatus.ContainersGenerated) return;
-				dataGrid.ItemContainerGenerator.StatusChanged -= loaded;
 
 				if(lastWatched != null) {
 					var row = (DataGridRow)dataGrid.ItemContainerGenerator.ContainerFromItem(lastWatched);
 					if(row != null) {
+						dataGrid.ItemContainerGenerator.StatusChanged -= loaded;
 						row.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
-						dataGrid.SelectedIndex = row.GetIndex();
 					}
 				}
 			});
@@ -135,6 +134,7 @@ namespace EpisodeTracker.WPF.Views.Episodes {
 
 			if(lastWatched != null) {
 				dataGrid.ScrollIntoView(lastWatched);
+				dataGrid.SelectedItem = lastWatched;
 			}
 
 			statusModal.Visibility = System.Windows.Visibility.Collapsed;
